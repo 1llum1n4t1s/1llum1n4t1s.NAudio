@@ -8,8 +8,6 @@
 
 YAudio is a fork of NAudio, an open source .NET audio library originally written by [Mark Heath](https://markheath.net)
 
-![NAudio logo](naudio-logo.png)
-
 ## Features
 
 YAudio provides the same comprehensive audio functionality as NAudio, including playback, recording, file format support, audio manipulation, MIDI support, and more. For detailed feature information, please refer to the [original NAudio README](https://github.com/naudio/NAudio/blob/master/README.md).
@@ -37,7 +35,7 @@ dotnet add package YAudio
 
 **PackageReference:**
 ```xml
-<PackageReference Include="YAudio" Version="1.0.3" />
+<PackageReference Include="YAudio" Version="1.0.5" />
 ```
 
 ## Documentation
