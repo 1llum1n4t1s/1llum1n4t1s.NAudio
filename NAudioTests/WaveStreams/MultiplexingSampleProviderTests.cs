@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NAudioTests.Utils;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave.SampleProviders;
 using NAudio.Wave;
 using System.Diagnostics;
@@ -47,7 +48,7 @@ namespace NAudioTests.WaveStreams
             var inputWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(32000, 1);
             input1.Setup(x => x.WaveFormat).Returns(inputWaveFormat);
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1.Object }, 1);
-            Assert.AreEqual(inputWaveFormat, mp.WaveFormat);
+            ClassicAssert.AreEqual(inputWaveFormat, mp.WaveFormat);
         }
 
         [Test]
@@ -58,7 +59,7 @@ namespace NAudioTests.WaveStreams
             input1.Setup(x => x.WaveFormat).Returns(inputWaveFormat);
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1.Object }, 2);
             var expectedOutputWaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(32000, 2);
-            Assert.AreEqual(expectedOutputWaveFormat, mp.WaveFormat);
+            ClassicAssert.AreEqual(expectedOutputWaveFormat, mp.WaveFormat);
         }
 
         [Test]
@@ -157,7 +158,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestSampleProvider(32000, 2);
             var input2 = new TestSampleProvider(32000, 1);
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1, input2 }, 1);
-            Assert.AreEqual(3, mp.InputChannelCount);
+            ClassicAssert.AreEqual(3, mp.InputChannelCount);
         }
 
         [Test]
@@ -165,7 +166,7 @@ namespace NAudioTests.WaveStreams
         {
             var input1 = new TestSampleProvider(32000, 1);
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 3);
-            Assert.AreEqual(3, mp.OutputChannelCount);
+            ClassicAssert.AreEqual(3, mp.OutputChannelCount);
         }
 
         [Test]
@@ -184,7 +185,7 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 1);
             float[] buffer = new float[10];
             var read = mp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(0, read);
+            ClassicAssert.AreEqual(0, read);
         }
 
         [Test]
@@ -209,8 +210,8 @@ namespace NAudioTests.WaveStreams
                 buffer[n] = 99;
             }
             var read = mp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(6, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(6, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         public void PerformanceTest()

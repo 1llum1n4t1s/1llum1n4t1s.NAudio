@@ -1,6 +1,7 @@
-﻿using NAudio.Mixer;
+using NAudio.Mixer;
 using NAudio.Wave;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Diagnostics;
 
 namespace NAudioTests
@@ -13,7 +14,7 @@ namespace NAudioTests
         public void CanEnumerateAllMixerControls()
         {
             int devices = Mixer.NumberOfDevices;
-            Assert.That(devices > 0, "Expected at least one mixer device");
+            ClassicAssert.That(devices > 0, "Expected at least one mixer device");
             for (int device = 0; device < devices; device++)
             {
                 ExploreMixerDevice(device);
@@ -46,13 +47,13 @@ namespace NAudioTests
                                     UnsignedMixerControl umc = (UnsignedMixerControl)control;
                                     uint originalValue = umc.Value;
                                     umc.Value = umc.MinValue;
-                                    Assert.AreEqual(umc.MinValue, umc.Value, "Set Minimum Correctly");
+                                    ClassicAssert.AreEqual(umc.MinValue, umc.Value, "Set Minimum Correctly");
                                     umc.Value = umc.MaxValue;
-                                    Assert.AreEqual(umc.MaxValue, umc.Value, "Set Maximum Correctly");
+                                    ClassicAssert.AreEqual(umc.MaxValue, umc.Value, "Set Maximum Correctly");
                                     umc.Value = umc.MaxValue / 2;
-                                    Assert.AreEqual(umc.MaxValue / 2, umc.Value, "Set MidPoint Correctly");
+                                    ClassicAssert.AreEqual(umc.MaxValue / 2, umc.Value, "Set MidPoint Correctly");
                                     umc.Value = originalValue;
-                                    Assert.AreEqual(originalValue, umc.Value, "Set Original Correctly");
+                                    ClassicAssert.AreEqual(originalValue, umc.Value, "Set Original Correctly");
                                 }
                             }
                         }
@@ -77,7 +78,7 @@ namespace NAudioTests
             Debug.WriteLine($"Device {deviceIndex}: {mixer.Name}");
             Debug.WriteLine("--------------------------------------------");
             int destinations = mixer.DestinationCount;
-            Assert.That(destinations > 0, "Expected at least one destination");
+            ClassicAssert.That(destinations > 0, "Expected at least one destination");
             for (int destinationIndex = 0; destinationIndex < destinations; destinationIndex++)
             {
                 ExploreMixerDestination(mixer, destinationIndex);

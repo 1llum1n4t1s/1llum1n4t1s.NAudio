@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 
 namespace NAudioTests
@@ -14,7 +15,7 @@ namespace NAudioTests
         public void CanRequestNumberOfWaveInDevices()
         {
             int deviceCount = WaveIn.DeviceCount;
-            Assert.That(deviceCount > 0, "Expected at least one WaveIn device");
+            ClassicAssert.That(deviceCount > 0, "Expected at least one WaveIn device");
         }
         
         [Test]
@@ -23,9 +24,9 @@ namespace NAudioTests
             for (int n = 0; n < WaveIn.DeviceCount; n++)
             {
                 WaveInCapabilities capabilities = WaveIn.GetCapabilities(n);
-                Assert.IsNotNull(capabilities, "Null capabilities");
-                //Assert.That(capabilities.Channels >= 1, "At least one channel"); - seem to get -1 a lot
-                Assert.That(!String.IsNullOrEmpty(capabilities.ProductName), "Needs a name");
+                ClassicAssert.IsNotNull(capabilities, "Null capabilities");
+                //ClassicAssert.That(capabilities.Channels >= 1, "At least one channel"); - seem to get -1 a lot
+                ClassicAssert.That(!String.IsNullOrEmpty(capabilities.ProductName), "Needs a name");
             }
         }
 

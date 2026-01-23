@@ -20,6 +20,7 @@ namespace AudioFileInspector
         string currentFile;
         FindForm findForm;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string[] CommandLineArguments { get; set; }
 
         [ImportingConstructor]

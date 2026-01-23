@@ -1,7 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;netcoreapp3.1;net6.0-windows;net6.0</TargetFrameworks>
-    <Version>2.2.1</Version>
+    <TargetFrameworks>net10.0-windows</TargetFrameworks>
+    <PackageId>YAudio</PackageId>
+    <Version>1.0.0</Version>
     <Authors>Mark Heath &amp; Contributors</Authors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>NAudio, an audio library for .NET</Description>
@@ -24,7 +25,7 @@
     <ProjectReference Include="..\NAudio.Wasapi\NAudio.Wasapi.csproj" />
     <ProjectReference Include="..\NAudio.WinMM\NAudio.WinMM.csproj" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net6.0' ">
+  <ItemGroup>
     <ProjectReference Include="..\NAudio.WinForms\NAudio.WinForms.csproj" />
   </ItemGroup>
 

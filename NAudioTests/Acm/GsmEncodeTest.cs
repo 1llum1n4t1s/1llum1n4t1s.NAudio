@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Linq;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 using System.IO;
 using NAudio.Wave.SampleProviders;
@@ -36,7 +37,7 @@ namespace NAudioTests.Acm
 
             byte[] data = new byte[outFormat.AverageBytesPerSecond * durationInSeconds];
             var bytesRead = sp.Read(data, 0, data.Length);
-            Assert.AreEqual(bytesRead, data.Length);
+            ClassicAssert.AreEqual(bytesRead, data.Length);
             return new RawSourceWaveStream(new MemoryStream(data), outFormat);
         }
 
@@ -58,7 +59,7 @@ namespace NAudioTests.Acm
             var testFile = Path.Combine(tempFolder, "gsm.wav");
             if (!File.Exists(testFile))
             {
-                Assert.Ignore("Missing test file (created by the another test)");
+                ClassicAssert.Ignore("Missing test file (created by the another test)");
             }
             using (var reader = new WaveFileReader(testFile))
             {

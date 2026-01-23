@@ -1,0 +1,33 @@
+name: Publish to NuGet
+
+on:
+  push:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore NAudio\NAudio.csproj
+      
+      - name: Build Release
+        run: dotnet build NAudio\NAudio.csproj -c Release --no-restore
+      
+      - name: Publish to NuGet
+        run: |
+          $apiKey = $env:NUGET_API_KEY
+          .\publish.ps1
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        shell: pwsh

@@ -1,0 +1,88 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="ARM" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Samples/">
+    <Project Path="AudioFileInspector/AudioFileInspector.csproj">
+      <Build Solution="*|x64" Project="false" />
+      <Build Solution="*|x86" Project="false" />
+    </Project>
+    <Project Path="MidiFileConverter/MidiFileConverter.csproj">
+      <Build Solution="*|x64" Project="false" />
+      <Build Solution="*|x86" Project="false" />
+    </Project>
+    <Project Path="MixDiff/MixDiff.csproj">
+      <Build Solution="*|x64" Project="false" />
+      <Build Solution="*|x86" Project="false" />
+    </Project>
+    <Project Path="NAudioDemo/NAudioDemo.csproj">
+      <Build Solution="*|x64" Project="false" />
+      <Build Solution="*|x86" Project="false" />
+    </Project>
+    <Project Path="NAudioWpfDemo/NAudioWpfDemo.csproj">
+      <Build Solution="*|x64" Project="false" />
+      <Build Solution="*|x86" Project="false" />
+    </Project>
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="azure-pipelines.yml" />
+    <File Path="build.cake" />
+    <File Path="build.ps1" />
+    <File Path="global.json" />
+    <File Path="license.txt" />
+    <File Path="naudio-logo.png" />
+    <File Path="publish.ps1" />
+    <File Path="README.md" />
+    <File Path="readme.txt" />
+    <File Path="RELEASE_NOTES.md" />
+  </Folder>
+  <Folder Name="/Solution Items/Docs/">
+    <File Path="Docs/AsioPlayback.md" />
+    <File Path="Docs/AsioRecording.md" />
+    <File Path="Docs/ConcatenatingAudio.md" />
+    <File Path="Docs/ConvertBetweenStereoAndMono.md" />
+    <File Path="Docs/ConvertMp3ToWav.md" />
+    <File Path="Docs/EnumerateAcmDrivers.md" />
+    <File Path="Docs/EnumerateMediaFoundationTransforms.md" />
+    <File Path="Docs/EnumerateOutputDevices.md" />
+    <File Path="Docs/FadeInOutSampleProvider.md" />
+    <File Path="Docs/MediaFoundationEncoder.md" />
+    <File Path="Docs/MidiEvent.md" />
+    <File Path="Docs/MidiFile.md" />
+    <File Path="Docs/MidiInAndOut.md" />
+    <File Path="Docs/MixTwoAudioFilesToWav.md" />
+    <File Path="Docs/OffsetSampleProvider.md" />
+    <File Path="Docs/OutputDeviceTypes.md" />
+    <File Path="Docs/PlayAudioFileConsoleApp.md" />
+    <File Path="Docs/PlayAudioFileWinForms.md" />
+    <File Path="Docs/PlayAudioFromUrl.md" />
+    <File Path="Docs/PlaybackStopped.md" />
+    <File Path="Docs/PlaySineWave.md" />
+    <File Path="Docs/RawSourceWaveStream.md" />
+    <File Path="Docs/RecordingLevelMeter.md" />
+    <File Path="Docs/RecordWavFileWinFormsWaveIn.md" />
+    <File Path="Docs/Resampling.md" />
+    <File Path="Docs/WasapiLoopbackCapture.md" />
+    <File Path="Docs/WasapiOut.md" />
+    <File Path="Docs/WaveFormRendering.md" />
+    <File Path="Docs/WaveProviders.md" />
+  </Folder>
+  <Project Path="NAudio.Asio/NAudio.Asio.csproj" />
+  <Project Path="NAudio.Core/NAudio.Core.csproj" />
+  <Project Path="NAudio.Extras/NAudio.Extras.csproj" />
+  <Project Path="NAudio.Midi/NAudio.Midi.csproj" />
+  <Project Path="NAudio.Wasapi/NAudio.Wasapi.csproj" />
+  <Project Path="NAudio.WinForms/NAudio.WinForms.csproj" />
+  <Project Path="NAudio.WinMM/NAudio.WinMM.csproj" />
+  <Project Path="NAudio/NAudio.csproj">
+    <Build Solution="*|x64" Project="false" />
+    <Build Solution="*|x86" Project="false" />
+  </Project>
+  <Project Path="NAudioTests/NAudioTests.csproj">
+    <Build Solution="*|x64" Project="false" />
+    <Build Solution="*|x86" Project="false" />
+  </Project>
+</Solution>

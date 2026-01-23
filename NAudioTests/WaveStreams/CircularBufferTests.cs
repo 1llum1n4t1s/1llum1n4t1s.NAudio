@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Utils;
 
 namespace NAudioTests.WaveStreams
@@ -14,8 +15,8 @@ namespace NAudioTests.WaveStreams
         public void CircularBufferHasMaxLengthAndCount()
         {
             CircularBuffer circularBuffer = new CircularBuffer(1024);
-            Assert.AreEqual(1024, circularBuffer.MaxLength);
-            Assert.AreEqual(0, circularBuffer.Count);
+            ClassicAssert.AreEqual(1024, circularBuffer.MaxLength);
+            ClassicAssert.AreEqual(0, circularBuffer.Count);
         }
 
         [Test]
@@ -24,7 +25,7 @@ namespace NAudioTests.WaveStreams
             CircularBuffer circularBuffer = new CircularBuffer(1024);
             byte[] buffer = new byte[1024];
             int read = circularBuffer.Read(buffer, 0, 1024);
-            Assert.AreEqual(0, read);
+            ClassicAssert.AreEqual(0, read);
         }
 
         [Test]
@@ -33,9 +34,9 @@ namespace NAudioTests.WaveStreams
             CircularBuffer circularBuffer = new CircularBuffer(1024);
             byte[] buffer = new byte[100];
             circularBuffer.Write(buffer, 0, 100);
-            Assert.AreEqual(100, circularBuffer.Count);
+            ClassicAssert.AreEqual(100, circularBuffer.Count);
             circularBuffer.Write(buffer, 0, 50);
-            Assert.AreEqual(150, circularBuffer.Count);
+            ClassicAssert.AreEqual(150, circularBuffer.Count);
         }
 
         [Test]
@@ -44,10 +45,10 @@ namespace NAudioTests.WaveStreams
             CircularBuffer circularBuffer = new CircularBuffer(1024);
             byte[] buffer = new byte[100];
             circularBuffer.Write(buffer, 0, 100);
-            Assert.AreEqual(100, circularBuffer.Count);
+            ClassicAssert.AreEqual(100, circularBuffer.Count);
             byte[] readBuffer = new byte[1000];
             int read = circularBuffer.Read(readBuffer, 0, 1000);
-            Assert.AreEqual(100, read);
+            ClassicAssert.AreEqual(100, read);
         }
 
         [Test]
@@ -57,7 +58,7 @@ namespace NAudioTests.WaveStreams
             byte[] buffer = new byte[200];
                 
             int written = circularBuffer.Write(buffer, 0, 200);
-            Assert.AreEqual(100, written, "Wrote the wrong amount");
+            ClassicAssert.AreEqual(100, written, "Wrote the wrong amount");
         }
 
         [Test]
@@ -67,7 +68,7 @@ namespace NAudioTests.WaveStreams
             byte[] buffer = new byte[200];
             circularBuffer.Write(buffer, 0, 75);
             int written = circularBuffer.Write(buffer, 0, 50);
-            Assert.AreEqual(25, written, "Wrote the wrong amount");
+            ClassicAssert.AreEqual(25, written, "Wrote the wrong amount");
         }
 
         [Test]
@@ -77,7 +78,7 @@ namespace NAudioTests.WaveStreams
             byte[] buffer = new byte[200];
             circularBuffer.Write(buffer, 0, 100);
             int written = circularBuffer.Write(buffer, 0, 50);
-            Assert.AreEqual(0, written, "Wrote the wrong amount");
+            ClassicAssert.AreEqual(0, written, "Wrote the wrong amount");
         }
 
         [Test]
@@ -86,17 +87,17 @@ namespace NAudioTests.WaveStreams
             CircularBuffer circularBuffer = new CircularBuffer(100);
             byte[] buffer = new byte[200];
             circularBuffer.Write(buffer, 0, 75);
-            Assert.AreEqual(75, circularBuffer.Count, "Initial count");
+            ClassicAssert.AreEqual(75, circularBuffer.Count, "Initial count");
             int read = circularBuffer.Read(buffer, 0, 75);
-            Assert.AreEqual(0, circularBuffer.Count, "Count after read");
-            Assert.AreEqual(75, read, "Bytes read");
+            ClassicAssert.AreEqual(0, circularBuffer.Count, "Count after read");
+            ClassicAssert.AreEqual(75, read, "Bytes read");
             // write wraps round
             circularBuffer.Write(buffer, 0, 50);
-            Assert.AreEqual(50, circularBuffer.Count, "Count after wrap round");
+            ClassicAssert.AreEqual(50, circularBuffer.Count, "Count after wrap round");
             // read wraps round
             read = circularBuffer.Read(buffer, 0, 75);
-            Assert.AreEqual(50, read, "Bytes Read 2");
-            Assert.AreEqual(0, circularBuffer.Count, "Final Count");
+            ClassicAssert.AreEqual(50, read, "Bytes Read 2");
+            ClassicAssert.AreEqual(0, circularBuffer.Count, "Final Count");
         }
 
         [Test]
@@ -113,7 +114,7 @@ namespace NAudioTests.WaveStreams
             circularBuffer.Write(numbers, 0, 200);
             Array.Clear(readBuffer, 0, readBuffer.Length);
             int read = circularBuffer.Read(readBuffer, 0, 200);
-            Assert.AreEqual(200, read);
+            ClassicAssert.AreEqual(200, read);
             CheckBuffer(readBuffer, 0, read);
             
             // now write past the end
@@ -121,7 +122,7 @@ namespace NAudioTests.WaveStreams
             Array.Clear(readBuffer, 0, readBuffer.Length);
             // now read past the end
             read = circularBuffer.Read(readBuffer, 0, 200);
-            Assert.AreEqual(200, read);
+            ClassicAssert.AreEqual(200, read);
             CheckBuffer(readBuffer, 0, read);
             
         }
@@ -130,7 +131,7 @@ namespace NAudioTests.WaveStreams
         {
             for (int n = 0; n < length; n++)
             {
-                Assert.AreEqual(startNumber + n, buffer[n], "Byte mismatch at offset {0}", n);
+                ClassicAssert.AreEqual(startNumber + n, buffer[n], "Byte mismatch at offset {0}", n);
             }
         }
     }

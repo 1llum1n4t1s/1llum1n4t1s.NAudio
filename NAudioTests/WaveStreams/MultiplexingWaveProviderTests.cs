@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 using System.Diagnostics;
 using Moq;
@@ -43,7 +44,7 @@ namespace NAudioTests.WaveStreams
             var inputWaveFormat = new WaveFormat(32000, 16, 1);
             input1.Setup(x => x.WaveFormat).Returns(inputWaveFormat);
             var mp = new MultiplexingWaveProvider(new[] { input1.Object }, 1);
-            Assert.AreEqual(inputWaveFormat, mp.WaveFormat);
+            ClassicAssert.AreEqual(inputWaveFormat, mp.WaveFormat);
         }
 
         [Test]
@@ -54,7 +55,7 @@ namespace NAudioTests.WaveStreams
             input1.Setup(x => x.WaveFormat).Returns(inputWaveFormat);
             var mp = new MultiplexingWaveProvider(new[] { input1.Object }, 2);
             var expectedOutputWaveFormat = new WaveFormat(32000, 16, 2);
-            Assert.AreEqual(expectedOutputWaveFormat, mp.WaveFormat);
+            ClassicAssert.AreEqual(expectedOutputWaveFormat, mp.WaveFormat);
         }
 
         [Test]
@@ -65,8 +66,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
             byte[] buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
-            Assert.AreEqual(10, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(10, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
 
@@ -79,8 +80,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
             byte[] buffer = new byte[20];
             var read = mp.Read(buffer, 0, 20);
-            Assert.AreEqual(20, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(20, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -92,8 +93,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
             byte[] buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
-            Assert.AreEqual(10, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(10, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -106,8 +107,8 @@ namespace NAudioTests.WaveStreams
             mp.ConnectInputToOutput(1, 0);
             byte[] buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
-            Assert.AreEqual(10, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(10, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -119,8 +120,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
             byte[] buffer = new byte[12];
             var read = mp.Read(buffer, 0, 12);
-            Assert.AreEqual(12, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(12, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -133,8 +134,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 }, 2);
             byte[] buffer = new byte[expected.Length];
             var read = mp.Read(buffer, 0, expected.Length);
-            Assert.AreEqual(expected.Length, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(expected.Length, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -148,8 +149,8 @@ namespace NAudioTests.WaveStreams
             mp.ConnectInputToOutput(1, 0);
             byte[] buffer = new byte[12];
             var read = mp.Read(buffer, 0, 12);
-            Assert.AreEqual(12, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(12, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -182,7 +183,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 2));
             var input2 = new TestWaveProvider(new WaveFormat(32000, 16, 1));
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 }, 1);
-            Assert.AreEqual(3, mp.InputChannelCount);
+            ClassicAssert.AreEqual(3, mp.InputChannelCount);
         }
 
         [Test]
@@ -190,7 +191,7 @@ namespace NAudioTests.WaveStreams
         {
             var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 1));
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 3);
-            Assert.AreEqual(3, mp.OutputChannelCount);
+            ClassicAssert.AreEqual(3, mp.OutputChannelCount);
         }
 
         [Test]
@@ -217,7 +218,7 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
             byte[] buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
-            Assert.AreEqual(0, read);
+            ClassicAssert.AreEqual(0, read);
         }
 
         [Test]
@@ -229,7 +230,7 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 }, 1);
             byte[] buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
-            Assert.AreEqual(10, read);
+            ClassicAssert.AreEqual(10, read);
         }
 
         [Test]
@@ -239,11 +240,11 @@ namespace NAudioTests.WaveStreams
             var input2 = new TestWaveProvider(new WaveFormat(32000, 8, 1));
             byte[] expected = { 0,1,0,2,3,1,4,5,2};
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 });
-            Assert.AreEqual(3, mp.WaveFormat.Channels);
+            ClassicAssert.AreEqual(3, mp.WaveFormat.Channels);
             byte[] buffer = new byte[9];
             var read = mp.Read(buffer, 0, 9);
-            Assert.AreEqual(9, read);
-            Assert.AreEqual(buffer,expected);
+            ClassicAssert.AreEqual(9, read);
+            ClassicAssert.AreEqual(buffer,expected);
         }
 
 
@@ -259,8 +260,8 @@ namespace NAudioTests.WaveStreams
                 buffer[n] = 0xFF;
             }
             var read = mp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(6, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(6, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -271,8 +272,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
             byte[] buffer = new byte[expected.Length];
             var read = mp.Read(buffer, 0, expected.Length);
-            Assert.AreEqual(expected.Length, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(expected.Length, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
         [Test]
@@ -283,8 +284,8 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
             byte[] buffer = new byte[expected.Length];
             var read = mp.Read(buffer, 0, expected.Length);
-            Assert.AreEqual(expected.Length, read);
-            Assert.AreEqual(expected, buffer);
+            ClassicAssert.AreEqual(expected.Length, read);
+            ClassicAssert.AreEqual(expected, buffer);
         }
 
 
@@ -294,7 +295,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(32000, 1));
             byte[] expected = { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 9, 10, 11, 8, 9, 10, 11, };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
-            Assert.AreEqual(WaveFormatEncoding.IeeeFloat, mp.WaveFormat.Encoding);
+            ClassicAssert.AreEqual(WaveFormatEncoding.IeeeFloat, mp.WaveFormat.Encoding);
         }
 
         public void PerformanceTest()

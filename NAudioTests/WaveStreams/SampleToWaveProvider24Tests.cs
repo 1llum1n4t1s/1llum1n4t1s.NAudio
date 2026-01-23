@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +6,7 @@ using System.Text;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
@@ -16,7 +17,7 @@ namespace NAudioTests.WaveStreams
         public void ConvertAFile()
         {
             const string input = @"C:\Users\Mark\Downloads\Region-1.wav";
-            if (!File.Exists(input)) Assert.Ignore("Test file not found");
+            if (!File.Exists(input)) ClassicAssert.Ignore("Test file not found");
             using (var reader = new WaveFileReader(input))
             {
                 var sp = reader.ToSampleProvider();

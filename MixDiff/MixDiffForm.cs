@@ -306,6 +306,7 @@ namespace MarkHeath.AudioUtils
             }
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CompareMode CompareMode
         {
             get { return compareMode; }

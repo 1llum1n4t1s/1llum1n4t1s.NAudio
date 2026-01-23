@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NAudio.Wave;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Diagnostics;
 using NAudio.Wave.Compression;
 
@@ -16,11 +17,11 @@ namespace NAudioTests.Acm
         public void CanEnumerateDrivers()
         {
             IEnumerable<AcmDriver> drivers = AcmDriver.EnumerateAcmDrivers();
-            Assert.IsNotNull(drivers);
+            ClassicAssert.IsNotNull(drivers);
             foreach (AcmDriver driver in drivers)
             {
-                Assert.GreaterOrEqual((int)driver.DriverId, 0);
-                Assert.IsTrue(!String.IsNullOrEmpty(driver.ShortName));
+                ClassicAssert.GreaterOrEqual((int)driver.DriverId, 0);
+                ClassicAssert.IsTrue(!String.IsNullOrEmpty(driver.ShortName));
                 Debug.WriteLine(driver.LongName);
             }
         }
@@ -28,13 +29,13 @@ namespace NAudioTests.Acm
         [Test]
         public void DoesntFindNonexistentCodec()
         {
-            Assert.IsFalse(AcmDriver.IsCodecInstalled("ASJHASDHJSAK"));
+            ClassicAssert.IsFalse(AcmDriver.IsCodecInstalled("ASJHASDHJSAK"));
         }
 
         [Test]
         public void FindsStandardCodec()
         {
-            Assert.IsTrue(AcmDriver.IsCodecInstalled("MS-ADPCM"));
+            ClassicAssert.IsTrue(AcmDriver.IsCodecInstalled("MS-ADPCM"));
         }
 
         [Test]
@@ -47,7 +48,7 @@ namespace NAudioTests.Acm
         public void CanOpenAndCloseDriver()
         {
             IEnumerable<AcmDriver> drivers = AcmDriver.EnumerateAcmDrivers();
-            Assert.IsNotNull(drivers);
+            ClassicAssert.IsNotNull(drivers);
             foreach (AcmDriver driver in drivers)
             {
                 driver.Open();
@@ -63,7 +64,7 @@ namespace NAudioTests.Acm
                 Debug.WriteLine("Enumerating Format Tags for " + driver.LongName);
                 driver.Open();
                 IEnumerable<AcmFormatTag> formatTags = driver.FormatTags;
-                Assert.IsNotNull(formatTags, "FormatTags");
+                ClassicAssert.IsNotNull(formatTags, "FormatTags");
                 foreach(AcmFormatTag formatTag in formatTags)
                 {
                     Debug.WriteLine(String.Format("{0} {1} {2} Standard formats: {3} Support Flags: {4} Format Size: {5}",
@@ -85,11 +86,11 @@ namespace NAudioTests.Acm
             {
                 driver.Open();
                 IEnumerable<AcmFormatTag> formatTags = driver.FormatTags;
-                Assert.IsNotNull(formatTags, "FormatTags");
+                ClassicAssert.IsNotNull(formatTags, "FormatTags");
                 foreach (AcmFormatTag formatTag in formatTags)
                 {                                        
                     IEnumerable<AcmFormat> formats = driver.GetFormats(formatTag);
-                    Assert.IsNotNull(formats);
+                    ClassicAssert.IsNotNull(formats);
                     foreach (AcmFormat format in formats)
                     {
                         Debug.WriteLine(String.Format("{0} {1} {2} {3} {4}",

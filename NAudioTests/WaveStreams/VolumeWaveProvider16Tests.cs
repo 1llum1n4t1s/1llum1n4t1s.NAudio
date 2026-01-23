@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 using Moq;
 
@@ -16,7 +17,7 @@ namespace NAudioTests.WaveStreams
         {
             var testProvider = new TestWaveProvider(new WaveFormat(44100, 16, 2));
             VolumeWaveProvider16 vwp = new VolumeWaveProvider16(testProvider);
-            Assert.AreEqual(1.0f, vwp.Volume);
+            ClassicAssert.AreEqual(1.0f, vwp.Volume);
         }
 
         [Test]
@@ -24,7 +25,7 @@ namespace NAudioTests.WaveStreams
         {
             var testProvider = new TestWaveProvider(new WaveFormat(44100, 16, 2));
             VolumeWaveProvider16 vwp = new VolumeWaveProvider16(testProvider);
-            Assert.AreSame(testProvider.WaveFormat, vwp.WaveFormat);
+            ClassicAssert.AreSame(testProvider.WaveFormat, vwp.WaveFormat);
         }
 
         [Test]
@@ -34,8 +35,8 @@ namespace NAudioTests.WaveStreams
             VolumeWaveProvider16 vwp = new VolumeWaveProvider16(testProvider);
             byte[] buffer = new byte[20];
             int bytesRead = vwp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(buffer.Length, bytesRead);
-            Assert.AreEqual(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }, buffer);
+            ClassicAssert.AreEqual(buffer.Length, bytesRead);
+            ClassicAssert.AreEqual(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }, buffer);
         }
 
         [Test]
@@ -47,7 +48,7 @@ namespace NAudioTests.WaveStreams
             vwp.Volume = 0.5f;
             byte[] buffer = new byte[4];
             int bytesRead = vwp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(new byte[] { 50, 50, 50, 50 }, buffer);
+            ClassicAssert.AreEqual(new byte[] { 50, 50, 50, 50 }, buffer);
         }
 
         [Test]
@@ -59,7 +60,7 @@ namespace NAudioTests.WaveStreams
             vwp.Volume = 0f;
             byte[] buffer = new byte[4];
             int bytesRead = vwp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(new byte[] { 0, 0, 0, 0 }, buffer);
+            ClassicAssert.AreEqual(new byte[] { 0, 0, 0, 0 }, buffer);
         }
 
         [Test]
@@ -74,7 +75,7 @@ namespace NAudioTests.WaveStreams
             vwp.Volume = 2f;
             byte[] buffer = new byte[2];
             int bytesRead = vwp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(BitConverter.GetBytes(sampleValue), buffer);
+            ClassicAssert.AreEqual(BitConverter.GetBytes(sampleValue), buffer);
         }
 
         [Test]
@@ -89,7 +90,7 @@ namespace NAudioTests.WaveStreams
             vwp.Volume = 2f;
             byte[] buffer = new byte[2];
             int bytesRead = vwp.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(BitConverter.GetBytes(sampleValue), buffer);
+            ClassicAssert.AreEqual(BitConverter.GetBytes(sampleValue), buffer);
         }
     }
 }

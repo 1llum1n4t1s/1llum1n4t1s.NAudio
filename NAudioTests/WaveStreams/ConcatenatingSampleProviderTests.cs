@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using NAudio.Wave.SampleProviders;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
@@ -24,9 +25,9 @@ namespace NAudioTests.WaveStreams
                 var read = concatenator.Read(buffer, 0, buffer.Length);
                 if (read == 0) break;
                 totalRead += read;
-                Assert.That(totalRead <= expectedLength);
+                ClassicAssert.That(totalRead <= expectedLength);
             }
-            Assert.That(totalRead == expectedLength);
+            ClassicAssert.That(totalRead == expectedLength);
         }
 
         [Test]
@@ -40,10 +41,10 @@ namespace NAudioTests.WaveStreams
             var buffer = new float[2000];
             
             var read = concatenator.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(expectedLength, read, "read == expectedLength");
-            Assert.AreEqual(49, buffer[49]);
-            Assert.AreEqual(0, buffer[50]);
-            Assert.AreEqual(49, buffer[99]);
+            ClassicAssert.AreEqual(expectedLength, read, "read == expectedLength");
+            ClassicAssert.AreEqual(49, buffer[49]);
+            ClassicAssert.AreEqual(0, buffer[50]);
+            ClassicAssert.AreEqual(49, buffer[99]);
         }
     }
 }

@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NAudio.Utils;
 using NAudio.Wave;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
@@ -21,7 +22,7 @@ namespace NAudioTests.WaveStreams
         public void CanConvertChunkIndentiferToInt(string chunkIdentifier)
         {
             var x = WaveInterop.mmioStringToFOURCC(chunkIdentifier, 0);
-            Assert.AreEqual(x, ChunkIdentifier.ChunkIdentifierToInt32(chunkIdentifier));
+            ClassicAssert.AreEqual(x, ChunkIdentifier.ChunkIdentifierToInt32(chunkIdentifier));
         }
 
 

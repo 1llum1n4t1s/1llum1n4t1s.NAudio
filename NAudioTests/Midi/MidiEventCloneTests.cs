@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NAudio.Midi;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.Midi
 {
@@ -22,10 +23,10 @@ namespace NAudioTests.Midi
 
             collection.PrepareForExport();
 
-            Assert.That(collection[0][0].AbsoluteTime, Is.EqualTo(0));
-            Assert.That(collection[0][1].AbsoluteTime, Is.EqualTo(15));
-            Assert.That(((NoteOnEvent)collection[0][0]).NoteNumber, Is.EqualTo(30));
-            Assert.That(((NoteOnEvent)collection[0][1]).NoteNumber, Is.EqualTo(31));
+            ClassicAssert.That(collection[0][0].AbsoluteTime, Is.EqualTo(0));
+            ClassicAssert.That(collection[0][1].AbsoluteTime, Is.EqualTo(15));
+            ClassicAssert.That(((NoteOnEvent)collection[0][0]).NoteNumber, Is.EqualTo(30));
+            ClassicAssert.That(((NoteOnEvent)collection[0][1]).NoteNumber, Is.EqualTo(31));
         }
 
         [Test]
@@ -33,7 +34,7 @@ namespace NAudioTests.Midi
         {
             var ev = new NoteOnEvent(0, 1, 30, 100, 15);
             var clone = (NoteOnEvent)ev.Clone();
-            Assert.That(clone.OffEvent, Is.Not.SameAs(ev.OffEvent));
+            ClassicAssert.That(clone.OffEvent, Is.Not.SameAs(ev.OffEvent));
         }
 
         [Test]
@@ -41,7 +42,7 @@ namespace NAudioTests.Midi
         {
             var ev = new SequencerSpecificEvent(new byte[] { 0x01 }, 0);
             var clone = (SequencerSpecificEvent)ev.Clone();
-            Assert.That(clone.Data, Is.Not.SameAs(ev.Data));
+            ClassicAssert.That(clone.Data, Is.Not.SameAs(ev.Data));
         }
 
         private static IEnumerable<TestCaseData> AllMidiEventTypes =>
@@ -73,8 +74,8 @@ namespace NAudioTests.Midi
         public void CloneReturnsCorrectType(Type midiEventType)
         {
             MidiEvent instance;
-            Assert.That(TestMidiEvents.TryGetValue(midiEventType, out instance), $"{midiEventType.Name} should be tested.");
-            Assert.That(instance.Clone(), Is.TypeOf(midiEventType));
+            ClassicAssert.That(TestMidiEvents.TryGetValue(midiEventType, out instance), $"{midiEventType.Name} should be tested.");
+            ClassicAssert.That(instance.Clone(), Is.TypeOf(midiEventType));
         }
     }
 }

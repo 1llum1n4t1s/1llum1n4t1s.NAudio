@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 using System.Diagnostics;
 using NAudioTests.Utils;
@@ -26,9 +27,9 @@ namespace NAudioTests.Dmo
             {
                 using (ResamplerDmoStream resampler = new ResamplerDmoStream(reader, WaveFormat.CreateIeeeFloatWaveFormat(48000,2)))
                 {
-                    Assert.Greater(resampler.Length, reader.Length, "Length");
-                    Assert.AreEqual(0, reader.Position, "Position");
-                    Assert.AreEqual(0, resampler.Position, "Position");            
+                    ClassicAssert.Greater(resampler.Length, reader.Length, "Length");
+                    ClassicAssert.AreEqual(0, reader.Position, "Position");
+                    ClassicAssert.AreEqual(0, resampler.Position, "Position");            
                 }
             }
         }
@@ -47,7 +48,7 @@ namespace NAudioTests.Dmo
                     int bytesToRead = resampler.WaveFormat.AverageBytesPerSecond / 100;
                     byte[] buffer = new byte[bytesToRead];
                     int count = resampler.Read(buffer, 0, bytesToRead);
-                    Assert.That(count > 0, "Bytes Read");
+                    ClassicAssert.That(count > 0, "Bytes Read");
                 }
             }
         }
@@ -104,7 +105,7 @@ namespace NAudioTests.Dmo
                     {
                         count = resampler.Read(buffer, 0, bytesToRead);
                         total += count;
-                        //Assert.AreEqual(count, bytesToRead, "Bytes Read");
+                        //ClassicAssert.AreEqual(count, bytesToRead, "Bytes Read");
                     } while (count > 0);
                     //Debug.WriteLine(String.Format("Converted input length {0} to {1}", reader.Length, total));
                 }
@@ -130,7 +131,7 @@ namespace NAudioTests.Dmo
                             count = resampler.Read(buffer, 0, bytesToRead);
                             writer.WriteData(buffer, 0, count);
                             total += count;
-                            //Assert.AreEqual(count, bytesToRead, "Bytes Read");
+                            //ClassicAssert.AreEqual(count, bytesToRead, "Bytes Read");
                         } while (count > 0);
                         Debug.WriteLine(String.Format("Converted input length {0} to {1}", reader.Length, total));
                     }

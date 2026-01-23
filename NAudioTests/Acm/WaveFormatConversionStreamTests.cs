@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 using NAudio.Wave.Compression;
 using System.Diagnostics;
@@ -152,7 +153,7 @@ namespace NAudioTests.Acm
                     totalRead += bytesRead;
                 } while (bytesRead > 0);
                 Debug.WriteLine(String.Format("Converted {0}", totalRead));
-                Assert.AreEqual(inputStream.Length, inputStream.Position);
+                ClassicAssert.AreEqual(inputStream.Length, inputStream.Position);
             }
         }
     }

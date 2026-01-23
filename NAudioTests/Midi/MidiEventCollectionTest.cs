@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Midi;
 
 namespace NAudioTests.Midi
@@ -21,14 +22,14 @@ namespace NAudioTests.Midi
             collection.AddEvent(new NoteOnEvent(0, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(15, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(30, 10, 60, 100, 15), 10);
-            Assert.AreEqual(collection.Tracks, 11);
+            ClassicAssert.AreEqual(collection.Tracks, 11);
             collection.PrepareForExport();
-            Assert.AreEqual(collection.Tracks, 3);
+            ClassicAssert.AreEqual(collection.Tracks, 3);
             IList<MidiEvent> track0 = collection.GetTrackEvents(0);
-            Assert.AreEqual(track0.Count, 2);
-            Assert.AreEqual(collection.GetTrackEvents(1).Count, 4);
-            Assert.AreEqual(collection.GetTrackEvents(2).Count, 4);
-            Assert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
+            ClassicAssert.AreEqual(track0.Count, 2);
+            ClassicAssert.AreEqual(collection.GetTrackEvents(1).Count, 4);
+            ClassicAssert.AreEqual(collection.GetTrackEvents(2).Count, 4);
+            ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
         [Test]
@@ -42,12 +43,12 @@ namespace NAudioTests.Midi
             collection.AddEvent(new NoteOnEvent(0, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(15, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(30, 10, 60, 100, 15), 10);
-            Assert.AreEqual(collection.Tracks, 1);
+            ClassicAssert.AreEqual(collection.Tracks, 1);
             collection.PrepareForExport();
-            Assert.AreEqual(collection.Tracks, 1);
+            ClassicAssert.AreEqual(collection.Tracks, 1);
             IList<MidiEvent> track0 = collection.GetTrackEvents(0);
-            Assert.AreEqual(track0.Count, 8);
-            Assert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
+            ClassicAssert.AreEqual(track0.Count, 8);
+            ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
         [Test]
@@ -61,13 +62,13 @@ namespace NAudioTests.Midi
             collection.AddEvent(new NoteOnEvent(0, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(15, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(30, 10, 60, 100, 15), 10);
-            Assert.AreEqual(collection.Tracks, 11);
+            ClassicAssert.AreEqual(collection.Tracks, 11);
             collection.MidiFileType = 0;
             collection.PrepareForExport();
-            Assert.AreEqual(collection.Tracks, 1);
+            ClassicAssert.AreEqual(collection.Tracks, 1);
             IList<MidiEvent> track0 = collection.GetTrackEvents(0);
-            Assert.AreEqual(track0.Count, 8);
-            Assert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
+            ClassicAssert.AreEqual(track0.Count, 8);
+            ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
         [Test]
@@ -81,15 +82,15 @@ namespace NAudioTests.Midi
             collection.AddEvent(new NoteOnEvent(0, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(15, 10, 60, 100, 15), 10);
             collection.AddEvent(new NoteOnEvent(30, 10, 60, 100, 15), 10);
-            Assert.AreEqual(collection.Tracks, 1);
+            ClassicAssert.AreEqual(collection.Tracks, 1);
             collection.MidiFileType = 1;
             collection.PrepareForExport();
-            Assert.AreEqual(3, collection.Tracks, "Wrong number of tracks");
+            ClassicAssert.AreEqual(3, collection.Tracks, "Wrong number of tracks");
             IList<MidiEvent> track0 = collection.GetTrackEvents(0);
-            Assert.AreEqual(track0.Count, 2);
-            Assert.AreEqual(collection.GetTrackEvents(1).Count, 4);
-            Assert.AreEqual(collection.GetTrackEvents(2).Count, 4);
-            Assert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
+            ClassicAssert.AreEqual(track0.Count, 2);
+            ClassicAssert.AreEqual(collection.GetTrackEvents(1).Count, 4);
+            ClassicAssert.AreEqual(collection.GetTrackEvents(2).Count, 4);
+            ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
     }
 }

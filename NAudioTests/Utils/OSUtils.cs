@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.Utils
 {
@@ -9,7 +10,7 @@ namespace NAudioTests.Utils
         {
             if (Environment.OSVersion.Version.Major < 6)
             {
-                Assert.Ignore("This test requires Windows Vista or newer");
+                ClassicAssert.Ignore("This test requires Windows Vista or newer");
             }
         }
 
@@ -17,7 +18,7 @@ namespace NAudioTests.Utils
         {
             if (Environment.OSVersion.Version.Major >= 6)
             {
-                Assert.Ignore("This test requires Windows XP");
+                ClassicAssert.Ignore("This test requires Windows XP");
             }
         }
     }

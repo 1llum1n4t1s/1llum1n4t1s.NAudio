@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
@@ -20,13 +21,13 @@ namespace NAudioTests.WaveStreams
             int samples = 1000;
             byte[] buffer = new byte[samples * 2];
             int read = mono.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(buffer.Length, read, "bytes read");
+            ClassicAssert.AreEqual(buffer.Length, read, "bytes read");
             WaveBuffer waveBuffer = new WaveBuffer(buffer);
             short expected = 0;
             for (int sample = 0; sample < samples; sample++)
             {
                 short sampleVal = waveBuffer.ShortBuffer[sample];
-                Assert.AreEqual(expected--, sampleVal, "sample #" + sample.ToString());
+                ClassicAssert.AreEqual(expected--, sampleVal, "sample #" + sample.ToString());
             }
         }
     }

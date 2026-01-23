@@ -43,6 +43,7 @@ namespace NAudio.Utils
         /// The URL of the website to use for help
         /// e.g. http://www.codeplex.com/naudio
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Url
         {
             get { return linkLabelWebsite.Text; }
@@ -52,6 +53,7 @@ namespace NAudio.Utils
         /// <summary>
         /// The email address for feedback
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Email
         {
             get { return linkLabelFeedback.Text; }
@@ -62,6 +64,7 @@ namespace NAudio.Utils
         /// The copyright info
         /// e.g. Copyright © 2007 Mark Heath
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Copyright
         {
             get { return labelCopyright.Text; }

@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.IO;
 using NAudio.Wave;
 using System.Diagnostics;
@@ -18,7 +19,7 @@ namespace NAudioTests.Aiff
             string testFolder = @"C:\Users\Mark\Downloads\NAudio";
             if (!Directory.Exists(testFolder))
             {
-                Assert.Ignore("{0} not found", testFolder);
+                ClassicAssert.Ignore($"{testFolder} not found");
             }
 
             foreach (string file in Directory.GetFiles(testFolder, "*.aiff"))

@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NUnit.Framework.Internal;
 
 namespace NAudioTests.MediaFoundation
@@ -17,7 +18,7 @@ namespace NAudioTests.MediaFoundation
         public void CanReadAnAac()
         {
             var testFile = @"C:\Users\mheath\Downloads\NAudio\AAC\halfspeed.aac";
-            if (!File.Exists(testFile)) Assert.Ignore("Missing test file");
+            if (!File.Exists(testFile)) ClassicAssert.Ignore("Missing test file");
             var reader = new MediaFoundationReader(testFile);
             Console.WriteLine(reader.WaveFormat);
             var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
@@ -27,7 +28,7 @@ namespace NAudioTests.MediaFoundation
             {
                 total += bytesRead;
             }
-            Assert.IsTrue(total > 0);
+            ClassicAssert.IsTrue(total > 0);
         }
     }
 
@@ -40,7 +41,7 @@ namespace NAudioTests.MediaFoundation
         {
             string fileInPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.wav";
             string fileOutPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.mp3";
-            if (!File.Exists(fileInPath)) Assert.Ignore("Missing test file"); ;
+            if (!File.Exists(fileInPath)) ClassicAssert.Ignore("Missing test file"); ;
             Stopwatch sw = Stopwatch.StartNew();
             using (var wavToConvert = new WaveFileReader(fileInPath))
             using (var converter = WaveFormatConversionStream.CreatePcmStream(wavToConvert))

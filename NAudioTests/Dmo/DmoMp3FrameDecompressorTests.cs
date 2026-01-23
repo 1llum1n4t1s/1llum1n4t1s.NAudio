@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.FileFormats.Mp3;
 using NAudio.Wave;
 using NAudio.Dmo;
@@ -24,7 +25,7 @@ namespace NAudioTests.Dmo
         {
             var mp3Format = new Mp3WaveFormat(44100, 2, 215, 32000);
             var frameDecompressor = new DmoMp3FrameDecompressor(mp3Format);
-            Assert.IsNotNull(frameDecompressor);
+            ClassicAssert.IsNotNull(frameDecompressor);
         }
 
         [Test]
@@ -57,7 +58,7 @@ namespace NAudioTests.Dmo
         public void CanExamineInputTypesOnMp3Decoder()
         {
             var decoder = new WindowsMediaMp3Decoder();
-            Assert.AreEqual(decoder.MediaObject.InputStreamCount, 1);
+            ClassicAssert.AreEqual(decoder.MediaObject.InputStreamCount, 1);
             foreach (DmoMediaType mediaType in decoder.MediaObject.GetInputTypes(0))
             {
                 Debug.WriteLine($"{mediaType.MajorTypeName}:{mediaType.SubTypeName}:{mediaType.FormatTypeName}");
@@ -70,7 +71,7 @@ namespace NAudioTests.Dmo
         {
             var decoder = new WindowsMediaMp3Decoder();
             decoder.MediaObject.SetInputWaveFormat(0,new Mp3WaveFormat(44100, 2, 200, 32000));
-            Assert.AreEqual(decoder.MediaObject.OutputStreamCount, 1);
+            ClassicAssert.AreEqual(decoder.MediaObject.OutputStreamCount, 1);
 
             foreach (DmoMediaType mediaType in decoder.MediaObject.GetOutputTypes(0))
             {
@@ -83,7 +84,7 @@ namespace NAudioTests.Dmo
         public void WindowsMediaMp3DecoderSupportsStereoMp3()
         {
             WaveFormat waveFormat = new Mp3WaveFormat(44100, 2, 0, 32000);
-            Assert.IsTrue(IsInputFormatSupported(waveFormat));
+            ClassicAssert.IsTrue(IsInputFormatSupported(waveFormat));
         }
 
         private bool IsInputFormatSupported(WaveFormat waveFormat)

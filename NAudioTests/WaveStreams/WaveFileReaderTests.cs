@@ -3,6 +3,7 @@ using System.IO;
 using NAudio.Utils;
 using NAudio.Wave;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.Diagnostics;
 using System;
 using NAudio.FileFormats.Wav;
@@ -40,14 +41,14 @@ namespace NAudioTests.WaveStreams
                 chunkReader.ReadWaveHeader(inputStream);
 
                 // assert
-                Assert.AreEqual(16000, chunkReader.WaveFormat.AverageBytesPerSecond);
-                Assert.AreEqual(8, chunkReader.WaveFormat.BitsPerSample);
-                Assert.AreEqual(2, chunkReader.WaveFormat.Channels);
-                Assert.AreEqual(8000, chunkReader.WaveFormat.SampleRate);
+                ClassicAssert.AreEqual(16000, chunkReader.WaveFormat.AverageBytesPerSecond);
+                ClassicAssert.AreEqual(8, chunkReader.WaveFormat.BitsPerSample);
+                ClassicAssert.AreEqual(2, chunkReader.WaveFormat.Channels);
+                ClassicAssert.AreEqual(8000, chunkReader.WaveFormat.SampleRate);
 
-                Assert.AreEqual(46, chunkReader.DataChunkPosition);
-                Assert.AreEqual(0, chunkReader.DataChunkLength);
-                Assert.AreEqual(0, chunks.Count);
+                ClassicAssert.AreEqual(46, chunkReader.DataChunkPosition);
+                ClassicAssert.AreEqual(0, chunkReader.DataChunkLength);
+                ClassicAssert.AreEqual(0, chunks.Count);
             }
         }
 
@@ -66,11 +67,11 @@ namespace NAudioTests.WaveStreams
             ms.Position = 0;
             using (var reader = new WaveFileReader(ms))
             {
-                Assert.AreEqual(0.1f, reader.ReadNextSampleFrame()[0], 0.001f);
-                Assert.AreEqual(0.2f, reader.ReadNextSampleFrame()[0], 0.001f);
-                Assert.AreEqual(0.3f, reader.ReadNextSampleFrame()[0], 0.001f);
-                Assert.AreEqual(0.4f, reader.ReadNextSampleFrame()[0], 0.001f);
-                Assert.IsNull(reader.ReadNextSampleFrame());
+                ClassicAssert.AreEqual(0.1f, reader.ReadNextSampleFrame()[0], 0.001f);
+                ClassicAssert.AreEqual(0.2f, reader.ReadNextSampleFrame()[0], 0.001f);
+                ClassicAssert.AreEqual(0.3f, reader.ReadNextSampleFrame()[0], 0.001f);
+                ClassicAssert.AreEqual(0.4f, reader.ReadNextSampleFrame()[0], 0.001f);
+                ClassicAssert.IsNull(reader.ReadNextSampleFrame());
             }
         }
 
@@ -91,12 +92,12 @@ namespace NAudioTests.WaveStreams
             using (var reader = new WaveFileReader(ms))
             {
                 var f1 = reader.ReadNextSampleFrame();
-                Assert.AreEqual(0.1f, f1[0], 0.0001f);
-                Assert.AreEqual(0.2f, f1[1], 0.0001f);
+                ClassicAssert.AreEqual(0.1f, f1[0], 0.0001f);
+                ClassicAssert.AreEqual(0.2f, f1[1], 0.0001f);
                 var f2 = reader.ReadNextSampleFrame();
-                Assert.AreEqual(0.3f, f2[0], 0.0001f);
-                Assert.AreEqual(0.4f, f2[1], 0.0001f);
-                Assert.IsNull(reader.ReadNextSampleFrame());
+                ClassicAssert.AreEqual(0.3f, f2[0], 0.0001f);
+                ClassicAssert.AreEqual(0.4f, f2[1], 0.0001f);
+                ClassicAssert.IsNull(reader.ReadNextSampleFrame());
             }
         }
 
@@ -117,12 +118,12 @@ namespace NAudioTests.WaveStreams
             using (var reader = new WaveFileReader(ms))
             {
                 var f1 = reader.ReadNextSampleFrame();
-                Assert.AreEqual(0.1f, f1[0], 0.0001f);
-                Assert.AreEqual(0.2f, f1[1], 0.0001f);
+                ClassicAssert.AreEqual(0.1f, f1[0], 0.0001f);
+                ClassicAssert.AreEqual(0.2f, f1[1], 0.0001f);
                 var f2 = reader.ReadNextSampleFrame();
-                Assert.AreEqual(0.3f, f2[0], 0.0001f);
-                Assert.AreEqual(0.4f, f2[1], 0.0001f);
-                Assert.IsNull(reader.ReadNextSampleFrame());
+                ClassicAssert.AreEqual(0.3f, f2[0], 0.0001f);
+                ClassicAssert.AreEqual(0.4f, f2[1], 0.0001f);
+                ClassicAssert.IsNull(reader.ReadNextSampleFrame());
             }
         }
 
@@ -133,7 +134,7 @@ namespace NAudioTests.WaveStreams
             string testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
             if (!Directory.Exists(testDataFolder))
             {
-                Assert.Ignore("{0} not found", testDataFolder);
+                ClassicAssert.Ignore($"{testDataFolder} not found");
             }
             foreach (string file in Directory.GetFiles(testDataFolder, "*.wav"))
             {
@@ -164,11 +165,11 @@ namespace NAudioTests.WaveStreams
             {
                 WaveFileReader waveReader = new WaveFileReader(tempFilePath);
 
-                Assert.Fail("Expected exception System.FormatException was not thrown for file missing a header.");
+                ClassicAssert.Fail("Expected exception System.FormatException was not thrown for file missing a header.");
             }
             catch(FormatException ex)
             {
-                Assert.IsNotNull(ex);
+                ClassicAssert.IsNotNull(ex);
             }
             finally
             {
@@ -186,11 +187,11 @@ namespace NAudioTests.WaveStreams
             {
                 var reader = new Mp3FileReader(tempFilePath);
 
-                Assert.Fail("Expected exception System.FormatException was not thrown for file missing a header.");
+                ClassicAssert.Fail("Expected exception System.FormatException was not thrown for file missing a header.");
             }
             catch (InvalidDataException ex)
             {
-                Assert.IsNotNull(ex);
+                ClassicAssert.IsNotNull(ex);
             }
             finally
             {

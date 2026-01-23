@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using NAudio.Wave;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
@@ -15,8 +16,8 @@ namespace NAudioTests.WaveStreams
             var length = 1000;
             var b = Enumerable.Range(1, length).Select(n => (byte) 1).ToArray();
             var read = sp.Read(b, 0, length);
-            Assert.AreEqual(length, read);
-            Assert.AreEqual(new byte[length], b);
+            ClassicAssert.AreEqual(length, read);
+            ClassicAssert.AreEqual(new byte[length], b);
         }
 
         [Test]
@@ -26,8 +27,8 @@ namespace NAudioTests.WaveStreams
             var length = 10;
             var b = Enumerable.Range(1, length).Select(n => (byte)1).ToArray();
             var read = sp.Read(b, 2, 4);
-            Assert.AreEqual(4, read);
-            Assert.AreEqual(new byte[] { 1, 1, 0, 0, 0, 0, 1, 1, 1, 1}, b);
+            ClassicAssert.AreEqual(4, read);
+            ClassicAssert.AreEqual(new byte[] { 1, 1, 0, 0, 0, 0, 1, 1, 1, 1}, b);
         }
     }
 }

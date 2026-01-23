@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
@@ -20,15 +21,15 @@ namespace NAudioTests.WaveStreams
             int samples = 1000;
             byte[] buffer = new byte[samples * 2];
             int read = stereo.Read(buffer, 0, buffer.Length);
-            Assert.AreEqual(buffer.Length, read, "bytes read");
+            ClassicAssert.AreEqual(buffer.Length, read, "bytes read");
             WaveBuffer waveBuffer = new WaveBuffer(buffer);
             short expected = 0;
             for (int sample = 0; sample < samples; sample+=2)
             {
                 short sampleLeft = waveBuffer.ShortBuffer[sample];
                 short sampleRight = waveBuffer.ShortBuffer[sample+1];
-                Assert.AreEqual(expected++, sampleLeft, "sample left");
-                Assert.AreEqual(0, sampleRight, "sample right");
+                ClassicAssert.AreEqual(expected++, sampleLeft, "sample left");
+                ClassicAssert.AreEqual(0, sampleRight, "sample right");
             }
         }
     }

@@ -1,9 +1,8 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;uap10.0.18362</TargetFrameworks>
-    <Version>2.2.1</Version>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <TargetFrameworks>net10.0-windows</TargetFrameworks>
+    <Version>1.0.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>Mark Heath</Authors>
     <SignAssembly>true</SignAssembly>
@@ -29,9 +28,6 @@
   
 
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'uap10.0.18362' ">
-    <DefineConstants>UAP;NETFX_CORE</DefineConstants>
-  </PropertyGroup>
 
 
   <ItemGroup>

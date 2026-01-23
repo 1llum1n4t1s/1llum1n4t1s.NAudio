@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Linq;
 using NAudio.Wave.SampleProviders;
 using NAudioTests.Utils;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
@@ -58,8 +59,8 @@ namespace NAudioTests.WaveStreams
             var source = new TestSampleProvider(100, 2) { Position = 10 };
             var osp = new OffsetSampleProvider(source) { DelayBy = TimeSpan.FromSeconds(2.5) };
 
-            Assert.AreEqual(2500, (int) osp.DelayBy.TotalMilliseconds);
-            Assert.AreEqual(500, osp.DelayBySamples);
+            ClassicAssert.AreEqual(2500, (int) osp.DelayBy.TotalMilliseconds);
+            ClassicAssert.AreEqual(500, osp.DelayBySamples);
         }
 
         [Test]
@@ -95,10 +96,10 @@ namespace NAudioTests.WaveStreams
                 var read = osp.Read(buffer, 0, buffer.Length);
                 totalRead += read;
                 if (read == 0) break;
-                Assert.IsTrue(totalRead <= 480000);
+                ClassicAssert.IsTrue(totalRead <= 480000);
 
             }
-            Assert.AreEqual(480000, totalRead);
+            ClassicAssert.AreEqual(480000, totalRead);
 
         }
 
@@ -133,7 +134,7 @@ namespace NAudioTests.WaveStreams
         {
             var source = new TestSampleProvider(32000, 1, 10);
             var osp = new OffsetSampleProvider(source);
-            Assert.AreEqual(source.WaveFormat, osp.WaveFormat);
+            ClassicAssert.AreEqual(source.WaveFormat, osp.WaveFormat);
         }
 
 
@@ -237,7 +238,7 @@ namespace NAudioTests.WaveStreams
             var osp = new OffsetSampleProvider(source);
 
             var ex = Assert.Throws<ArgumentException>(() => osp.DelayBySamples = 3);
-            Assert.That(ex.Message.Contains("DelayBySamples"));
+            ClassicAssert.That(ex.Message.Contains("DelayBySamples"));
         }
 
         [Test]
@@ -247,7 +248,7 @@ namespace NAudioTests.WaveStreams
             var osp = new OffsetSampleProvider(source);
 
             var ex = Assert.Throws<ArgumentException>(() => osp.SkipOverSamples = 3);
-            Assert.That(ex.Message.Contains("SkipOverSamples"));
+            ClassicAssert.That(ex.Message.Contains("SkipOverSamples"));
         }
 
         [Test]
@@ -257,7 +258,7 @@ namespace NAudioTests.WaveStreams
             var osp = new OffsetSampleProvider(source);
 
             var ex = Assert.Throws<ArgumentException>(() => osp.TakeSamples = 3);
-            Assert.That(ex.Message.Contains("TakeSamples"));
+            ClassicAssert.That(ex.Message.Contains("TakeSamples"));
         }
 
 
@@ -268,7 +269,7 @@ namespace NAudioTests.WaveStreams
             var osp = new OffsetSampleProvider(source);
 
             var ex = Assert.Throws<ArgumentException>(() => osp.LeadOutSamples = 3);
-            Assert.That(ex.Message.Contains("LeadOutSamples"));
+            ClassicAssert.That(ex.Message.Contains("LeadOutSamples"));
         }
 
         // TODO: Test that Read offset parameter is respected

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using System.IO;
 using NAudio.Wave;
 
@@ -29,7 +30,7 @@ namespace NAudioTests.Mp3
         {
             MemoryStream ms = new MemoryStream(ConstructValidMp3Frame());
             Mp3Frame frame = Mp3Frame.LoadFromStream(ms);
-            Assert.IsNotNull(frame);
+            ClassicAssert.IsNotNull(frame);
         }
 
         [TestCase(0)]
@@ -41,7 +42,7 @@ namespace NAudioTests.Mp3
         {
             MemoryStream ms = new MemoryStream(new byte[length]);
             Mp3Frame frame = Mp3Frame.LoadFromStream(ms);
-            Assert.IsNull(frame);
+            ClassicAssert.IsNull(frame);
         }
 
         [TestCase(1)]
@@ -55,7 +56,7 @@ namespace NAudioTests.Mp3
             Array.Copy(validMp3Frame, 0, offsetBuffer, offset, validMp3Frame.Length);
             MemoryStream ms = new MemoryStream(offsetBuffer);
             Mp3Frame frame = Mp3Frame.LoadFromStream(ms);
-            Assert.IsNotNull(frame);
+            ClassicAssert.IsNotNull(frame);
         }
     }
 }
