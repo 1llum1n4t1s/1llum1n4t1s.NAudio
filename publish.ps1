@@ -13,12 +13,28 @@ $recent = gci "$folder\*.nupkg" | sort LastWriteTime | select -last 1
 if ($recent)
 {
     $pkg = $recent.Name
-    # note that this will fail with 409 error if you try to push package that already exists
+    $pkgPath = "$folder\$pkg"
     Write-Host "publishing $pkg"
-    dotnet nuget push "$folder\$pkg" --api-key $apiKey --source https://api.nuget.org/v3/index.json | out-null
-    if (-not $?) { Write-Error "Failed to publish $pkg" }
+    Write-Host "Package path: $pkgPath"
+    Write-Host "API key length: $($apiKey.Length)"
+    
+    $result = dotnet nuget push "$pkgPath" --api-key $apiKey --source https://api.nuget.org/v3/index.json 2>&1
+    $exitCode = $LASTEXITCODE
+    
+    if ($exitCode -ne 0)
+    {
+        Write-Host "Error output:"
+        Write-Host $result
+        Write-Error "Failed to publish $pkg (exit code: $exitCode)"
+        exit $exitCode
+    }
+    else
+    {
+        Write-Host "Successfully published $pkg"
+    }
 }
 else
 {
     Write-Error "No package found in $folder"
+    exit 1
 }
