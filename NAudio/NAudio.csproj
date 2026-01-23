@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <TargetFrameworks>net10.0-windows</TargetFrameworks>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWindowsForms>true</UseWindowsForms>
     <PackageId>YAudio</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Mark Heath,Contributors,ゆろち</Authors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>NAudio, an audio library for .NET</Description>
@@ -21,14 +22,50 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NAudio.Asio\NAudio.Asio.csproj" />
-    <ProjectReference Include="..\NAudio.Core\NAudio.Core.csproj" />
-    <ProjectReference Include="..\NAudio.Midi\NAudio.Midi.csproj" />
-    <ProjectReference Include="..\NAudio.Wasapi\NAudio.Wasapi.csproj" />
-    <ProjectReference Include="..\NAudio.WinMM\NAudio.WinMM.csproj" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\NAudio.WinForms\NAudio.WinForms.csproj" />
+    <Compile Remove="Demo\**" />
+    <Compile Remove="Tests\**" />
+    <Compile Remove="WpfDemo\**" />
+    <Compile Remove="AudioFileInspector\**" />
+    <Compile Remove="MidiFileConverter\**" />
+    <Compile Remove="MixDiff\**" />
+    <EmbeddedResource Remove="Demo\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <EmbeddedResource Remove="WpfDemo\**" />
+    <EmbeddedResource Remove="AudioFileInspector\**" />
+    <EmbeddedResource Remove="MidiFileConverter\**" />
+    <EmbeddedResource Remove="MixDiff\**" />
+    <None Remove="Demo\**" />
+    <None Remove="Tests\**" />
+    <None Remove="WpfDemo\**" />
+    <None Remove="AudioFileInspector\**" />
+    <None Remove="MidiFileConverter\**" />
+    <None Remove="MixDiff\**" />
+    <None Remove="SampleData\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="WinForms\Gui\Fader.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="WinForms\Gui\PanSlider.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="WinForms\Gui\Pot.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="WinForms\Gui\ProgressLog.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="WinForms\Gui\VolumeSlider.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="WinForms\Gui\WaveViewer.Designer.cs">
+      <DesignTime>True</DesignTime>
+    </Compile>
   </ItemGroup>
 
 

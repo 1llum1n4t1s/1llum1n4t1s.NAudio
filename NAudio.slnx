@@ -6,23 +6,15 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Samples/">
-    <Project Path="AudioFileInspector/AudioFileInspector.csproj">
+    <Project Path="NAudio/AudioFileInspector/AudioFileInspector.csproj">
       <Build Solution="*|x64" Project="false" />
       <Build Solution="*|x86" Project="false" />
     </Project>
-    <Project Path="MidiFileConverter/MidiFileConverter.csproj">
+    <Project Path="NAudio/MidiFileConverter/MidiFileConverter.csproj">
       <Build Solution="*|x64" Project="false" />
       <Build Solution="*|x86" Project="false" />
     </Project>
-    <Project Path="MixDiff/MixDiff.csproj">
-      <Build Solution="*|x64" Project="false" />
-      <Build Solution="*|x86" Project="false" />
-    </Project>
-    <Project Path="NAudioDemo/NAudioDemo.csproj">
-      <Build Solution="*|x64" Project="false" />
-      <Build Solution="*|x86" Project="false" />
-    </Project>
-    <Project Path="NAudioWpfDemo/NAudioWpfDemo.csproj">
+    <Project Path="NAudio/MixDiff/MixDiff.csproj">
       <Build Solution="*|x64" Project="false" />
       <Build Solution="*|x86" Project="false" />
     </Project>
@@ -70,18 +62,11 @@
     <File Path="Docs/WaveFormRendering.md" />
     <File Path="Docs/WaveProviders.md" />
   </Folder>
-  <Project Path="NAudio.Asio/NAudio.Asio.csproj" />
-  <Project Path="NAudio.Core/NAudio.Core.csproj" />
-  <Project Path="NAudio.Extras/NAudio.Extras.csproj" />
-  <Project Path="NAudio.Midi/NAudio.Midi.csproj" />
-  <Project Path="NAudio.Wasapi/NAudio.Wasapi.csproj" />
-  <Project Path="NAudio.WinForms/NAudio.WinForms.csproj" />
-  <Project Path="NAudio.WinMM/NAudio.WinMM.csproj" />
   <Project Path="NAudio/NAudio.csproj">
     <Build Solution="*|x64" Project="false" />
     <Build Solution="*|x86" Project="false" />
   </Project>
-  <Project Path="NAudioTests/NAudioTests.csproj">
+  <Project Path="Tests/NAudioTests.csproj">
     <Build Solution="*|x64" Project="false" />
     <Build Solution="*|x86" Project="false" />
   </Project>
