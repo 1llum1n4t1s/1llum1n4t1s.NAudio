@@ -56,8 +56,8 @@ namespace NAudio.Wave
         /// <returns>The WaveIn device capabilities</returns>
         public static WaveInCapabilities GetCapabilities(int devNumber)
         {
-            WaveInCapabilities caps = new WaveInCapabilities();
-            int structSize = Marshal.SizeOf(caps);
+            var caps = new WaveInCapabilities();
+            var structSize = Marshal.SizeOf(caps);
             MmException.Try(WaveInterop.waveInGetDevCaps((IntPtr)devNumber, out caps, structSize), "waveInGetDevCaps");
             return caps;
         }
@@ -80,14 +80,14 @@ namespace NAudio.Wave
         private void CreateBuffers()
         {
             // Default to three buffers of 100ms each
-            int bufferSize = BufferMilliseconds * WaveFormat.AverageBytesPerSecond / 1000;
+            var bufferSize = BufferMilliseconds * WaveFormat.AverageBytesPerSecond / 1000;
             if (bufferSize % WaveFormat.BlockAlign != 0)
             {
                 bufferSize -= bufferSize % WaveFormat.BlockAlign;
             }
 
             buffers = new WaveInBuffer[NumberOfBuffers];
-            for (int n = 0; n < buffers.Length; n++)
+            for (var n = 0; n < buffers.Length; n++)
             {
                 buffers[n] = new WaveInBuffer(waveInHandle, bufferSize);
             }
@@ -96,7 +96,7 @@ namespace NAudio.Wave
         private void OpenWaveInDevice()
         {
             CloseWaveInDevice();
-            MmResult result = WaveInterop.waveInOpenWindow(out waveInHandle, (IntPtr)DeviceNumber, WaveFormat,
+            var result = WaveInterop.waveInOpenWindow(out waveInHandle, (IntPtr)DeviceNumber, WaveFormat,
                 callbackEvent.SafeWaitHandle.DangerousGetHandle(), 
                 IntPtr.Zero, WaveInterop.WaveInOutOpenFlags.CallbackEvent);
             MmException.Try(result, "waveInOpen");
@@ -207,7 +207,7 @@ namespace NAudio.Wave
         /// <returns>Position in bytes</returns>
         public long GetPosition()
         {
-            MmTime mmTime = new MmTime();
+            var mmTime = new MmTime();
             mmTime.wType = MmTime.TIME_BYTES; // request results in bytes, TODO: perhaps make this a little more flexible and support the other types?
             MmException.Try(WaveInterop.waveInGetPosition(waveInHandle, out mmTime, Marshal.SizeOf(mmTime)), "waveInGetPosition");
 
@@ -242,7 +242,7 @@ namespace NAudio.Wave
             WaveInterop.waveInReset(waveInHandle);
             if (buffers != null)
             {
-                for (int n = 0; n < buffers.Length; n++)
+                for (var n = 0; n < buffers.Length; n++)
                 {
                     buffers[n].Dispose();
                 }

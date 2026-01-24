@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using NAudio.Wave;
 using NUnit.Framework;

@@ -35,9 +35,9 @@ namespace NAudioTests.Wasapi
         [Test]
         public void CanInitializeInExclusiveMode()
         {
-            using (AudioClient audioClient = GetAudioClient())
+            using (var audioClient = GetAudioClient())
             {
-                WaveFormat waveFormat = new WaveFormat(48000, 16, 2); //audioClient.MixFormat;
+                var waveFormat = new WaveFormat(48000, 16, 2); //audioClient.MixFormat;
                 long refTimesPerSecond = 10000000;
                 audioClient.Initialize(AudioClientShareMode.Exclusive,
                     AudioClientStreamFlags.None,
@@ -84,8 +84,8 @@ namespace NAudioTests.Wasapi
         [Test]
         public void DefaultFormatIsSupportedInSharedMode()
         {
-            AudioClient client = GetAudioClient();
-            WaveFormat defaultFormat = client.MixFormat;
+            var client = GetAudioClient();
+            var defaultFormat = client.MixFormat;
             ClassicAssert.IsTrue(client.IsFormatSupported(AudioClientShareMode.Shared, defaultFormat), "Is Format Supported");
         }
 
@@ -103,7 +103,7 @@ namespace NAudioTests.Wasapi
         [Test]
         public void CanRequestIfFormatIsSupportedExtensible44100SharedMode()
         {
-            WaveFormatExtensible desiredFormat = new WaveFormatExtensible(44100, 32, 2);
+            var desiredFormat = new WaveFormatExtensible(44100, 32, 2);
             Debug.WriteLine(desiredFormat);
             GetAudioClient().IsFormatSupported(AudioClientShareMode.Shared, desiredFormat);
         }
@@ -111,7 +111,7 @@ namespace NAudioTests.Wasapi
         [Test]
         public void CanRequestIfFormatIsSupportedExtensible44100ExclusiveMode()
         {
-            WaveFormatExtensible desiredFormat = new WaveFormatExtensible(44100, 32, 2);
+            var desiredFormat = new WaveFormatExtensible(44100, 32, 2);
             Debug.WriteLine(desiredFormat);
             GetAudioClient().IsFormatSupported(AudioClientShareMode.Exclusive, desiredFormat);
         }
@@ -119,7 +119,7 @@ namespace NAudioTests.Wasapi
         [Test]
         public void CanRequestIfFormatIsSupportedExtensible48000()
         {
-            WaveFormatExtensible desiredFormat = new WaveFormatExtensible(48000, 32, 2);
+            var desiredFormat = new WaveFormatExtensible(48000, 32, 2);
             Debug.WriteLine(desiredFormat);
             GetAudioClient().IsFormatSupported(AudioClientShareMode.Shared, desiredFormat);
         }
@@ -127,7 +127,7 @@ namespace NAudioTests.Wasapi
         [Test]
         public void CanRequestIfFormatIsSupportedExtensible48000_16bit()
         {
-            WaveFormatExtensible desiredFormat = new WaveFormatExtensible(48000, 16, 2);
+            var desiredFormat = new WaveFormatExtensible(48000, 16, 2);
             Debug.WriteLine(desiredFormat);
             GetAudioClient().IsFormatSupported(AudioClientShareMode.Shared, desiredFormat);
         }
@@ -166,10 +166,10 @@ namespace NAudioTests.Wasapi
         [Test]
         public void CanPopulateABuffer()
         {
-            AudioClient audioClient = InitializeClient(AudioClientShareMode.Shared);
-            AudioRenderClient renderClient = audioClient.AudioRenderClient;
-            int bufferFrameCount = audioClient.BufferSize;
-            IntPtr buffer = renderClient.GetBuffer(bufferFrameCount);
+            var audioClient = InitializeClient(AudioClientShareMode.Shared);
+            var renderClient = audioClient.AudioRenderClient;
+            var bufferFrameCount = audioClient.BufferSize;
+            var buffer = renderClient.GetBuffer(bufferFrameCount);
             // TODO put some stuff in
             // will tell it it has a silent buffer
             renderClient.ReleaseBuffer(bufferFrameCount, AudioClientBufferFlags.Silent);
@@ -202,8 +202,8 @@ namespace NAudioTests.Wasapi
 
         private AudioClient InitializeClient(AudioClientShareMode shareMode)
         {
-            AudioClient audioClient = GetAudioClient();
-            WaveFormat waveFormat = audioClient.MixFormat;
+            var audioClient = GetAudioClient();
+            var waveFormat = audioClient.MixFormat;
             long refTimesPerSecond = 10000000;
             audioClient.Initialize(shareMode,
                 AudioClientStreamFlags.None,
@@ -216,9 +216,9 @@ namespace NAudioTests.Wasapi
 
         private AudioClient GetAudioClient()
         {
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            MMDevice defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
-            AudioClient audioClient = defaultAudioEndpoint.AudioClient;
+            var enumerator = new MMDeviceEnumerator();
+            var defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            var audioClient = defaultAudioEndpoint.AudioClient;
             ClassicAssert.IsNotNull(audioClient);
             return audioClient;
         }

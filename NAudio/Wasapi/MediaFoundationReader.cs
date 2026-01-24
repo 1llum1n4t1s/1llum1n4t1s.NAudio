@@ -109,16 +109,16 @@ namespace NAudio.Wave
 
         private WaveFormat GetCurrentWaveFormat(IMFSourceReader reader)
         {
-            reader.GetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, out IMFMediaType uncompressedMediaType);
+            reader.GetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, out var uncompressedMediaType);
 
             // Two ways to query it, first is to ask for properties (second is to convert into WaveFormatEx using MFCreateWaveFormatExFromMFMediaType)
             var outputMediaType = new MediaType(uncompressedMediaType);
-            Guid actualMajorType = outputMediaType.MajorType;
+            var actualMajorType = outputMediaType.MajorType;
             Debug.Assert(actualMajorType == MediaTypes.MFMediaType_Audio);
-            Guid audioSubType = outputMediaType.SubType;
-            int channels = outputMediaType.ChannelCount;
-            int bits = outputMediaType.BitsPerSample;
-            int sampleRate = outputMediaType.SampleRate;
+            var audioSubType = outputMediaType.SubType;
+            var channels = outputMediaType.ChannelCount;
+            var bits = outputMediaType.BitsPerSample;
+            var sampleRate = outputMediaType.SampleRate;
 
             if (audioSubType == AudioSubtypes.MFAudioFormat_PCM)
                 return new WaveFormat(sampleRate, bits, channels);
@@ -130,7 +130,7 @@ namespace NAudio.Wave
 
         private static MediaType GetCurrentMediaType(IMFSourceReader reader)
         {
-            reader.GetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, out IMFMediaType mediaType);
+            reader.GetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, out var mediaType);
             return new MediaType(mediaType);
         }
 
@@ -185,7 +185,7 @@ namespace NAudio.Wave
             {
 
                 // http://msdn.microsoft.com/en-gb/library/windows/desktop/dd389281%28v=vs.85%29.aspx#getting_file_duration
-                int hResult = reader.GetPresentationAttribute(MediaFoundationInterop.MF_SOURCE_READER_MEDIASOURCE,
+                var hResult = reader.GetPresentationAttribute(MediaFoundationInterop.MF_SOURCE_READER_MEDIASOURCE,
                     MediaFoundationAttributes.MF_PD_DURATION, variantPtr);
                 if (hResult == MediaFoundationErrors.MF_E_ATTRIBUTENOTFOUND)
                 {
@@ -238,7 +238,7 @@ namespace NAudio.Wave
                 Reposition(repositionTo);
             }
 
-            int bytesWritten = 0;
+            var bytesWritten = 0;
             // read in any leftovers from last time
             if (decoderOutputCount > 0)
             {
@@ -248,7 +248,7 @@ namespace NAudio.Wave
             while (bytesWritten < count)
             {
                 pReader.ReadSample(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, 
-                    out int actualStreamIndex, out MF_SOURCE_READER_FLAG dwFlags, out ulong timestamp, out IMFSample pSample);
+                    out var actualStreamIndex, out var dwFlags, out var timestamp, out var pSample);
                 if ((dwFlags & MF_SOURCE_READER_FLAG.MF_SOURCE_READERF_ENDOFSTREAM) != 0)
                 {
                     // reached the end of the stream
@@ -265,8 +265,8 @@ namespace NAudio.Wave
                     throw new InvalidOperationException($"MediaFoundationReadError {dwFlags}");
                 }
 
-                pSample.ConvertToContiguousBuffer(out IMFMediaBuffer pBuffer);
-                pBuffer.Lock(out IntPtr pAudioData, out int pcbMaxLength, out int cbBuffer);
+                pSample.ConvertToContiguousBuffer(out var pBuffer);
+                pBuffer.Lock(out var pAudioData, out var pcbMaxLength, out var cbBuffer);
                 EnsureBuffer(cbBuffer);
                 Marshal.Copy(pAudioData, decoderOutputBuffer, 0, cbBuffer);
                 decoderOutputOffset = 0;
@@ -284,7 +284,7 @@ namespace NAudio.Wave
 
         private int ReadFromDecoderBuffer(byte[] buffer, int offset, int needed)
         {
-            int bytesFromDecoderOutput = Math.Min(needed, decoderOutputCount);
+            var bytesFromDecoderOutput = Math.Min(needed, decoderOutputCount);
             Array.Copy(decoderOutputBuffer, decoderOutputOffset, buffer, offset, bytesFromDecoderOutput);
             decoderOutputOffset += bytesFromDecoderOutput;
             decoderOutputCount -= bytesFromDecoderOutput;
@@ -340,7 +340,7 @@ namespace NAudio.Wave
 
         private void Reposition(long desiredPosition)
         {
-            long nsPosition = (10000000L * repositionTo) / waveFormat.AverageBytesPerSecond;
+            var nsPosition = (10000000L * repositionTo) / waveFormat.AverageBytesPerSecond;
             var pv = PropVariant.FromLong(nsPosition);
             var ptr = Marshal.AllocHGlobal(Marshal.SizeOf(pv));
             try

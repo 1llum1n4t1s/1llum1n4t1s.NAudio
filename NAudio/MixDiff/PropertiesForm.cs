@@ -1,9 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 
 namespace MarkHeath.AudioUtils
@@ -30,9 +25,9 @@ namespace MarkHeath.AudioUtils
 
         private void buttonOK_Click(object sender, EventArgs e)
         {
-            int delay = 0;
-            int offset = 0;
-            bool parse = Int32.TryParse(textBoxDelay.Text,out delay);
+            var delay = 0;
+            var offset = 0;
+            var parse = Int32.TryParse(textBoxDelay.Text,out delay);
             if(!parse || delay < 0)
             {
                 MessageBox.Show("Please enter a valid number of milliseconds for the delay.");

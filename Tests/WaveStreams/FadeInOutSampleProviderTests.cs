@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave.SampleProviders;
@@ -19,8 +15,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeIn(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(0, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(50, buffer[5]); // half-way
@@ -36,8 +32,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeOut(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(100, buffer[0]); // start of fade-out
             ClassicAssert.AreEqual(50, buffer[5]); // half-way
@@ -53,8 +49,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeIn(1000);
-            float[] buffer = new float[4];
-            int read = fade.Read(buffer, 0, 4);
+            var buffer = new float[4];
+            var read = fade.Read(buffer, 0, 4);
             ClassicAssert.AreEqual(4, read);
             ClassicAssert.AreEqual(0, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(10, buffer[1]);
@@ -92,8 +88,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeIn(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(0, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(0, buffer[1]); // start of fade-in
@@ -111,8 +107,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeOut(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(100, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(50, buffer[5]); // half-way

@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 
 namespace NAudio.Utils
@@ -62,7 +58,7 @@ namespace NAudio.Utils
 
         /// <summary>
         /// The copyright info
-        /// e.g. Copyright © 2007 Mark Heath
+        /// e.g. Copyright ï¿½ 2007 Mark Heath
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Copyright

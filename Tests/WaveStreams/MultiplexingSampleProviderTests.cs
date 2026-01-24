@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NAudioTests.Utils;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
@@ -66,7 +64,7 @@ namespace NAudioTests.WaveStreams
         public void OneInOneOutShouldCopyInReadMethod()
         {
             var input1 = new TestSampleProvider(32000, 1);
-            float[] expected = new float[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            var expected = new float[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 1);
             mp.AssertReadsExpected(expected);
         }
@@ -75,7 +73,7 @@ namespace NAudioTests.WaveStreams
         public void OneInTwoOutShouldConvertMonoToStereo()
         {
             var input1 = new TestSampleProvider(32000, 1);
-            float[] expected = new float[] { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9 };
+            var expected = new float[] { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 2);
             mp.AssertReadsExpected(expected);
         }
@@ -84,7 +82,7 @@ namespace NAudioTests.WaveStreams
         public void TwoInOneOutShouldSelectLeftChannel()
         {
             var input1 = new TestSampleProvider(32000, 2);
-            float[] expected = new float[] { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18 };
+            var expected = new float[] { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 1);
             mp.AssertReadsExpected(expected);
         }
@@ -93,7 +91,7 @@ namespace NAudioTests.WaveStreams
         public void TwoInOneOutShouldCanBeConfiguredToSelectRightChannel()
         {
             var input1 = new TestSampleProvider(32000, 2);
-            float[] expected = new float[] { 1, 3, 5, 7, 9, 11, 13, 15, 17, 19 };
+            var expected = new float[] { 1, 3, 5, 7, 9, 11, 13, 15, 17, 19 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 1);
             mp.ConnectInputToOutput(1, 0);
             mp.AssertReadsExpected(expected);
@@ -103,7 +101,7 @@ namespace NAudioTests.WaveStreams
         public void StereoInTwoOutShouldCopyStereo()
         {
             var input1 = new TestSampleProvider(32000, 2);
-            float[] expected = new float[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+            var expected = new float[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 2);
         }
 
@@ -112,7 +110,7 @@ namespace NAudioTests.WaveStreams
         {
             var input1 = new TestSampleProvider(32000, 1);
             var input2 = new TestSampleProvider(32000, 1) { Position = 100 };
-            float[] expected = new float[] { 0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105 };
+            var expected = new float[] { 0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1, input2 }, 2);
             mp.AssertReadsExpected(expected);
         }
@@ -121,7 +119,7 @@ namespace NAudioTests.WaveStreams
         public void StereoInTwoOutCanBeConfiguredToSwapLeftAndRight()
         {
             var input1 = new TestSampleProvider(32000, 2);
-            float[] expected = new float[] { 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10 };
+            var expected = new float[] { 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 2);
             mp.ConnectInputToOutput(0, 1);
             mp.ConnectInputToOutput(1, 0);
@@ -181,9 +179,9 @@ namespace NAudioTests.WaveStreams
         public void ReadReturnsZeroIfSingleInputHasReachedEnd()
         {
             var input1 = new TestSampleProvider(32000, 1, 0);
-            float[] expected = new float[] { };
+            var expected = new float[] { };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 1);
-            float[] buffer = new float[10];
+            var buffer = new float[10];
             var read = mp.Read(buffer, 0, buffer.Length);
             ClassicAssert.AreEqual(0, read);
         }
@@ -193,7 +191,7 @@ namespace NAudioTests.WaveStreams
         {
             var input1 = new TestSampleProvider(32000, 1, 0);
             var input2 = new TestSampleProvider(32000, 1);
-            float[] expected = new float[] { 0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7 };
+            var expected = new float[] { 0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1, input2 }, 2);
             mp.AssertReadsExpected(expected);
         }
@@ -202,10 +200,10 @@ namespace NAudioTests.WaveStreams
         public void ShouldZeroOutBufferIfInputStopsShort()
         {
             var input1 = new TestSampleProvider(32000, 1, 6);
-            float[] expected = new float[] { 0, 1, 2, 3, 4, 5, 0, 0, 0, 0 };
+            var expected = new float[] { 0, 1, 2, 3, 4, 5, 0, 0, 0, 0 };
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 1);
-            float[] buffer = new float[10];
-            for (int n = 0; n < buffer.Length; n++)
+            var buffer = new float[10];
+            for (var n = 0; n < buffer.Length; n++)
             {
                 buffer[n] = 99;
             }
@@ -226,12 +224,12 @@ namespace NAudioTests.WaveStreams
             mp.ConnectInputToOutput(2, 1);
             mp.ConnectInputToOutput(3, 0);
 
-            float[] buffer = new float[input1.WaveFormat.AverageBytesPerSecond / 4];
-            Stopwatch s = new Stopwatch();
+            var buffer = new float[input1.WaveFormat.AverageBytesPerSecond / 4];
+            var s = new Stopwatch();
             var duration = s.Time(() =>
             {
                 // read one hour worth of audio
-                for (int n = 0; n < 60 * 60; n++)
+                for (var n = 0; n < 60 * 60; n++)
                 {
                     mp.Read(buffer, 0, buffer.Length);
                 }

@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave;
 
@@ -18,7 +15,7 @@ namespace NAudioTests.Utils
             var buffer = new float[readSize];
             var read = sampleProvider.Read(buffer, 0, readSize);
             ClassicAssert.AreEqual(expected.Length, read, "Number of samples read");
-            for (int n = 0; n < read; n++)
+            for (var n = 0; n < read; n++)
             {
                 ClassicAssert.AreEqual(expected[n], buffer[n], $"Buffer at index {n}");
             }

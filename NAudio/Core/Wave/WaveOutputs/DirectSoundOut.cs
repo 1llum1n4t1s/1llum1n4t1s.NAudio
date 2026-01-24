@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
@@ -19,7 +19,7 @@ namespace NAudio.Wave
         /// </summary>
         public event EventHandler<StoppedEventArgs> PlaybackStopped;
 
-        private PlaybackState playbackState;
+        private volatile PlaybackState playbackState;
         private WaveFormat waveFormat;
         private int samplesTotalSize;
         private int samplesFrameSize;
@@ -34,6 +34,7 @@ namespace NAudio.Wave
         private EventWaitHandle frameEventWaitHandle1;
         private EventWaitHandle frameEventWaitHandle2;
         private EventWaitHandle endEventWaitHandle;
+        private readonly EventWaitHandle stopEventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
         private Thread notifyThread;
         private SynchronizationContext syncContext;
         private long bytesPlayed;
@@ -64,12 +65,12 @@ namespace NAudio.Wave
             }
             else
             {
-                byte[] guidBytes = new byte[16];
+                var guidBytes = new byte[16];
                 Marshal.Copy(lpGuid, guidBytes, 0, 16);
                 device.Guid = new Guid(guidBytes);
             }
             device.Description =  Marshal.PtrToStringAnsi(lpcstrDescription);
-            if (lpcstrModule != null)
+            if (lpcstrModule != IntPtr.Zero)
             {
                 device.ModuleName = Marshal.PtrToStringAnsi(lpcstrModule);
             }
@@ -138,6 +139,7 @@ namespace NAudio.Wave
                 // -------------------------------------------------------------------------------------
                 // Thread that process samples
                 // -------------------------------------------------------------------------------------
+                stopEventWaitHandle.Reset();
                 notifyThread = new Thread(new ThreadStart(PlaybackThreadFunc));
                 // put this back to highest when we are confident we don't have any bugs in the thread proc
                 notifyThread.Priority = ThreadPriority.Normal;
@@ -145,10 +147,7 @@ namespace NAudio.Wave
                 notifyThread.Start();
             }
 
-            lock (m_LockObject)
-            {
-                playbackState = PlaybackState.Playing;
-            }
+            playbackState = PlaybackState.Playing;
         }
 
         /// <summary>
@@ -156,20 +155,13 @@ namespace NAudio.Wave
         /// </summary>
         public void Stop()
         {
-            // Try and tidy up nicely
-            if (Monitor.TryEnter(m_LockObject, 50))
+            playbackState = PlaybackState.Stopped;
+            stopEventWaitHandle.Set();
+
+            var thread = notifyThread;
+            if (thread != null)
             {
-                playbackState = PlaybackState.Stopped;
-                Monitor.Exit(m_LockObject);
-            }
-            else
-            {
-                // No joy - abort the thread!
-                if (notifyThread != null)
-                {
-                    notifyThread.Abort();
-                    notifyThread = null;
-                }
+                thread.Join(250);
             }
         }
 
@@ -252,7 +244,7 @@ namespace NAudio.Wave
                     // -------------------------------------------------------------------------------------
 
                     // Fill BufferDescription for PrimaryBuffer
-                    BufferDescription bufferDesc = new BufferDescription();
+                    var bufferDesc = new BufferDescription();
                     bufferDesc.dwSize = Marshal.SizeOf(bufferDesc);
                     bufferDesc.dwBufferBytes = 0;
                     bufferDesc.dwFlags = DirectSoundBufferCaps.DSBCAPS_PRIMARYBUFFER;
@@ -276,7 +268,7 @@ namespace NAudio.Wave
                     samplesFrameSize = MsToBytes(desiredLatency);
 
                     // Fill BufferDescription for SecondaryBuffer
-                    BufferDescription bufferDesc2 = new BufferDescription();
+                    var bufferDesc2 = new BufferDescription();
                     bufferDesc2.dwSize = Marshal.SizeOf(bufferDesc2);
                     bufferDesc2.dwBufferBytes = (uint)(samplesFrameSize * 2);
                     bufferDesc2.dwFlags = DirectSoundBufferCaps.DSBCAPS_GETCURRENTPOSITION2
@@ -286,7 +278,7 @@ namespace NAudio.Wave
                         | DirectSoundBufferCaps.DSBCAPS_STICKYFOCUS
                         | DirectSoundBufferCaps.DSBCAPS_GETCURRENTPOSITION2;
                     bufferDesc2.dwReserved = 0;
-                    GCHandle handleOnWaveFormat = GCHandle.Alloc(waveFormat, GCHandleType.Pinned); // Ptr to waveFormat
+                    var handleOnWaveFormat = GCHandle.Alloc(waveFormat, GCHandleType.Pinned); // Ptr to waveFormat
                     bufferDesc2.lpwfxFormat = handleOnWaveFormat.AddrOfPinnedObject(); // set Ptr to waveFormat
                     bufferDesc2.guidAlgo = Guid.Empty;
 
@@ -296,7 +288,7 @@ namespace NAudio.Wave
                     handleOnWaveFormat.Free();
 
                     // Get effective SecondaryBuffer size
-                    BufferCaps dsbCaps = new BufferCaps();
+                    var dsbCaps = new BufferCaps();
                     dsbCaps.dwSize = Marshal.SizeOf(dsbCaps);
                     secondaryBuffer.GetCaps(dsbCaps);
 
@@ -309,13 +301,13 @@ namespace NAudio.Wave
                     // Create double buffering notification.
                     // Use DirectSoundNotify at Position [0, 1/2] and Stop Position (0xFFFFFFFF)
                     // -------------------------------------------------------------------------------------
-                    IDirectSoundNotify notify = (IDirectSoundNotify)soundBufferObj;
+                    var notify = (IDirectSoundNotify)soundBufferObj;
 
                     frameEventWaitHandle1 = new EventWaitHandle(false, EventResetMode.AutoReset);
                     frameEventWaitHandle2 = new EventWaitHandle(false, EventResetMode.AutoReset);
                     endEventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
 
-                    DirectSoundBufferPositionNotify[] notifies = new DirectSoundBufferPositionNotify[3];
+                    var notifies = new DirectSoundBufferPositionNotify[3];
                     notifies[0] = new DirectSoundBufferPositionNotify();
                     notifies[0].dwOffset = 0;
                     notifies[0].hEventNotify = frameEventWaitHandle1.SafeWaitHandle.DangerousGetHandle();
@@ -394,7 +386,7 @@ namespace NAudio.Wave
         /// <returns>number of byttes</returns>
         private int MsToBytes(int ms)
         {
-            int bytes = ms * (waveFormat.AverageBytesPerSecond / 1000);
+            var bytes = ms * (waveFormat.AverageBytesPerSecond / 1000);
             bytes -= bytes % waveFormat.BlockAlign;
             return bytes;
         }
@@ -405,8 +397,8 @@ namespace NAudio.Wave
         private void PlaybackThreadFunc()
         {
             // Used to determine if playback is halted
-            bool lPlaybackHalted = false;
-            bool firstBufferStarted = false;
+            var lPlaybackHalted = false;
+            var firstBufferStarted = false;
             bytesPlayed = 0;
 
             Exception exception = null;
@@ -414,7 +406,7 @@ namespace NAudio.Wave
             try
             {
                 InitializeDirectSound();
-                int lResult = 1;
+                var lResult = 1;
 
                 if (PlaybackState == PlaybackState.Stopped)
                 {
@@ -433,19 +425,24 @@ namespace NAudio.Wave
 
                     secondaryBuffer.Play(0, 0, DirectSoundPlayFlags.DSBPLAY_LOOPING);
 
-                    var waitHandles = new WaitHandle[] { frameEventWaitHandle1, frameEventWaitHandle2, endEventWaitHandle };
+                    var waitHandles = new WaitHandle[] { frameEventWaitHandle1, frameEventWaitHandle2, endEventWaitHandle, stopEventWaitHandle };
 
-                    bool lContinuePlayback = true;
+                    var lContinuePlayback = true;
                     while (PlaybackState != PlaybackState.Stopped && lContinuePlayback)
                     {
                         // Wait for signals on frameEventWaitHandle1 (Position 0), frameEventWaitHandle2 (Position 1/2)
-                        int indexHandle = WaitHandle.WaitAny(waitHandles, 3 * desiredLatency, false);
+                        var indexHandle = WaitHandle.WaitAny(waitHandles, 3 * desiredLatency, false);
 
                         // TimeOut is ok
                         if (indexHandle != WaitHandle.WaitTimeout)
                         {
+                            // Stop requested
+                            if (indexHandle == 3)
+                            {
+                                lContinuePlayback = false;
+                            }
                             // Buffer is Stopped
-                            if (indexHandle == 2)
+                            else if (indexHandle == 2)
                             {
                                 // (Gee) - Not sure whether to stop playback in this case or not!
                                 StopPlayback();
@@ -591,7 +588,7 @@ namespace NAudio.Wave
         {
             if (secondaryBuffer != null)
             {
-                byte[] silence = new byte[samplesTotalSize];
+                var silence = new byte[samplesTotalSize];
 
                 // Lock the SecondaryBuffer
                 IntPtr wavBuffer1;
@@ -625,7 +622,7 @@ namespace NAudio.Wave
         /// <param name="bytesToCopy">number of bytes to feed</param>
         private int Feed(int bytesToCopy)
         {
-            int bytesRead = bytesToCopy;
+            var bytesRead = bytesToCopy;
 
             // Restore the buffer if lost
             if (IsBufferLost())
@@ -680,7 +677,6 @@ namespace NAudio.Wave
         //----------------------------------------------------------------------------------------------
         // Minimal Native DirectSound COM interop interfaces
         //----------------------------------------------------------------------------------------------
-#region Native DirectSound COM Interface
 
         [StructLayout(LayoutKind.Sequential, Pack = 2)]
         internal class BufferDescription
@@ -915,7 +911,6 @@ namespace NAudio.Wave
         /// <returns>HANDLE of the Desktop window</returns>
         [DllImport("user32.dll")]
         private static extern IntPtr GetDesktopWindow();
-#endregion
     }
 
     /// <summary>

@@ -279,15 +279,15 @@ namespace NAudioTests.Dmo
         public void CanReadABlockFromDmoEffectWaveProvider()
         {
             //using (var reader = new Mp3FileReader("C:\\Users\\Wind\\Source\\Repos\\source.mp3"))
-            WaveFormat inputFormat = new WaveFormat(44100, 16, 1);
+            var inputFormat = new WaveFormat(44100, 16, 1);
             using (WaveStream reader = new NullWaveStream(inputFormat, inputFormat.AverageBytesPerSecond * 20))
             {
                 using (var effector = new DmoEffectWaveProvider<DmoFlanger, DmoFlanger.Params>(reader))
                 {
                     // try to read 10 ms;
-                    int bytesToRead = effector.WaveFormat.AverageBytesPerSecond / 100;
-                    byte[] buffer = new byte[bytesToRead];
-                    int count = effector.Read(buffer, 0, bytesToRead);
+                    var bytesToRead = effector.WaveFormat.AverageBytesPerSecond / 100;
+                    var buffer = new byte[bytesToRead];
+                    var count = effector.Read(buffer, 0, bytesToRead);
                     ClassicAssert.That(count > 0, "Bytes Read");
                 }
             }

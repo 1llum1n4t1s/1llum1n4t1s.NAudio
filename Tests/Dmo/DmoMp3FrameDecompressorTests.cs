@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.FileFormats.Mp3;
@@ -42,7 +41,7 @@ namespace NAudioTests.Dmo
                     var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
                     while ((frame = reader.ReadNextFrame()) != null)
                     {
-                        int decompressed = frameDecompressor.DecompressFrame(frame, buffer, 0);
+                        var decompressed = frameDecompressor.DecompressFrame(frame, buffer, 0);
                         Debug.WriteLine($"Decompressed {frame.FrameLength} bytes to {decompressed}");
                     }
                 }
@@ -59,7 +58,7 @@ namespace NAudioTests.Dmo
         {
             var decoder = new WindowsMediaMp3Decoder();
             ClassicAssert.AreEqual(decoder.MediaObject.InputStreamCount, 1);
-            foreach (DmoMediaType mediaType in decoder.MediaObject.GetInputTypes(0))
+            foreach (var mediaType in decoder.MediaObject.GetInputTypes(0))
             {
                 Debug.WriteLine($"{mediaType.MajorTypeName}:{mediaType.SubTypeName}:{mediaType.FormatTypeName}");
             }
@@ -73,7 +72,7 @@ namespace NAudioTests.Dmo
             decoder.MediaObject.SetInputWaveFormat(0,new Mp3WaveFormat(44100, 2, 200, 32000));
             ClassicAssert.AreEqual(decoder.MediaObject.OutputStreamCount, 1);
 
-            foreach (DmoMediaType mediaType in decoder.MediaObject.GetOutputTypes(0))
+            foreach (var mediaType in decoder.MediaObject.GetOutputTypes(0))
             {
                 Debug.WriteLine($"{mediaType.MajorTypeName}:{mediaType.SubTypeName}:{mediaType.FormatTypeName}");
             }

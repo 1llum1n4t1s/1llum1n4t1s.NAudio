@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml;
 
 namespace MarkHeath.MidiUtils
@@ -14,7 +13,7 @@ namespace MarkHeath.MidiUtils
 
         public static NamingRules LoadRules(string xmlPath)
         {
-            NamingRules namingRules = new NamingRules();
+            var namingRules = new NamingRules();
             namingRules.rules = new List<NamingRule>();
 
             using (XmlReader reader = new XmlTextReader(xmlPath))
@@ -50,10 +49,10 @@ namespace MarkHeath.MidiUtils
                     //reader.Read();
 
                     reader.ReadStartElement("SearchString");
-                    string regex = reader.ReadString();
+                    var regex = reader.ReadString();
                     reader.ReadEndElement();
                     reader.ReadStartElement("Replacement");
-                    string replacement = reader.ReadString();
+                    var replacement = reader.ReadString();
                     reader.ReadEndElement();
                     reader.ReadEndElement();
                     namingRules.rules.Add(new NamingRule(regex, replacement));

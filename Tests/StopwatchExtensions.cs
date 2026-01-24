@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
-
 namespace System.Diagnostics
 {
     public static class StopwatchExtensions
@@ -12,7 +6,7 @@ namespace System.Diagnostics
         {
             sw.Reset();
             sw.Start();
-            for (int i = 0; i < iterations; i++)
+            for (var i = 0; i < iterations; i++)
             {
                 action();
             }

@@ -21,8 +21,7 @@ namespace NAudio.Utils
                 {
                     foreach (var a in f.GetCustomAttributes(false))
                     {
-                        var d = a as FieldDescriptionAttribute;
-                        if (d != null)
+                        if (a is FieldDescriptionAttribute d)
                         {
                             return d.Description;
                         }

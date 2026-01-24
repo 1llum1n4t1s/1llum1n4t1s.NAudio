@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NAudio.Wave;
 
 namespace MarkHeath.AudioUtils
@@ -14,7 +12,7 @@ namespace MarkHeath.AudioUtils
 
         public MixDiffStream(string fileName)
         {
-            WaveFileReader reader = new WaveFileReader(fileName);
+            var reader = new WaveFileReader(fileName);
             offsetStream = new WaveOffsetStream(reader);
             channelSteam = new WaveChannel32(offsetStream);
             muted = false;

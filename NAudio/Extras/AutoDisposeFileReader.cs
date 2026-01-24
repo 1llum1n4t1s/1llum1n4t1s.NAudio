@@ -28,7 +28,7 @@ namespace NAudio.Extras
         {
             if (isDisposed)
                 return 0;
-            int read = reader.Read(buffer, offset, count);
+            var read = reader.Read(buffer, offset, count);
             if (read == 0)
             {
                 if (reader is IDisposable d)

@@ -20,7 +20,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 // this version modified for NAudio from Ray Molenkamp's original
-using System;
 using System.Runtime.InteropServices;
 using NAudio.CoreAudioApi.Interfaces;
 
@@ -54,7 +53,7 @@ namespace NAudio.CoreAudioApi
         {
             get
             {
-                PropertyKey key = Get(index);
+                var key = Get(index);
                 Marshal.ThrowExceptionForHR(storeInterface.GetValue(ref key, out var result));
                 return new PropertyStoreProperty(key, result);
             }
@@ -122,7 +121,7 @@ namespace NAudio.CoreAudioApi
         /// <returns>Property value</returns>
         public PropVariant GetValue(int index)
         {
-            PropertyKey key = Get(index);
+            var key = Get(index);
             Marshal.ThrowExceptionForHR(storeInterface.GetValue(ref key, out var result));
             return result;
         }

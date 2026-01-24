@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
 
 namespace NAudio.Midi
@@ -18,16 +16,15 @@ namespace NAudio.Midi
         /// </summary>
         public int Compare(MidiEvent x, MidiEvent y)
         {
-            long xTime = x.AbsoluteTime;
-            long yTime = y.AbsoluteTime;
+            var xTime = x.AbsoluteTime;
+            var yTime = y.AbsoluteTime;
 
             if (xTime == yTime)
             {
                 // sort meta events before note events, except end track
-                MetaEvent xMeta = x as MetaEvent;
-                MetaEvent yMeta = y as MetaEvent;
+                var yMeta = y as MetaEvent;
 
-                if (xMeta != null)
+                if (x is MetaEvent xMeta)
                 {
                     if (xMeta.MetaEventType == MetaEventType.EndTrack)
                         xTime = Int64.MaxValue;

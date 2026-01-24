@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.CoreAudioApi;
@@ -17,17 +15,17 @@ namespace NAudioTests.Wasapi
         public void CanCreateMMDeviceEnumeratorInVista()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            var enumerator = new MMDeviceEnumerator();
         }
 
         [Test]
         public void CanEnumerateDevicesInVista()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            var enumerator = new MMDeviceEnumerator();
             var devices = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.All);
 
-            foreach (MMDevice device in devices)
+            foreach (var device in devices)
             {
                 if (device.State != DeviceState.NotPresent)
                 {
@@ -44,10 +42,10 @@ namespace NAudioTests.Wasapi
         public void CanEnumerateCaptureDevices()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            var enumerator = new MMDeviceEnumerator();
             var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All);
 
-            foreach (MMDevice device in devices)
+            foreach (var device in devices)
             {
                 if (device.State != DeviceState.NotPresent)
                 {
@@ -64,8 +62,8 @@ namespace NAudioTests.Wasapi
         public void CanGetDefaultAudioEndpoint()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            MMDevice defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            var enumerator = new MMDeviceEnumerator();
+            var defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
             ClassicAssert.IsNotNull(defaultAudioEndpoint);
         }
 
@@ -73,9 +71,9 @@ namespace NAudioTests.Wasapi
         public void CanActivateDefaultAudioEndpoint()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            MMDevice defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
-            AudioClient audioClient = defaultAudioEndpoint.AudioClient;
+            var enumerator = new MMDeviceEnumerator();
+            var defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            var audioClient = defaultAudioEndpoint.AudioClient;
             ClassicAssert.IsNotNull(audioClient);
         }
 

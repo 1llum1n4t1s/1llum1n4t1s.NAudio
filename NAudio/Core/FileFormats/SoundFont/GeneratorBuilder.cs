@@ -6,7 +6,7 @@ namespace NAudio.SoundFont
     {
         public override Generator Read(BinaryReader br)
         {
-            Generator g = new Generator();
+            var g = new Generator();
             g.GeneratorType = (GeneratorEnum)br.ReadUInt16();
             g.UInt16Amount = br.ReadUInt16();
             data.Add(g);
@@ -25,7 +25,7 @@ namespace NAudio.SoundFont
 
         public void Load(Instrument[] instruments)
         {
-            foreach (Generator g in Generators)
+            foreach (var g in Generators)
             {
                 if (g.GeneratorType == GeneratorEnum.Instrument)
                 {
@@ -36,7 +36,7 @@ namespace NAudio.SoundFont
 
         public void Load(SampleHeader[] sampleHeaders)
         {
-            foreach (Generator g in Generators)
+            foreach (var g in Generators)
             {
                 if (g.GeneratorType == GeneratorEnum.SampleID)
                 {

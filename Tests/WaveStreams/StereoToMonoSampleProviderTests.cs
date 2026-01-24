@@ -17,7 +17,7 @@ namespace NAudioTests.WaveStreams
             var buffer = new float[samples];
             var read = mono.Read(buffer, 0, buffer.Length);
             ClassicAssert.AreEqual(buffer.Length, read, "samples read");
-            for (int sample = 0; sample < samples; sample++)
+            for (var sample = 0; sample < samples; sample++)
             {
                 ClassicAssert.AreEqual(1 + 2*sample, buffer[sample], "sample #" + sample);
             }
@@ -52,7 +52,7 @@ namespace NAudioTests.WaveStreams
             var read = mono.Read(buffer, offset, samples);
             ClassicAssert.AreEqual(samples, read, "samples read");
 
-            for (int i = 0; i < bufferLength; i++)
+            for (var i = 0; i < bufferLength; i++)
             {
                 var sample = buffer[i];
 

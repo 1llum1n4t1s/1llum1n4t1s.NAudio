@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using NAudio.Utils;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;

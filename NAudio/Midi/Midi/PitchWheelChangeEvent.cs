@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 
 namespace NAudio.Midi 
 {
@@ -17,8 +16,8 @@ namespace NAudio.Midi
         /// <param name="br">The MIDI stream to read from</param>
         public PitchWheelChangeEvent(BinaryReader br) 
         {
-            byte b1 = br.ReadByte();
-            byte b2 = br.ReadByte();
+            var b1 = br.ReadByte();
+            var b2 = br.ReadByte();
             if((b1 & 0x80) != 0) 
             {
                 // TODO: might be a follow-on				

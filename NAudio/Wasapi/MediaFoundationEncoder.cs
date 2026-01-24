@@ -58,11 +58,11 @@ namespace NAudio.Wave
                     throw;
                 }
             }
-            availableTypes.GetElementCount(out int count);
+            availableTypes.GetElementCount(out var count);
             var mediaTypes = new List<MediaType>(count);
-            for (int n = 0; n < count; n++)
+            for (var n = 0; n < count; n++)
             {
-                availableTypes.GetElement(n, out object mediaTypeObject);
+                availableTypes.GetElement(n, out var mediaTypeObject);
                 var mediaType = (IMFMediaType)mediaTypeObject;
                 mediaTypes.Add(new MediaType(mediaType));
             }
@@ -227,7 +227,7 @@ namespace NAudio.Wave
             var writer = CreateSinkWriter(outputFile);
             try
             {
-                writer.AddStream(outputMediaType.MediaFoundationObject, out int streamIndex);
+                writer.AddStream(outputMediaType.MediaFoundationObject, out var streamIndex);
 
                 // n.b. can get 0xC00D36B4 - MF_E_INVALIDMEDIATYPE here
                 writer.SetInputMediaType(streamIndex, inputMediaType.MediaFoundationObject, null);
@@ -265,7 +265,7 @@ namespace NAudio.Wave
             var writer = CreateSinkWriter(new ComStream(outputStream), transcodeContainerType);
             try 
             {
-				writer.AddStream(outputMediaType.MediaFoundationObject, out int streamIndex);
+				writer.AddStream(outputMediaType.MediaFoundationObject, out var streamIndex);
 
 				// n.b. can get 0xC00D36B4 - MF_E_INVALIDMEDIATYPE here
 				writer.SetInputMediaType(streamIndex, inputMediaType.MediaFoundationObject, null);
@@ -356,23 +356,23 @@ namespace NAudio.Wave
 
         private static long BytesToNsPosition(int bytes, WaveFormat waveFormat)
         {
-            long nsPosition = (10000000L * bytes) / waveFormat.AverageBytesPerSecond;
+            var nsPosition = (10000000L * bytes) / waveFormat.AverageBytesPerSecond;
             return nsPosition;
         }
 
         private long ConvertOneBuffer(IMFSinkWriter writer, int streamIndex, IWaveProvider inputProvider, long position, byte[] managedBuffer)
         {
             long durationConverted = 0;
-            IMFMediaBuffer buffer = MediaFoundationApi.CreateMemoryBuffer(managedBuffer.Length);
+            var buffer = MediaFoundationApi.CreateMemoryBuffer(managedBuffer.Length);
             buffer.GetMaxLength(out var maxLength);
 
-            IMFSample sample = MediaFoundationApi.CreateSample();
+            var sample = MediaFoundationApi.CreateSample();
             sample.AddBuffer(buffer);
 
-            int read = inputProvider.Read(managedBuffer, 0, maxLength);
+            var read = inputProvider.Read(managedBuffer, 0, maxLength);
             if (read > 0)
             {
-                buffer.Lock(out var ptr, out maxLength, out int currentLength);
+                buffer.Lock(out var ptr, out maxLength, out var currentLength);
                 durationConverted = BytesToNsPosition(read, inputProvider.WaveFormat);
                 Marshal.Copy(managedBuffer, 0, ptr, read);
                 buffer.SetCurrentLength(read);

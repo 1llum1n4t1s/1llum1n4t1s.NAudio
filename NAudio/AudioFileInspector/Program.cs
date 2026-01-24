@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
 using System.Windows.Forms;
-using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 
 namespace AudioFileInspector

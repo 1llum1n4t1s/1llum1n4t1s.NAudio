@@ -33,10 +33,10 @@ namespace NAudio.Extras
 
         private void CreateFilters()
         {
-            for (int bandIndex = 0; bandIndex < bandCount; bandIndex++)
+            for (var bandIndex = 0; bandIndex < bandCount; bandIndex++)
             {
                 var band = bands[bandIndex];
-                for (int n = 0; n < channels; n++)
+                for (var n = 0; n < channels; n++)
                 {
                     if (filters[n, bandIndex] == null)
                         filters[n, bandIndex] = BiQuadFilter.PeakingEQ(sourceProvider.WaveFormat.SampleRate, band.Frequency, band.Bandwidth, band.Gain);
@@ -65,7 +65,7 @@ namespace NAudio.Extras
         /// </summary>
         public int Read(float[] buffer, int offset, int count)
         {
-            int samplesRead = sourceProvider.Read(buffer, offset, count);
+            var samplesRead = sourceProvider.Read(buffer, offset, count);
 
             if (updated)
             {
@@ -73,11 +73,11 @@ namespace NAudio.Extras
                 updated = false;
             }
 
-            for (int n = 0; n < samplesRead; n++)
+            for (var n = 0; n < samplesRead; n++)
             {
-                int ch = n % channels; 
+                var ch = n % channels; 
                 
-                for (int band = 0; band < bandCount; band++)
+                for (var band = 0; band < bandCount; band++)
                 {
                     buffer[offset + n] = filters[ch, band].Transform(buffer[offset + n]);
                 }

@@ -35,7 +35,7 @@ dotnet add package YAudio
 
 **PackageReference:**
 ```xml
-<PackageReference Include="YAudio" Version="1.0.5" />
+<PackageReference Include="YAudio" Version="1.0.6" />
 ```
 
 ## Documentation

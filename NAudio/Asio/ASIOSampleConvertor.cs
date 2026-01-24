@@ -19,7 +19,7 @@ namespace NAudio.Wave.Asio
         public static SampleConvertor SelectSampleConvertor(WaveFormat waveFormat, AsioSampleType asioType)
         {
             SampleConvertor convertor = null;
-            bool is2Channels = waveFormat.Channels == 2;
+            var is2Channels = waveFormat.Channels == 2;
 
             // TODO : IMPLEMENTS OTHER CONVERTOR TYPES
             switch (asioType)
@@ -94,15 +94,15 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                short* inputSamples = (short*)inputInterleavedBuffer;
+                var inputSamples = (short*)inputInterleavedBuffer;
                 // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                short* leftSamples = (short*)asioOutputBuffers[0];
-                short* rightSamples = (short*)asioOutputBuffers[1];
+                var leftSamples = (short*)asioOutputBuffers[0];
+                var rightSamples = (short*)asioOutputBuffers[1];
 
                 // Point to upper 16 bits of the 32Bits.
                 leftSamples++;
                 rightSamples++;
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
                     *leftSamples = inputSamples[0];
                     *rightSamples = inputSamples[1];
@@ -122,19 +122,19 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                short* inputSamples = (short*)inputInterleavedBuffer;
+                var inputSamples = (short*)inputInterleavedBuffer;
                 // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                short*[] samples = new short*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var samples = new short*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
                     // Point to upper 16 bits of the 32Bits.
                     samples[i]++;
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *samples[j] = *inputSamples++;
                         samples[j] += 2;
@@ -150,11 +150,11 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                float* inputSamples = (float*)inputInterleavedBuffer;
-                int* leftSamples = (int*)asioOutputBuffers[0];
-                int* rightSamples = (int*)asioOutputBuffers[1];
+                var inputSamples = (float*)inputInterleavedBuffer;
+                var leftSamples = (int*)asioOutputBuffers[0];
+                var rightSamples = (int*)asioOutputBuffers[1];
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
                     *leftSamples++ = clampToInt(inputSamples[0]);
                     *rightSamples++ = clampToInt(inputSamples[1]);
@@ -170,16 +170,16 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                float* inputSamples = (float*)inputInterleavedBuffer;
-                int*[] samples = new int*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var inputSamples = (float*)inputInterleavedBuffer;
+                var samples = new int*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (int*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *samples[j]++ = clampToInt(*inputSamples++);
                     }
@@ -194,11 +194,11 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                int* inputSamples = (int*)inputInterleavedBuffer;
-                int* leftSamples = (int*)asioOutputBuffers[0];
-                int* rightSamples = (int*)asioOutputBuffers[1];
+                var inputSamples = (int*)inputInterleavedBuffer;
+                var leftSamples = (int*)asioOutputBuffers[0];
+                var rightSamples = (int*)asioOutputBuffers[1];
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
                     *leftSamples++ = inputSamples[0];
                     *rightSamples++ = inputSamples[1];
@@ -214,16 +214,16 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                int* inputSamples = (int*)inputInterleavedBuffer;
-                int*[] samples = new int*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var inputSamples = (int*)inputInterleavedBuffer;
+                var samples = new int*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (int*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *samples[j]++ = *inputSamples++;
                     }
@@ -238,11 +238,11 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                int* inputSamples = (int*)inputInterleavedBuffer;
-                short* leftSamples = (short*)asioOutputBuffers[0];
-                short* rightSamples = (short*)asioOutputBuffers[1];
+                var inputSamples = (int*)inputInterleavedBuffer;
+                var leftSamples = (short*)asioOutputBuffers[0];
+                var rightSamples = (short*)asioOutputBuffers[1];
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
                     *leftSamples++ = (short)(inputSamples[0] / (1 << 16));
                     *rightSamples++ = (short)(inputSamples[1] / (1 << 16));
@@ -258,16 +258,16 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                int* inputSamples = (int*)inputInterleavedBuffer;
-                int*[] samples = new int*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var inputSamples = (int*)inputInterleavedBuffer;
+                var samples = new int*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (int*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *samples[j]++ = (short)(*inputSamples++ / (1 << 16));
                     }
@@ -282,16 +282,16 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                int* inputSamples = (int*)inputInterleavedBuffer;
-                float*[] samples = new float*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var inputSamples = (int*)inputInterleavedBuffer;
+                var samples = new float*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (float*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *samples[j]++ = *inputSamples++ / (1 << (32 - 1));
                     }
@@ -306,13 +306,13 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                short* inputSamples = (short*)inputInterleavedBuffer;
+                var inputSamples = (short*)inputInterleavedBuffer;
                 // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                short* leftSamples = (short*)asioOutputBuffers[0];
-                short* rightSamples = (short*)asioOutputBuffers[1];
+                var leftSamples = (short*)asioOutputBuffers[0];
+                var rightSamples = (short*)asioOutputBuffers[1];
 
                 // Point to upper 16 bits of the 32Bits.
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
                     *leftSamples++ = inputSamples[0];
                     *rightSamples++ = inputSamples[1];
@@ -329,17 +329,17 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                short* inputSamples = (short*)inputInterleavedBuffer;
+                var inputSamples = (short*)inputInterleavedBuffer;
                 // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                short*[] samples = new short*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var samples = new short*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *(samples[j]++) = *inputSamples++;
                     }
@@ -354,12 +354,12 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                float* inputSamples = (float*)inputInterleavedBuffer;
+                var inputSamples = (float*)inputInterleavedBuffer;
                 // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                short* leftSamples = (short*)asioOutputBuffers[0];
-                short* rightSamples = (short*)asioOutputBuffers[1];
+                var leftSamples = (short*)asioOutputBuffers[0];
+                var rightSamples = (short*)asioOutputBuffers[1];
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
                     *leftSamples++ = clampToShort(inputSamples[0]);
                     *rightSamples++ = clampToShort(inputSamples[1]);
@@ -375,17 +375,17 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                float* inputSamples = (float*)inputInterleavedBuffer;
+                var inputSamples = (float*)inputInterleavedBuffer;
                 // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                short*[] samples = new short*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var samples = new short*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *(samples[j]++) = clampToShort(*inputSamples++);
                     }
@@ -400,19 +400,19 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                float* inputSamples = (float*)inputInterleavedBuffer;
+                var inputSamples = (float*)inputInterleavedBuffer;
                 
-                byte*[] samples = new byte*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var samples = new byte*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (byte*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
-                        int sample24 = clampTo24Bit(*inputSamples++);
+                        var sample24 = clampTo24Bit(*inputSamples++);
                         *(samples[j]++) = (byte)(sample24);
                         *(samples[j]++) = (byte)(sample24 >> 8);
                         *(samples[j]++) = (byte)(sample24 >> 16);
@@ -428,16 +428,16 @@ namespace NAudio.Wave.Asio
         {
             unsafe
             {
-                float* inputSamples = (float*)inputInterleavedBuffer;
-                float*[] samples = new float*[nbChannels];
-                for (int i = 0; i < nbChannels; i++)
+                var inputSamples = (float*)inputInterleavedBuffer;
+                var samples = new float*[nbChannels];
+                for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (float*)asioOutputBuffers[i];
                 }
 
-                for (int i = 0; i < nbSamples; i++)
+                for (var i = 0; i < nbSamples; i++)
                 {
-                    for (int j = 0; j < nbChannels; j++)
+                    for (var j = 0; j < nbChannels; j++)
                     {
                         *(samples[j]++) = *inputSamples++;
                     }

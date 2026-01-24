@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using NAudio.CoreAudioApi.Interfaces;
 
 namespace NAudio.MediaFoundation
 {

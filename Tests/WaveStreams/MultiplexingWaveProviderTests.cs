@@ -64,7 +64,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 1));
             byte[] expected = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
-            byte[] buffer = new byte[10];
+            var buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
             ClassicAssert.AreEqual(10, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -78,7 +78,7 @@ namespace NAudioTests.WaveStreams
             // 16 bit so left right pairs
             byte[] expected = { 0, 1, 0, 1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 7, 6, 7, 8, 9, 8, 9 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
-            byte[] buffer = new byte[20];
+            var buffer = new byte[20];
             var read = mp.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -91,7 +91,7 @@ namespace NAudioTests.WaveStreams
             // 16 bit so left right pairs
             byte[] expected = { 0, 1, 4, 5, 8, 9, 12, 13, 16, 17 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
-            byte[] buffer = new byte[10];
+            var buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
             ClassicAssert.AreEqual(10, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -105,7 +105,7 @@ namespace NAudioTests.WaveStreams
             byte[] expected = { 2, 3, 6, 7, 10, 11, 14, 15, 18, 19 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
             mp.ConnectInputToOutput(1, 0);
-            byte[] buffer = new byte[10];
+            var buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
             ClassicAssert.AreEqual(10, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -118,7 +118,7 @@ namespace NAudioTests.WaveStreams
             // 4 bytes per pair of samples
             byte[] expected = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
-            byte[] buffer = new byte[12];
+            var buffer = new byte[12];
             var read = mp.Read(buffer, 0, 12);
             ClassicAssert.AreEqual(12, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -132,7 +132,7 @@ namespace NAudioTests.WaveStreams
             // 4 bytes per pair of samples
             byte[] expected = { 0, 1, 100, 101, 2, 3, 102, 103, 4, 5, 104, 105, };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 }, 2);
-            byte[] buffer = new byte[expected.Length];
+            var buffer = new byte[expected.Length];
             var read = mp.Read(buffer, 0, expected.Length);
             ClassicAssert.AreEqual(expected.Length, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -147,7 +147,7 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
             mp.ConnectInputToOutput(0, 1);
             mp.ConnectInputToOutput(1, 0);
-            byte[] buffer = new byte[12];
+            var buffer = new byte[12];
             var read = mp.Read(buffer, 0, 12);
             ClassicAssert.AreEqual(12, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -216,7 +216,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 1), 0);
             byte[] expected = { };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
-            byte[] buffer = new byte[10];
+            var buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
             ClassicAssert.AreEqual(0, read);
         }
@@ -228,7 +228,7 @@ namespace NAudioTests.WaveStreams
             var input2 = new TestWaveProvider(new WaveFormat(32000, 16, 1));
             byte[] expected = { };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 }, 1);
-            byte[] buffer = new byte[10];
+            var buffer = new byte[10];
             var read = mp.Read(buffer, 0, 10);
             ClassicAssert.AreEqual(10, read);
         }
@@ -241,7 +241,7 @@ namespace NAudioTests.WaveStreams
             byte[] expected = { 0,1,0,2,3,1,4,5,2};
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1, input2 });
             ClassicAssert.AreEqual(3, mp.WaveFormat.Channels);
-            byte[] buffer = new byte[9];
+            var buffer = new byte[9];
             var read = mp.Read(buffer, 0, 9);
             ClassicAssert.AreEqual(9, read);
             ClassicAssert.AreEqual(buffer,expected);
@@ -254,8 +254,8 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 1), 6);
             byte[] expected = { 0, 1, 2, 3, 4, 5, 0, 0, 0, 0 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 1);
-            byte[] buffer = new byte[10];
-            for (int n = 0; n < buffer.Length; n++)
+            var buffer = new byte[10];
+            for (var n = 0; n < buffer.Length; n++)
             {
                 buffer[n] = 0xFF;
             }
@@ -270,7 +270,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(new WaveFormat(32000, 24, 1));
             byte[] expected = { 0, 1, 2, 0, 1, 2, 3, 4, 5, 3, 4, 5, 6, 7, 8, 6, 7, 8, 9, 10, 11, 9, 10, 11 };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
-            byte[] buffer = new byte[expected.Length];
+            var buffer = new byte[expected.Length];
             var read = mp.Read(buffer, 0, expected.Length);
             ClassicAssert.AreEqual(expected.Length, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -282,7 +282,7 @@ namespace NAudioTests.WaveStreams
             var input1 = new TestWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(32000, 1));
             byte[] expected = { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 9, 10, 11, 8, 9, 10, 11, };
             var mp = new MultiplexingWaveProvider(new IWaveProvider[] { input1 }, 2);
-            byte[] buffer = new byte[expected.Length];
+            var buffer = new byte[expected.Length];
             var read = mp.Read(buffer, 0, expected.Length);
             ClassicAssert.AreEqual(expected.Length, read);
             ClassicAssert.AreEqual(expected, buffer);
@@ -311,12 +311,12 @@ namespace NAudioTests.WaveStreams
             mp.ConnectInputToOutput(2, 1);
             mp.ConnectInputToOutput(3, 0);
 
-            byte[] buffer = new byte[waveFormat.AverageBytesPerSecond];
-            Stopwatch s = new Stopwatch();
+            var buffer = new byte[waveFormat.AverageBytesPerSecond];
+            var s = new Stopwatch();
             var duration = s.Time(() =>
             {
                 // read one hour worth of audio
-                for (int n = 0; n < 60 * 60; n++)
+                for (var n = 0; n < 60 * 60; n++)
                 {
                     mp.Read(buffer, 0, buffer.Length);
                 }

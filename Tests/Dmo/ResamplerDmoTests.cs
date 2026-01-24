@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Dmo;
@@ -23,16 +21,16 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void CanCreateResamplerMediaObject()
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
         }
 
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineInputTypesOnResampler()
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
             ClassicAssert.AreEqual(dmoResampler.MediaObject.InputStreamCount, 1);
-            foreach (DmoMediaType mediaType in dmoResampler.MediaObject.GetInputTypes(0))
+            foreach (var mediaType in dmoResampler.MediaObject.GetInputTypes(0))
             {
                 Debug.WriteLine(String.Format("{0}:{1}:{2}",
                     mediaType.MajorTypeName,
@@ -45,9 +43,9 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void CanExamineOutputTypesOnResampler()
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
             ClassicAssert.AreEqual(dmoResampler.MediaObject.OutputStreamCount, 1);
-            foreach (DmoMediaType mediaType in dmoResampler.MediaObject.GetOutputTypes(0))
+            foreach (var mediaType in dmoResampler.MediaObject.GetOutputTypes(0))
             {
                 Debug.WriteLine(String.Format("{0}:{1}:{2}",
                     mediaType.MajorTypeName,
@@ -60,7 +58,7 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupports16BitPCM41000Input()
         {
-            WaveFormat waveFormat = new WaveFormat(44100, 16, 2);
+            var waveFormat = new WaveFormat(44100, 16, 2);
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
@@ -68,7 +66,7 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupports16BitPCM8000Input()
         {
-            WaveFormat waveFormat = new WaveFormat(8000, 16, 2);
+            var waveFormat = new WaveFormat(8000, 16, 2);
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
@@ -76,7 +74,7 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupportsIEEE44100Input()
         {
-            WaveFormat waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+            var waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
@@ -84,7 +82,7 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupportsIEEE8000Input()
         {
-            WaveFormat waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(8000, 2);
+            var waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(8000, 2);
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
@@ -92,8 +90,8 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupports8000To44100IEEE()
         {
-            WaveFormat inputFormat = WaveFormat.CreateIeeeFloatWaveFormat(8000, 2);
-            WaveFormat outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+            var inputFormat = WaveFormat.CreateIeeeFloatWaveFormat(8000, 2);
+            var outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
             ClassicAssert.IsTrue(IsResamplerConversionSupported(inputFormat, outputFormat));
         }
 
@@ -101,8 +99,8 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupports41000To48000IEEE()
         {
-            WaveFormat inputFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
-            WaveFormat outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
+            var inputFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+            var outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
             ClassicAssert.IsTrue(IsResamplerConversionSupported(inputFormat, outputFormat));
         }
 
@@ -110,8 +108,8 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerSupportsPCMToIEEE()
         {
-            WaveFormat inputFormat = new WaveFormat(44100, 16, 2);
-            WaveFormat outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
+            var inputFormat = new WaveFormat(44100, 16, 2);
+            var outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
             ClassicAssert.IsTrue(IsResamplerConversionSupported(inputFormat, outputFormat));
         }
 
@@ -119,13 +117,13 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerCanGetInputAndOutputBufferSizes()
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
             dmoResampler.MediaObject.SetInputWaveFormat(0, WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));
             dmoResampler.MediaObject.SetOutputWaveFormat(0, WaveFormat.CreateIeeeFloatWaveFormat(48000, 2));
-            MediaObjectSizeInfo inputSizeInfo = dmoResampler.MediaObject.GetInputSizeInfo(0);
+            var inputSizeInfo = dmoResampler.MediaObject.GetInputSizeInfo(0);
             ClassicAssert.IsNotNull(inputSizeInfo, "Input Size Info");
             Debug.WriteLine(inputSizeInfo.ToString());
-            MediaObjectSizeInfo outputSizeInfo = dmoResampler.MediaObject.GetOutputSizeInfo(0);
+            var outputSizeInfo = dmoResampler.MediaObject.GetOutputSizeInfo(0);
             ClassicAssert.IsNotNull(outputSizeInfo, "Output Size Info");
             Debug.WriteLine(outputSizeInfo.ToString());
         }
@@ -134,10 +132,10 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerCanCallProcessInput()
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
             dmoResampler.MediaObject.SetInputWaveFormat(0, WaveFormat.CreateIeeeFloatWaveFormat(44100, 2));
             dmoResampler.MediaObject.SetOutputWaveFormat(0, WaveFormat.CreateIeeeFloatWaveFormat(48000, 2));
-            using (MediaBuffer buffer = new MediaBuffer(44100 * 2 * 4))
+            using (var buffer = new MediaBuffer(44100 * 2 * 4))
             {
                 buffer.Length = 8000;
                 dmoResampler.MediaObject.ProcessInput(0, buffer, DmoInputDataBufferFlags.None, 0, 0);
@@ -148,13 +146,13 @@ namespace NAudioTests.Dmo
         [Category("IntegrationTest")]
         public void ResamplerCanCallProcessOutput()
         {
-            DmoResampler dmoResampler = new DmoResampler();
-            WaveFormat inputFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
-            WaveFormat outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
+            var dmoResampler = new DmoResampler();
+            var inputFormat = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+            var outputFormat = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
             dmoResampler.MediaObject.SetInputWaveFormat(0, inputFormat);
             dmoResampler.MediaObject.SetOutputWaveFormat(0, outputFormat);
             dmoResampler.MediaObject.AllocateStreamingResources();
-            using (MediaBuffer inputBuffer = new MediaBuffer(inputFormat.AverageBytesPerSecond))
+            using (var inputBuffer = new MediaBuffer(inputFormat.AverageBytesPerSecond))
             {
                 inputBuffer.Length = inputFormat.AverageBytesPerSecond / 10;
                 Debug.WriteLine(String.Format("Input Length {0}", inputBuffer.Length));
@@ -162,7 +160,7 @@ namespace NAudioTests.Dmo
                 Debug.WriteLine(String.Format("Input Length {0}", inputBuffer.Length));
                 Debug.WriteLine(String.Format("Input Lookahead {0}", dmoResampler.MediaObject.GetInputSizeInfo(0).MaxLookahead));
                 //Debug.WriteLine(String.Format("Input Max Latency {0}", resampler.MediaObject.GetInputMaxLatency(0)));
-                using (DmoOutputDataBuffer outputBuffer = new DmoOutputDataBuffer(outputFormat.AverageBytesPerSecond))
+                using (var outputBuffer = new DmoOutputDataBuffer(outputFormat.AverageBytesPerSecond))
                 {
                     // one buffer for each output stream
                     dmoResampler.MediaObject.ProcessOutput(DmoProcessOutputFlags.None, 1, new DmoOutputDataBuffer[] { outputBuffer });
@@ -171,7 +169,7 @@ namespace NAudioTests.Dmo
                     //ClassicAssert.AreEqual((int)(inputBuffer.Length * 48000.0 / inputFormat.SampleRate), outputBuffer.Length, "Converted buffer length");
                 }
 
-                using (DmoOutputDataBuffer outputBuffer = new DmoOutputDataBuffer(48000 * 2 * 4))
+                using (var outputBuffer = new DmoOutputDataBuffer(48000 * 2 * 4))
                 {
                     // one buffer for each output stream
                     dmoResampler.MediaObject.ProcessOutput(DmoProcessOutputFlags.None, 1, new DmoOutputDataBuffer[] { outputBuffer });
@@ -186,13 +184,13 @@ namespace NAudioTests.Dmo
         #region Helper Functions
         private bool IsResamplerInputFormatSupported(WaveFormat waveFormat)
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
             return dmoResampler.MediaObject.SupportsInputWaveFormat(0, waveFormat);
         }
 
         private bool IsResamplerConversionSupported(WaveFormat from, WaveFormat to)
         {
-            DmoResampler dmoResampler = new DmoResampler();
+            var dmoResampler = new DmoResampler();
             // need to set an input format before we can ask for an output format to 
             dmoResampler.MediaObject.SetInputWaveFormat(0, from);
             return dmoResampler.MediaObject.SupportsOutputWaveFormat(0, to);

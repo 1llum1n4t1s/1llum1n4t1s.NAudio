@@ -26,7 +26,7 @@ namespace NAudio.Wave.Compression
         /// <returns>Whether the codec is installed</returns>
         public static bool IsCodecInstalled(string shortName)
         {
-            foreach (AcmDriver driver in EnumerateAcmDrivers())
+            foreach (var driver in EnumerateAcmDrivers())
             {
                 if (driver.ShortName == shortName)
                 {
@@ -43,7 +43,7 @@ namespace NAudio.Wave.Compression
         /// <returns>Handle to the driver</returns>
         public static AcmDriver AddLocalDriver(string driverFile)
         {
-            IntPtr handle = NativeMethods.LoadLibrary(driverFile);
+            var handle = NativeMethods.LoadLibrary(driverFile);
             if (handle == IntPtr.Zero)
             {
                 throw new ArgumentException("Failed to load driver file");
@@ -54,7 +54,7 @@ namespace NAudio.Wave.Compression
                 NativeMethods.FreeLibrary(handle);
                 throw new ArgumentException("Failed to discover DriverProc");
             }
-            var result = AcmInterop.acmDriverAdd(out IntPtr driverHandle,
+            var result = AcmInterop.acmDriverAdd(out var driverHandle,
                 handle, driverProc, 0, AcmDriverAddFlags.Function);
             if (result != MmResult.NoError)
             {
@@ -106,11 +106,11 @@ namespace NAudio.Wave.Compression
             out string selectedFormatDescription,
             out string selectedFormatTagDescription)
         {
-            AcmFormatChoose formatChoose = new AcmFormatChoose();
+            var formatChoose = new AcmFormatChoose();
             formatChoose.structureSize = Marshal.SizeOf(formatChoose);
             formatChoose.styleFlags = AcmFormatChooseStyleFlags.None;
             formatChoose.ownerWindowHandle = ownerWindowHandle;
-            int maxFormatSize = 200; // guess
+            var maxFormatSize = 200; // guess
             formatChoose.selectedWaveFormatPointer = Marshal.AllocHGlobal(maxFormatSize);
             formatChoose.selectedWaveFormatByteSize = maxFormatSize;
             formatChoose.title = windowTitle;
@@ -119,14 +119,14 @@ namespace NAudio.Wave.Compression
             formatChoose.waveFormatEnumPointer = IntPtr.Zero;
             if (enumFormat != null)
             {
-                IntPtr enumPointer = Marshal.AllocHGlobal(Marshal.SizeOf(enumFormat));
+                var enumPointer = Marshal.AllocHGlobal(Marshal.SizeOf(enumFormat));
                 Marshal.StructureToPtr(enumFormat,enumPointer,false);
                 formatChoose.waveFormatEnumPointer = enumPointer;
             }
             formatChoose.instanceHandle = IntPtr.Zero;
             formatChoose.templateName = null;
 
-            MmResult result = AcmInterop.acmFormatChoose(ref formatChoose);
+            var result = AcmInterop.acmFormatChoose(ref formatChoose);
             selectedFormat = null;
             selectedFormatDescription = null;
             selectedFormatTagDescription = null;
@@ -154,7 +154,7 @@ namespace NAudio.Wave.Compression
         {
             get
             {
-                MmException.Try(AcmInterop.acmMetrics(driverHandle, AcmMetrics.MaxSizeFormat, out int maxFormatSize), "acmMetrics");
+                MmException.Try(AcmInterop.acmMetrics(driverHandle, AcmMetrics.MaxSizeFormat, out var maxFormatSize), "acmMetrics");
                 return maxFormatSize;
             }
         }
@@ -166,7 +166,7 @@ namespace NAudio.Wave.Compression
         /// <returns>The driver, or null if not found</returns>
         public static AcmDriver FindByShortName(string shortName)
         {
-            foreach (AcmDriver driver in AcmDriver.EnumerateAcmDrivers())
+            foreach (var driver in AcmDriver.EnumerateAcmDrivers())
             {
                 if (driver.ShortName == shortName)
                 {
@@ -262,7 +262,7 @@ namespace NAudio.Wave.Compression
                         throw new InvalidOperationException("Driver must be opened first");
                     }
                     formatTags = new List<AcmFormatTag>();
-                    AcmFormatTagDetails formatTagDetails = new AcmFormatTagDetails();
+                    var formatTagDetails = new AcmFormatTagDetails();
                     formatTagDetails.structureSize = Marshal.SizeOf(formatTagDetails);
                     MmException.Try(AcmInterop.acmFormatTagEnum(this.driverHandle, ref formatTagDetails, AcmFormatTagEnumCallback, IntPtr.Zero, 0), "acmFormatTagEnum");
                 }

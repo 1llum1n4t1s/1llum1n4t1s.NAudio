@@ -63,7 +63,7 @@ namespace NAudio.CoreAudioApi
             get
             {
                 ulong pos, qpos;
-                int cnt = 0;
+                var cnt = 0;
                 while (!GetPosition(out pos, out qpos))
                 {
                     if (++cnt == 5)

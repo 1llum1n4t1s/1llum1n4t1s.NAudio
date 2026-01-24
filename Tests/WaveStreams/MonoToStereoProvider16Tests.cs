@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave;
@@ -15,19 +12,19 @@ namespace NAudioTests.WaveStreams
         public void LeftChannelOnly()
         {
             IWaveProvider monoStream = new TestMonoProvider();
-            MonoToStereoProvider16 stereo = new MonoToStereoProvider16(monoStream);
+            var stereo = new MonoToStereoProvider16(monoStream);
             stereo.LeftVolume = 1.0f;
             stereo.RightVolume = 0.0f;
-            int samples = 1000;
-            byte[] buffer = new byte[samples * 2];
-            int read = stereo.Read(buffer, 0, buffer.Length);
+            var samples = 1000;
+            var buffer = new byte[samples * 2];
+            var read = stereo.Read(buffer, 0, buffer.Length);
             ClassicAssert.AreEqual(buffer.Length, read, "bytes read");
-            WaveBuffer waveBuffer = new WaveBuffer(buffer);
+            var waveBuffer = new WaveBuffer(buffer);
             short expected = 0;
-            for (int sample = 0; sample < samples; sample+=2)
+            for (var sample = 0; sample < samples; sample+=2)
             {
-                short sampleLeft = waveBuffer.ShortBuffer[sample];
-                short sampleRight = waveBuffer.ShortBuffer[sample+1];
+                var sampleLeft = waveBuffer.ShortBuffer[sample];
+                var sampleRight = waveBuffer.ShortBuffer[sample+1];
                 ClassicAssert.AreEqual(expected++, sampleLeft, "sample left");
                 ClassicAssert.AreEqual(0, sampleRight, "sample right");
             }
@@ -41,7 +38,7 @@ namespace NAudioTests.WaveStreams
 
         public override int Read(short[] buffer, int offset, int sampleCount)
         {
-            for (int sample = 0; sample < sampleCount; sample++)
+            for (var sample = 0; sample < sampleCount; sample++)
             {
                 buffer[offset + sample] = current++;
             }

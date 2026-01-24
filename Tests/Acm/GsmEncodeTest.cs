@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave;
@@ -35,7 +33,7 @@ namespace NAudioTests.Acm
             var sp = sg.ToWaveProvider16();
 
 
-            byte[] data = new byte[outFormat.AverageBytesPerSecond * durationInSeconds];
+            var data = new byte[outFormat.AverageBytesPerSecond * durationInSeconds];
             var bytesRead = sp.Read(data, 0, data.Length);
             ClassicAssert.AreEqual(bytesRead, data.Length);
             return new RawSourceWaveStream(new MemoryStream(data), outFormat);

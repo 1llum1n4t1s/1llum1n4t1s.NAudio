@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System.IO;
@@ -16,17 +14,17 @@ namespace NAudioTests.Aiff
         [Category("IntegrationTest")]
         public void ConvertAiffToWav()
         {
-            string testFolder = @"C:\Users\Mark\Downloads\NAudio";
+            var testFolder = @"C:\Users\Mark\Downloads\NAudio";
             if (!Directory.Exists(testFolder))
             {
                 ClassicAssert.Ignore($"{testFolder} not found");
             }
 
-            foreach (string file in Directory.GetFiles(testFolder, "*.aiff"))
+            foreach (var file in Directory.GetFiles(testFolder, "*.aiff"))
             {
-                string baseName=  Path.GetFileNameWithoutExtension(file);
-                string wavFile = Path.Combine(testFolder, baseName + ".wav");
-                string aiffFile = Path.Combine(testFolder, file);
+                var baseName=  Path.GetFileNameWithoutExtension(file);
+                var wavFile = Path.Combine(testFolder, baseName + ".wav");
+                var aiffFile = Path.Combine(testFolder, file);
                 Debug.WriteLine(String.Format("Converting {0} to wav", aiffFile));
                 ConvertAiffToWav(aiffFile, wavFile);
             }
@@ -38,8 +36,8 @@ namespace NAudioTests.Aiff
             {
                 using (var writer = new WaveFileWriter(wavFile, reader.WaveFormat))
                 {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead = 0;
+                    var buffer = new byte[4096];
+                    var bytesRead = 0;
                     do
                     {
                         bytesRead = reader.Read(buffer, 0, buffer.Length);

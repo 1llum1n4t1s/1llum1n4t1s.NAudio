@@ -31,7 +31,7 @@ namespace NAudio.Wave
             waveFormatTag = WaveFormatEncoding.Extensible;
             extraSize = 22;
             wValidBitsPerSample = (short) bits;
-            for (int n = 0; n < channels; n++)
+            for (var n = 0; n < channels; n++)
             {
                 dwChannelMask |= (1 << n);
             }
@@ -78,7 +78,7 @@ namespace NAudio.Wave
             base.Serialize(writer);
             writer.Write(wValidBitsPerSample);
             writer.Write(dwChannelMask);
-            byte[] guid = subFormat.ToByteArray();
+            var guid = subFormat.ToByteArray();
             writer.Write(guid, 0, guid.Length);
         }
 

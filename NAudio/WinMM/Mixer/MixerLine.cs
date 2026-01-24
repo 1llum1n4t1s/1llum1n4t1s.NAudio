@@ -1,7 +1,6 @@
 // created on 10/12/2002 at 20:37
 using System;
 using System.Runtime.InteropServices;
-using NAudio.Wave;
 using System.Collections.Generic;
 
 namespace NAudio.Mixer 
@@ -55,7 +54,7 @@ namespace NAudio.Mixer
         /// <param name="waveInDevice">Wave In Device</param>
         public static int GetMixerIdForWaveIn(int waveInDevice)
         {
-            int mixerId = -1;
+            var mixerId = -1;
             MmException.Try(MixerInterop.mixerGetID((IntPtr)waveInDevice, out mixerId, MixerFlags.WaveIn), "mixerGetID");
             return mixerId;
         }
@@ -257,7 +256,7 @@ namespace NAudio.Mixer
         {
             get
             {
-                for (int source = 0; source < SourceCount; source++)
+                for (var source = 0; source < SourceCount; source++)
                 {
                     yield return GetSource(source);
                 }

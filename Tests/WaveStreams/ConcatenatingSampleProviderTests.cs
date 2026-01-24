@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using NAudio.Wave.SampleProviders;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;

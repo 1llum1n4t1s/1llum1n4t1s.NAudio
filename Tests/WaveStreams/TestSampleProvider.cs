@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
@@ -16,7 +15,7 @@ namespace NAudioTests.WaveStreams
 
         public int Read(float[] buffer, int offset, int count)
         {
-            int n = 0;
+            var n = 0;
             while (n < count && Position < length)
             {
                 buffer[n + offset] = (UseConstValue) ? ConstValue : Position;

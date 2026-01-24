@@ -1,11 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
-using NAudio.Utils;
 
 namespace AudioFileInspector
 {
@@ -54,13 +49,13 @@ namespace AudioFileInspector
 
         public static void Disassociate(IEnumerable<IAudioFileInspector> inspectors)
         {
-            foreach (IAudioFileInspector inspector in inspectors)
+            foreach (var inspector in inspectors)
             {
                 if (!FileAssociations.IsFileTypeRegistered(inspector.FileExtension))
                 {
                     FileAssociations.RegisterFileType(inspector.FileExtension, inspector.FileTypeDescription, null);
                 }
-                string command = "\"" + Application.ExecutablePath + "\" \"%1\"";
+                var command = "\"" + Application.ExecutablePath + "\" \"%1\"";
                 FileAssociations.RemoveAction(
                     inspector.FileExtension,
                     "AudioFileInspector");
@@ -69,13 +64,13 @@ namespace AudioFileInspector
 
         public static void Associate(IEnumerable<IAudioFileInspector> inspectors)
         {
-            foreach (IAudioFileInspector inspector in inspectors)
+            foreach (var inspector in inspectors)
             {
                 if (!FileAssociations.IsFileTypeRegistered(inspector.FileExtension))
                 {
                     FileAssociations.RegisterFileType(inspector.FileExtension, inspector.FileTypeDescription, null);
                 }
-                string command = "\"" + Application.ExecutablePath + "\" \"%1\"";
+                var command = "\"" + Application.ExecutablePath + "\" \"%1\"";
                 FileAssociations.AddAction(
                     inspector.FileExtension,
                     "AudioFileInspector",

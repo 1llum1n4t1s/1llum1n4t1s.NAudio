@@ -124,10 +124,10 @@ namespace NAudio.Wave
         {
             lock (lockObject)
             {
-                int samplesRead = sourceStream.Read(array, offset, count);
+                var samplesRead = sourceStream.Read(array, offset, count);
                 if (Enabled)
                 {
-                    for (int sample = 0; sample < samplesRead; sample+=channels)
+                    for (var sample = 0; sample < samplesRead; sample+=channels)
                     {
                         double in1 = array[offset+sample];
                         double in2 = (channels == 1) ? 0 : array[offset+sample+1];

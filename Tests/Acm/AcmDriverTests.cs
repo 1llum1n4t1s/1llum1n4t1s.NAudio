@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using NAudio.Wave;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System.Diagnostics;
@@ -16,9 +14,9 @@ namespace NAudioTests.Acm
         [Test]
         public void CanEnumerateDrivers()
         {
-            IEnumerable<AcmDriver> drivers = AcmDriver.EnumerateAcmDrivers();
+            var drivers = AcmDriver.EnumerateAcmDrivers();
             ClassicAssert.IsNotNull(drivers);
-            foreach (AcmDriver driver in drivers)
+            foreach (var driver in drivers)
             {
                 ClassicAssert.GreaterOrEqual((int)driver.DriverId, 0);
                 ClassicAssert.IsTrue(!String.IsNullOrEmpty(driver.ShortName));
@@ -41,15 +39,15 @@ namespace NAudioTests.Acm
         [Test]
         public void HasFindByShortNameMethod()
         {
-            AcmDriver driver = AcmDriver.FindByShortName("WM-AUDIO");
+            var driver = AcmDriver.FindByShortName("WM-AUDIO");
         }
 
         [Test]
         public void CanOpenAndCloseDriver()
         {
-            IEnumerable<AcmDriver> drivers = AcmDriver.EnumerateAcmDrivers();
+            var drivers = AcmDriver.EnumerateAcmDrivers();
             ClassicAssert.IsNotNull(drivers);
-            foreach (AcmDriver driver in drivers)
+            foreach (var driver in drivers)
             {
                 driver.Open();
                 driver.Close();
@@ -59,13 +57,13 @@ namespace NAudioTests.Acm
         [Test]
         public void CanEnumerateFormatTags()
         {
-            foreach(AcmDriver driver in AcmDriver.EnumerateAcmDrivers())
+            foreach(var driver in AcmDriver.EnumerateAcmDrivers())
             {
                 Debug.WriteLine("Enumerating Format Tags for " + driver.LongName);
                 driver.Open();
-                IEnumerable<AcmFormatTag> formatTags = driver.FormatTags;
+                var formatTags = driver.FormatTags;
                 ClassicAssert.IsNotNull(formatTags, "FormatTags");
-                foreach(AcmFormatTag formatTag in formatTags)
+                foreach(var formatTag in formatTags)
                 {
                     Debug.WriteLine(String.Format("{0} {1} {2} Standard formats: {3} Support Flags: {4} Format Size: {5}",
                         formatTag.FormatTagIndex, 
@@ -82,16 +80,16 @@ namespace NAudioTests.Acm
         [Test]
         public void CanEnumerateFormats()
         {
-            using (AcmDriver driver = AcmDriver.FindByShortName("MS-ADPCM"))
+            using (var driver = AcmDriver.FindByShortName("MS-ADPCM"))
             {
                 driver.Open();
-                IEnumerable<AcmFormatTag> formatTags = driver.FormatTags;
+                var formatTags = driver.FormatTags;
                 ClassicAssert.IsNotNull(formatTags, "FormatTags");
-                foreach (AcmFormatTag formatTag in formatTags)
+                foreach (var formatTag in formatTags)
                 {                                        
-                    IEnumerable<AcmFormat> formats = driver.GetFormats(formatTag);
+                    var formats = driver.GetFormats(formatTag);
                     ClassicAssert.IsNotNull(formats);
-                    foreach (AcmFormat format in formats)
+                    foreach (var format in formats)
                     {
                         Debug.WriteLine(String.Format("{0} {1} {2} {3} {4}",
                             format.FormatIndex,

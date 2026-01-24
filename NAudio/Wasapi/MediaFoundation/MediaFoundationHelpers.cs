@@ -40,7 +40,7 @@ namespace NAudio.MediaFoundation
             MediaFoundationInterop.MFTEnumEx(category, _MFT_ENUM_FLAG.MFT_ENUM_FLAG_ALL,
                 null, null, out var interfacesPointer, out var interfaceCount);
             var interfaces = new IMFActivate[interfaceCount];
-            for (int n = 0; n < interfaceCount; n++)
+            for (var n = 0; n < interfaceCount; n++)
             {
                 var ptr =
                     Marshal.ReadIntPtr(new IntPtr(interfacesPointer.ToInt64() + n*Marshal.SizeOf(interfacesPointer)));
@@ -71,7 +71,7 @@ namespace NAudio.MediaFoundation
         /// </summary>
         public static IMFMediaType CreateMediaType()
         {
-            MediaFoundationInterop.MFCreateMediaType(out IMFMediaType mediaType);
+            MediaFoundationInterop.MFCreateMediaType(out var mediaType);
             return mediaType;
         }
 
@@ -100,7 +100,7 @@ namespace NAudio.MediaFoundation
         /// <returns>The memory buffer</returns>
         public static IMFMediaBuffer CreateMemoryBuffer(int bufferSize)
         {
-            MediaFoundationInterop.MFCreateMemoryBuffer(bufferSize, out IMFMediaBuffer buffer);
+            MediaFoundationInterop.MFCreateMemoryBuffer(bufferSize, out var buffer);
             return buffer;
         }
 
@@ -110,7 +110,7 @@ namespace NAudio.MediaFoundation
         /// <returns>The sample object</returns>
         public static IMFSample CreateSample()
         {
-            MediaFoundationInterop.MFCreateSample(out IMFSample sample);
+            MediaFoundationInterop.MFCreateSample(out var sample);
             return sample;
         }
 
@@ -121,7 +121,7 @@ namespace NAudio.MediaFoundation
         /// <returns>The attributes store</returns>
         public static IMFAttributes CreateAttributes(int initialSize)
         {
-            MediaFoundationInterop.MFCreateAttributes(out IMFAttributes attributes, initialSize);
+            MediaFoundationInterop.MFCreateAttributes(out var attributes, initialSize);
             return attributes;
         }
 
@@ -154,7 +154,7 @@ namespace NAudio.MediaFoundation
         /// <returns>A media foundation source reader</returns>
         public static IMFSourceReader CreateSourceReaderFromByteStream(IMFByteStream byteStream)
         {
-            MediaFoundationInterop.MFCreateSourceReaderFromByteStream(byteStream, null, out IMFSourceReader reader);
+            MediaFoundationInterop.MFCreateSourceReaderFromByteStream(byteStream, null, out var reader);
             return reader;
         }
     }

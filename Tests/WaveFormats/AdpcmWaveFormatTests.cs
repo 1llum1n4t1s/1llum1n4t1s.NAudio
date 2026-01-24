@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System.Runtime.InteropServices;
@@ -15,16 +12,16 @@ namespace NAudioTests.WaveFormats
         [Test]
         public void StructureSizeIsCorrect()
         {
-            WaveFormat waveFormat = new WaveFormat(8000, 16, 1);
+            var waveFormat = new WaveFormat(8000, 16, 1);
             ClassicAssert.AreEqual(18, Marshal.SizeOf(waveFormat), "WaveFormat Size");
-            AdpcmWaveFormat adpcmWaveFormat = new AdpcmWaveFormat(8000,1);
+            var adpcmWaveFormat = new AdpcmWaveFormat(8000,1);
             ClassicAssert.AreEqual(18 + 32, Marshal.SizeOf(adpcmWaveFormat), "WaveFormat Size");            
         }
 
         [Test]
         public void StructureContentsAreCorrect()
         {
-            AdpcmWaveFormat adpcmWaveFormat = new AdpcmWaveFormat(8000,1);
+            var adpcmWaveFormat = new AdpcmWaveFormat(8000,1);
             ClassicAssert.AreEqual(WaveFormatEncoding.Adpcm, adpcmWaveFormat.Encoding, "Encoding");
             ClassicAssert.AreEqual(8000, adpcmWaveFormat.SampleRate, "Sample Rate");
             ClassicAssert.AreEqual(1, adpcmWaveFormat.Channels, "Channels");

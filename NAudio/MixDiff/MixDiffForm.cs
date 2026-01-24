@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using NAudio.Wave;
@@ -42,11 +40,11 @@ namespace MarkHeath.AudioUtils
         private bool LoadFile(Button button)
         {
             // prompt for file load
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            var openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "WAV Files (*.wav)|*.wav";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                MixdownInfo info = new MixdownInfo(openFileDialog.FileName);
+                var info = new MixdownInfo(openFileDialog.FileName);
                 // TODO: sort this out - post shuffle
                 info.Letter = button.Name.Substring(button.Name.Length - 1);
                 SetButtonInfo(button, info);
@@ -71,7 +69,7 @@ namespace MarkHeath.AudioUtils
         {
             if (button.Tag != null)
             {
-                MixdownInfo buttonInfo = button.Tag as MixdownInfo;
+                var buttonInfo = button.Tag as MixdownInfo;
                 mixer.RemoveInputStream(buttonInfo.Stream);
                 buttonInfo.Stream.Close();
                 button.Tag = null;
@@ -81,8 +79,7 @@ namespace MarkHeath.AudioUtils
 
         private void SetButtonAppearance(Button button)
         {
-            MixdownInfo info = button.Tag as MixdownInfo;
-            if (info == null)
+            if (button.Tag is not MixdownInfo info)
             {
                 button.Text = "<Empty>";
                 button.Font = EmptyFont;
@@ -107,7 +104,7 @@ namespace MarkHeath.AudioUtils
 
         private void OnMixButtonClick(object sender, EventArgs e)
         {
-            Button button = sender as Button;
+            var button = sender as Button;
             if (button.Tag == null)
             {
                 if (LoadFile(button))
@@ -222,7 +219,7 @@ namespace MarkHeath.AudioUtils
 
         private void SetPositionLabel()
         {
-            TimeSpan currentTime = mixer.CurrentTime;
+            var currentTime = mixer.CurrentTime;
             toolStripLabelPosition.Text = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
                 currentTime.Hours,
                 currentTime.Minutes,
@@ -232,7 +229,7 @@ namespace MarkHeath.AudioUtils
 
         private void SetLengthLabel()
         {
-            TimeSpan length = mixer.TotalTime;
+            var length = mixer.TotalTime;
             toolStripLabelLength.Text = String.Format("{0:00}:{1:00}:{2:00}",
                 length.Hours,
                 length.Minutes,
@@ -342,23 +339,23 @@ namespace MarkHeath.AudioUtils
 
         private void clearToolStripMenuItem_Click(object sender, EventArgs e)
         {            
-            Button button = (Button)contextMenuStrip1.SourceControl;
+            var button = (Button)contextMenuStrip1.SourceControl;
             ClearFile(button);
         }
 
         private void selectFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Button button = (Button)contextMenuStrip1.SourceControl;
+            var button = (Button)contextMenuStrip1.SourceControl;
             LoadFile(button);
         }
 
         private void propertiesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Button button = (Button)contextMenuStrip1.SourceControl;
+            var button = (Button)contextMenuStrip1.SourceControl;
             if (button.Tag != null)
             {
-                MixdownInfo mixdownInfo = button.Tag as MixdownInfo;
-                PropertiesForm propertiesForm = new PropertiesForm(mixdownInfo);
+                var mixdownInfo = button.Tag as MixdownInfo;
+                var propertiesForm = new PropertiesForm(mixdownInfo);
                 if (propertiesForm.ShowDialog() == DialogResult.OK)
                 {
                     
@@ -368,7 +365,7 @@ namespace MarkHeath.AudioUtils
 
         private void saveComparisonToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            var saveFileDialog = new SaveFileDialog();
             saveFileDialog.DefaultExt = ".MixDiff";
             saveFileDialog.Filter = "*.MixDiff (MixDiff Comparison Files)|*.MixDiff|*.* (All Files)|*.*";
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
@@ -379,17 +376,17 @@ namespace MarkHeath.AudioUtils
 
         private void SaveComparison(string fileName)
         {
-            XmlWriterSettings settings = new XmlWriterSettings();
+            var settings = new XmlWriterSettings();
             settings.Indent = true;
             settings.NewLineOnAttributes = true;
                 
-            using (XmlWriter writer = XmlWriter.Create(fileName,settings))
+            using (var writer = XmlWriter.Create(fileName,settings))
             {
                 writer.WriteStartElement("MixDiff");
                 writer.WriteStartElement("Settings");
                 writer.WriteAttributeString("CompareMode", compareMode.ToString());
                 writer.WriteEndElement();
-                foreach (Button button in fileButtons)
+                foreach (var button in fileButtons)
                 {
                     WriteMixdownInfo(writer, button.Tag as MixdownInfo);
                 }
@@ -399,16 +396,16 @@ namespace MarkHeath.AudioUtils
 
         private void LoadComparison(string fileName)
         {
-            XmlDocument document = new XmlDocument();
+            var document = new XmlDocument();
             document.Load(fileName);
-            XmlNode compareModeNode = document.SelectSingleNode("MixDiff/Settings/@CompareMode");
+            var compareModeNode = document.SelectSingleNode("MixDiff/Settings/@CompareMode");
             CompareMode = (CompareMode)Enum.Parse(typeof(CompareMode), compareModeNode.Value);
-            XmlNodeList mixes = document.SelectNodes("MixDiff/Mix");
-            int buttonIndex = 0;
+            var mixes = document.SelectNodes("MixDiff/Mix");
+            var buttonIndex = 0;
             foreach(XmlNode mixNode in mixes)
             {
-                Button button = fileButtons[buttonIndex++];
-                MixdownInfo info = new MixdownInfo(mixNode.SelectSingleNode("@FileName").Value);
+                var button = fileButtons[buttonIndex++];
+                var info = new MixdownInfo(mixNode.SelectSingleNode("@FileName").Value);
                 info.DelayMilliseconds = Int32.Parse(mixNode.SelectSingleNode("@DelayMilliseconds").Value);
                 info.OffsetMilliseconds = Int32.Parse(mixNode.SelectSingleNode("@OffsetMilliseconds").Value);
                 info.VolumeDecibels = Int32.Parse(mixNode.SelectSingleNode("@VolumeDecibels").Value);
@@ -434,13 +431,13 @@ namespace MarkHeath.AudioUtils
 
         private void openSavedComparisonToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            var openFileDialog = new OpenFileDialog();
             openFileDialog.DefaultExt = ".MixDiff";
             openFileDialog.Filter = "*.MixDiff (MixDiff Comparison Files)|*.MixDiff|*.* (All Files)|*.*";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 Stop();
-                foreach(Button button in fileButtons)
+                foreach(var button in fileButtons)
                 {
                     ClearFile(button);
                 }
@@ -463,13 +460,13 @@ namespace MarkHeath.AudioUtils
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            NAudio.Utils.AboutForm aboutForm = new NAudio.Utils.AboutForm();
+            var aboutForm = new NAudio.Utils.AboutForm();
             aboutForm.ShowDialog();
         }
 
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SettingsForm settingsForm = new SettingsForm();
+            var settingsForm = new SettingsForm();
             if (settingsForm.ShowDialog() == DialogResult.OK)
             {
                 // TODO: reopen WaveOut device
@@ -493,8 +490,8 @@ namespace MarkHeath.AudioUtils
 
         private void Shuffle()
         {
-            List<MixdownInfo> mixdowns = new List<MixdownInfo>();
-            foreach (Button button in fileButtons)
+            var mixdowns = new List<MixdownInfo>();
+            foreach (var button in fileButtons)
             {
                 if (button.Tag != null)
                 {
@@ -503,7 +500,7 @@ namespace MarkHeath.AudioUtils
             }
 
 
-            Random rand = new Random();
+            var rand = new Random();
             if (mixdowns.Count < 2)
             {
                 MessageBox.Show("You need to have at least two files to compare to use the shuffle feature",
@@ -515,7 +512,7 @@ namespace MarkHeath.AudioUtils
 
             if (Settings.Default.UseAllSlots)
             {
-                foreach (Button button in fileButtons)
+                foreach (var button in fileButtons)
                 {
                     if (button.Tag == null)
                     {
@@ -524,20 +521,20 @@ namespace MarkHeath.AudioUtils
                 }
             }
             
-            for (int n = 0; n < 12; n++)
+            for (var n = 0; n < 12; n++)
             {
-                int swap1 = rand.Next() % fileButtons.Count;
-                int swap2 = rand.Next() % fileButtons.Count;
+                var swap1 = rand.Next() % fileButtons.Count;
+                var swap2 = rand.Next() % fileButtons.Count;
                 if (swap1 != swap2)
                 {
-                    object tag1 = fileButtons[swap1].Tag;
+                    var tag1 = fileButtons[swap1].Tag;
                     fileButtons[swap1].Tag = fileButtons[swap2].Tag;
                     fileButtons[swap2].Tag = tag1;
                 }
             }
 
             Button firstMix = null;
-            foreach (Button button in fileButtons)
+            foreach (var button in fileButtons)
             {
                 SetButtonAppearance(button);
                 if (button.Tag != null && firstMix == null)
@@ -549,7 +546,7 @@ namespace MarkHeath.AudioUtils
         private void Reveal()
         {
             shuffled = false;
-            foreach (Button button in fileButtons)
+            foreach (var button in fileButtons)
             {
                 SetButtonAppearance(button);
             }

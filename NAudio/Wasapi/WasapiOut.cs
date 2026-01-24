@@ -98,7 +98,7 @@ namespace NAudio.Wave
         private void PlayThread()
         {
             ResamplerDmoStream resamplerDmoStream = null;
-            IWaveProvider playbackProvider = sourceProvider;
+            var playbackProvider = sourceProvider;
             Exception exception = null;
             try
             {
@@ -149,7 +149,7 @@ namespace NAudio.Wave
                         {
                             numFramesPadding = audioClient.CurrentPadding;
                         }
-                        int numFramesAvailable = bufferFrameCount - numFramesPadding;
+                        var numFramesAvailable = bufferFrameCount - numFramesPadding;
                         if (numFramesAvailable > 10) // see https://naudio.codeplex.com/workitem/16363
                         {
                             if (FillBuffer(playbackProvider, numFramesAvailable))
@@ -209,7 +209,7 @@ namespace NAudio.Wave
         private bool FillBuffer(IWaveProvider playbackProvider, int frameCount)
         {
             var readLength = frameCount * bytesPerFrame;
-            int read = playbackProvider.Read(readBuffer, 0, readLength);
+            var read = playbackProvider.Read(readBuffer, 0, readLength);
             if (read == 0)
             {
                 return true;
@@ -224,7 +224,7 @@ namespace NAudio.Wave
                     // pass frameCount
                     unsafe
                     {
-                        byte* pByte = (byte*)buffer;
+                        var pByte = (byte*)buffer;
                         while(read < readLength)
                         {
                             pByte[read++] = 0;
@@ -236,7 +236,7 @@ namespace NAudio.Wave
             }
             else
             {
-                int actualFrameCount = read / bytesPerFrame;
+                var actualFrameCount = read / bytesPerFrame;
                 /*if (actualFrameCount != frameCount)
                 {
                     Debug.WriteLine(String.Format("WASAPI wanted {0} frames, supplied {1}", frameCount, actualFrameCount ));
@@ -367,7 +367,7 @@ namespace NAudio.Wave
         /// <param name="waveProvider">IWaveProvider to play</param>
         public void Init(IWaveProvider waveProvider)
         {
-            long latencyRefTimes = latencyMilliseconds * 10000L;
+            var latencyRefTimes = latencyMilliseconds * 10000L;
             OutputWaveFormat = waveProvider.WaveFormat;
 
             // allow auto sample rate conversion - works for shared mode
@@ -377,7 +377,7 @@ namespace NAudio.Wave
             if (shareMode == AudioClientShareMode.Exclusive)
             {
                 flags = AudioClientStreamFlags.None;
-                if (!audioClient.IsFormatSupported(shareMode, OutputWaveFormat, out WaveFormatExtensible closestSampleRateFormat))
+                if (!audioClient.IsFormatSupported(shareMode, OutputWaveFormat, out var closestSampleRateFormat))
                 {
                     // Use closesSampleRateFormat (in sharedMode, it equals usualy to the audioClient.MixFormat)
                     // See documentation : http://msdn.microsoft.com/en-us/library/ms678737(VS.85).aspx 
@@ -452,7 +452,7 @@ namespace NAudio.Wave
                             throw;
 
                         // Calculate the new latency.
-                        long newLatencyRefTimes = (long)(10000000.0 /
+                        var newLatencyRefTimes = (long)(10000000.0 /
                             (double)this.OutputWaveFormat.SampleRate *
                             (double)this.audioClient.BufferSize + 0.5);
 

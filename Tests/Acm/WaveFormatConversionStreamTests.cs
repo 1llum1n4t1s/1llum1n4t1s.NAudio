@@ -16,8 +16,8 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertPcmToMuLaw()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new WaveFormat(sampleRate, 16, channels),
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.MuLaw, sampleRate, channels, sampleRate * channels, 1, 8));
@@ -26,8 +26,8 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertPcmToALaw()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new WaveFormat(sampleRate, 16, channels),
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.ALaw, sampleRate, channels, sampleRate * channels, 1, 8));
@@ -50,8 +50,8 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertALawToPcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.ALaw, sampleRate, channels, sampleRate * channels, 1, 8),
                 new WaveFormat(sampleRate, 16, channels));
@@ -60,8 +60,8 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertMuLawToPcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.MuLaw, sampleRate, channels, sampleRate * channels, 1, 8),
                 new WaveFormat(sampleRate, 16, channels));
@@ -70,8 +70,8 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertAdpcmToPcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new AdpcmWaveFormat(8000,1),
                 new WaveFormat(sampleRate, 16, channels));
@@ -107,8 +107,8 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertPcmToAdpcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new WaveFormat(sampleRate, 16, channels),
                 new AdpcmWaveFormat(8000, 1));
@@ -117,7 +117,7 @@ namespace NAudioTests.Acm
         [Test]
         public void CanConvertImeAdpcmToPcm()
         {
-            AcmDriver driver = AcmDriver.FindByShortName("Microsoft IMA ADPCM");
+            var driver = AcmDriver.FindByShortName("Microsoft IMA ADPCM");
             driver.Open();
             try
             {
@@ -144,8 +144,8 @@ namespace NAudioTests.Acm
             using (var stream = new WaveFormatConversionStream(
                 outputFormat, inputStream))
             {
-                byte[] buffer = new byte[stream.WaveFormat.AverageBytesPerSecond];
-                int totalRead = 0;
+                var buffer = new byte[stream.WaveFormat.AverageBytesPerSecond];
+                var totalRead = 0;
                 int bytesRead;
                 do
                 {

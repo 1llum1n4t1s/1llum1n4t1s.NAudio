@@ -1,9 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using NAudio.Wave;
 using MarkHeath.AudioUtils.Properties;
@@ -22,12 +17,12 @@ namespace MarkHeath.AudioUtils
             comboBoxOutputDevice.ValueMember = "DeviceNumber";
             comboBoxOutputDevice.DisplayMember = "DeviceName";
             comboBoxOutputDevice.Items.Add(new WaveOutComboItem("(Default)",-1));
-            for (int n = 0; n < WaveOut.DeviceCount; n++)
+            for (var n = 0; n < WaveOut.DeviceCount; n++)
             {
-                WaveOutCapabilities waveOutCaps = WaveOut.GetCapabilities(n);
+                var waveOutCaps = WaveOut.GetCapabilities(n);
                 comboBoxOutputDevice.Items.Add(new WaveOutComboItem(waveOutCaps.ProductName, n));
             }
-            Settings settings = Settings.Default;
+            var settings = Settings.Default;
             textBoxSkipBackSeconds.Text = settings.SkipBackSeconds.ToString();
             checkBoxUseAllSlots.Checked = settings.UseAllSlots;
             comboBoxOutputDevice.SelectedValue = settings.WaveOutDevice;
@@ -35,10 +30,10 @@ namespace MarkHeath.AudioUtils
 
         private void buttonOK_Click(object sender, EventArgs e)
         {
-            Settings settings = Settings.Default;
+            var settings = Settings.Default;
             
-            int skipBackSeconds = 5;
-            bool parsed = Int32.TryParse(textBoxSkipBackSeconds.Text, out skipBackSeconds);
+            var skipBackSeconds = 5;
+            var parsed = Int32.TryParse(textBoxSkipBackSeconds.Text, out skipBackSeconds);
             if (!parsed || skipBackSeconds <= 0)
             {
                 MessageBox.Show("Please enter a valid number of skip back seconds");

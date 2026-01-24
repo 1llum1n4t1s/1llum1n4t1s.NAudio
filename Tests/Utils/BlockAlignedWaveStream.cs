@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NAudio.Wave;
 
 namespace NAudioTests.Utils
@@ -48,7 +46,7 @@ namespace NAudioTests.Utils
             {
                 count = (int)(length - position);
             }
-            for (int n = 0; n < count; n++)
+            for (var n = 0; n < count; n++)
             {
                 buffer[n + offset] = (byte) ((position + n) % 256);
             }

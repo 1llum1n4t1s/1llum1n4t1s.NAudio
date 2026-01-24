@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 
 namespace NAudio.Midi
 {
@@ -154,7 +153,7 @@ namespace NAudio.Midi
                 }
                 else
                 {
-                    int octave = noteNumber / 12;
+                    var octave = noteNumber / 12;
                     return String.Format("{0}{1}", NoteNames[noteNumber % 12], octave);
                 }
             }

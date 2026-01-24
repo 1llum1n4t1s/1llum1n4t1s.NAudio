@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave;
-using NAudioTests.Utils;
 using System.IO;
 
 namespace NAudioTests.WaveStreams
@@ -16,8 +12,8 @@ namespace NAudioTests.WaveStreams
         [Category("IntegrationTest")]
         public void CanCreateWavFileFromWaveChannel32()
         {
-            string inFile = @"F:\Recording\wav\pcm\16bit mono 8kHz.wav";
-            string outFile = @"F:\Recording\wav\pcm\32bit stereo 8kHz.wav";
+            var inFile = @"F:\Recording\wav\pcm\16bit mono 8kHz.wav";
+            var outFile = @"F:\Recording\wav\pcm\32bit stereo 8kHz.wav";
             if (!File.Exists(inFile))
             {
                 ClassicAssert.Ignore("Input test file not found");

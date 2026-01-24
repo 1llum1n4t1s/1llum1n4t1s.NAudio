@@ -131,20 +131,20 @@ namespace NAudioTests.WaveStreams
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemWavFiles()
         {
-            string testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
+            var testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
             if (!Directory.Exists(testDataFolder))
             {
                 ClassicAssert.Ignore($"{testDataFolder} not found");
             }
-            foreach (string file in Directory.GetFiles(testDataFolder, "*.wav"))
+            foreach (var file in Directory.GetFiles(testDataFolder, "*.wav"))
             {
-                string wavFile = Path.Combine(testDataFolder, file);
+                var wavFile = Path.Combine(testDataFolder, file);
                 Debug.WriteLine(String.Format("Opening {0}", wavFile));
                 using (var reader = new WaveFileReader(wavFile))
                 {
-                    byte[] buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
+                    var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
                     int bytesRead;
-                    int total = 0;
+                    var total = 0;
                     do
                     {
                         bytesRead = reader.Read(buffer, 0, buffer.Length);
@@ -159,11 +159,11 @@ namespace NAudioTests.WaveStreams
         [Category("UnitTest")]
         public void DisposeOfStreamWhenConstructedFromFilePath()
         {
-            string tempFilePath = System.IO.Path.GetTempFileName();
+            var tempFilePath = System.IO.Path.GetTempFileName();
             System.IO.File.WriteAllText(tempFilePath, "Some test content");
             try
             {
-                WaveFileReader waveReader = new WaveFileReader(tempFilePath);
+                var waveReader = new WaveFileReader(tempFilePath);
 
                 ClassicAssert.Fail("Expected exception System.FormatException was not thrown for file missing a header.");
             }
@@ -181,7 +181,7 @@ namespace NAudioTests.WaveStreams
         [Category("IntegrationTest")]
         public void Mp3FileReaderDisposesFileOnFailToParse()
         {
-            string tempFilePath = Path.GetTempFileName();
+            var tempFilePath = Path.GetTempFileName();
             File.WriteAllText(tempFilePath, "Some test content");
             try
             {

@@ -1,5 +1,4 @@
-﻿using System;
-using NAudio.CoreAudioApi;
+﻿using NAudio.CoreAudioApi;
 
 // ReSharper disable once CheckNamespace
 namespace NAudio.Wave
@@ -33,7 +32,7 @@ namespace NAudio.Wave
         /// <returns>The default audio loopback capture device</returns>
         public static MMDevice GetDefaultLoopbackCaptureDevice()
         {
-            MMDeviceEnumerator devices = new MMDeviceEnumerator();
+            var devices = new MMDeviceEnumerator();
             return devices.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
         }
         

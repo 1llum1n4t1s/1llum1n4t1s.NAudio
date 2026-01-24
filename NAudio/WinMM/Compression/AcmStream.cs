@@ -26,10 +26,10 @@ namespace NAudio.Wave.Compression
             {
                 streamHandle = IntPtr.Zero;
                 this.sourceFormat = sourceFormat;
-                int sourceBufferSize = Math.Max(65536, sourceFormat.AverageBytesPerSecond);
+                var sourceBufferSize = Math.Max(65536, sourceFormat.AverageBytesPerSecond);
                 sourceBufferSize -= (sourceBufferSize % sourceFormat.BlockAlign);
-                IntPtr sourceFormatPointer = WaveFormat.MarshalToPtr(sourceFormat);
-                IntPtr destFormatPointer = WaveFormat.MarshalToPtr(destFormat);
+                var sourceFormatPointer = WaveFormat.MarshalToPtr(sourceFormat);
+                var destFormatPointer = WaveFormat.MarshalToPtr(destFormat);
 
                 try
                 {
@@ -42,7 +42,7 @@ namespace NAudio.Wave.Compression
 
                 }
 
-                int destBufferSize = SourceToDest(sourceBufferSize);
+                var destBufferSize = SourceToDest(sourceBufferSize);
                 streamHeader = new AcmStreamHeader(streamHandle, sourceBufferSize, destBufferSize);
                 driverHandle = IntPtr.Zero;
             }
@@ -63,12 +63,12 @@ namespace NAudio.Wave.Compression
         /// <param name="waveFilter">the wave filter</param>
         public AcmStream(IntPtr driverId, WaveFormat sourceFormat, WaveFilter waveFilter)
         {
-            int sourceBufferSize = Math.Max(16384, sourceFormat.AverageBytesPerSecond);
+            var sourceBufferSize = Math.Max(16384, sourceFormat.AverageBytesPerSecond);
             this.sourceFormat = sourceFormat;
             sourceBufferSize -= (sourceBufferSize % sourceFormat.BlockAlign);
             MmException.Try(AcmInterop.acmDriverOpen(out driverHandle, driverId, 0), "acmDriverOpen");
 
-            IntPtr sourceFormatPointer = WaveFormat.MarshalToPtr(sourceFormat);
+            var sourceFormatPointer = WaveFormat.MarshalToPtr(sourceFormat);
             try
             {
                 MmException.Try(AcmInterop.acmStreamOpen2(out streamHandle, driverHandle,
@@ -120,15 +120,15 @@ namespace NAudio.Wave.Compression
         public static WaveFormat SuggestPcmFormat(WaveFormat compressedFormat)
         {
             // create a PCM format
-            WaveFormat suggestedFormat = new WaveFormat(compressedFormat.SampleRate, 16, compressedFormat.Channels);
+            var suggestedFormat = new WaveFormat(compressedFormat.SampleRate, 16, compressedFormat.Channels);
             //MmException.Try(AcmInterop.acmFormatSuggest(IntPtr.Zero, compressedFormat, suggestedFormat, Marshal.SizeOf(suggestedFormat), AcmFormatSuggestFlags.FormatTag), "acmFormatSuggest");
             
 
-            IntPtr suggestedFormatPointer = WaveFormat.MarshalToPtr(suggestedFormat);
-            IntPtr compressedFormatPointer = WaveFormat.MarshalToPtr(compressedFormat);
+            var suggestedFormatPointer = WaveFormat.MarshalToPtr(suggestedFormat);
+            var compressedFormatPointer = WaveFormat.MarshalToPtr(compressedFormat);
             try
             {
-                MmResult result = AcmInterop.acmFormatSuggest2(IntPtr.Zero, compressedFormatPointer,
+                var result = AcmInterop.acmFormatSuggest2(IntPtr.Zero, compressedFormatPointer,
                     suggestedFormatPointer, Marshal.SizeOf(suggestedFormat), AcmFormatSuggestFlags.FormatTag);
                 suggestedFormat = WaveFormat.MarshalFromPtr(suggestedFormatPointer);
                 MmException.Try(result, "acmFormatSuggest");
@@ -193,7 +193,7 @@ namespace NAudio.Wave.Compression
         public int Convert(int bytesToConvert)
         {
             int sourceBytesConverted;
-            int destBytes = Convert(bytesToConvert, out sourceBytesConverted);
+            var destBytes = Convert(bytesToConvert, out sourceBytesConverted);
             if (sourceBytesConverted != bytesToConvert)
             {
                 throw new MmException(MmResult.NotSupported, "AcmStreamHeader.Convert didn't convert everything");
@@ -238,7 +238,7 @@ namespace NAudio.Wave.Compression
 
             if (streamHandle != IntPtr.Zero)
             {
-                MmResult result = AcmInterop.acmStreamClose(streamHandle, 0);
+                var result = AcmInterop.acmStreamClose(streamHandle, 0);
                 streamHandle = IntPtr.Zero;
                 if (result != MmResult.NoError)
                 {

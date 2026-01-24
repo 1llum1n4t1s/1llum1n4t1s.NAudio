@@ -1,5 +1,4 @@
-﻿using System;
-using NAudio.Wave;
+﻿using NAudio.Wave;
 
 namespace NAudio.Extras
 {
@@ -63,11 +62,11 @@ namespace NAudio.Extras
         /// </summary>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            int read = 0;
+            var read = 0;
             while (read < count)
             {
-                int required = count - read;
-                int readThisTime = sourceStream.Read(buffer, offset + read, required);
+                var required = count - read;
+                var readThisTime = sourceStream.Read(buffer, offset + read, required);
                 if (readThisTime < required)
                 {
                     sourceStream.Position = 0;

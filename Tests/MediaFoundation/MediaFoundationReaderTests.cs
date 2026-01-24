@@ -1,12 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
-using NUnit.Framework.Internal;
 
 namespace NAudioTests.MediaFoundation
 {
@@ -39,10 +37,10 @@ namespace NAudioTests.MediaFoundation
         [Test]
         public void CanEncodeLargeGSM610FileToMp3()
         {
-            string fileInPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.wav";
-            string fileOutPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.mp3";
+            var fileInPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.wav";
+            var fileOutPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.mp3";
             if (!File.Exists(fileInPath)) ClassicAssert.Ignore("Missing test file"); ;
-            Stopwatch sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
             using (var wavToConvert = new WaveFileReader(fileInPath))
             using (var converter = WaveFormatConversionStream.CreatePcmStream(wavToConvert))
             {

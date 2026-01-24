@@ -6,7 +6,7 @@ namespace NAudio.SoundFont
     {
         public SampleDataChunk(RiffChunk chunk)
         {
-            string header = chunk.ReadChunkID();
+            var header = chunk.ReadChunkID();
             if (header != "sdta")
             {
                 throw new InvalidDataException($"Not a sample data chunk ({header})");
