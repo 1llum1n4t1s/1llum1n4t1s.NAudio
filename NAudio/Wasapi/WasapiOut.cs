@@ -347,10 +347,8 @@ namespace NAudio.Wave
                 playbackState = PlaybackState.Stopped;
                 if (playThread != null)
                 {
-                    if (playThread.Join(300))
-                    {
-                        playThread = null;
-                    }
+                    playThread.Join();
+                    playThread = null;
                 }
             }
         }
@@ -541,12 +539,6 @@ namespace NAudio.Wave
             if (audioClient != null)
             {
                 Stop();
-                if (playThread != null)
-                {
-                    playThread.Join();
-                    playThread = null;
-                }
-
                 if (frameEventWaitHandle != null)
                 {
                     frameEventWaitHandle.Dispose();
