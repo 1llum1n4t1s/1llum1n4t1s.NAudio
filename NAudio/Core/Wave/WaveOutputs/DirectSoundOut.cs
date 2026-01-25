@@ -606,7 +606,7 @@ namespace NAudio.Wave
                     Marshal.Copy(silence, 0, wavBuffer1, nbSamples1);
                     if (wavBuffer2 != IntPtr.Zero)
                     {
-                        Marshal.Copy(silence, 0, wavBuffer1, nbSamples1);
+                        Marshal.Copy(silence, 0, wavBuffer2, nbSamples2);
                     }
                 }
 
@@ -663,7 +663,7 @@ namespace NAudio.Wave
                 Marshal.Copy(samples, 0, wavBuffer1, nbSamples1);
                 if (wavBuffer2 != IntPtr.Zero)
                 {
-                    Marshal.Copy(samples, 0, wavBuffer1, nbSamples1);
+                    Marshal.Copy(samples, nbSamples1, wavBuffer2, nbSamples2);
                 }
             }
 

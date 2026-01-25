@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NAudio.CoreAudioApi;
 using NAudio.CoreAudioApi.Interfaces;
 using System.Threading;
@@ -345,8 +345,11 @@ namespace NAudio.Wave
             if (playbackState != PlaybackState.Stopped)
             {
                 playbackState = PlaybackState.Stopped;
-                playThread.Join();
-                playThread = null;
+                if (playThread != null)
+                {
+                    playThread.Join();
+                    playThread = null;
+                }
             }
         }
 
@@ -536,6 +539,11 @@ namespace NAudio.Wave
             if (audioClient != null)
             {
                 Stop();
+                if (frameEventWaitHandle != null)
+                {
+                    frameEventWaitHandle.Dispose();
+                    frameEventWaitHandle = null;
+                }
 
                 audioClient.Dispose();
                 audioClient = null;
