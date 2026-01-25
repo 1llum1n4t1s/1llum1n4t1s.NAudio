@@ -9,21 +9,33 @@ using Moq;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// MultiplexingSampleProvider の入出力チャンネル・例外・Read のテスト。
+    /// </summary>
     [TestFixture]
     public class MultiplexingSampleProviderTests
     {
+        /// <summary>
+        /// null 入力で ArgumentNullException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void NullInputsShouldThrowException()
         {
             Assert.Throws<ArgumentNullException>(() => new MultiplexingSampleProvider(null, 1));
         }
 
+        /// <summary>
+        /// 入力 0 で ArgumentException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void ZeroInputsShouldThrowException()
         {
             Assert.Throws<ArgumentException>(() => new MultiplexingSampleProvider(new ISampleProvider[] { }, 1));
         }
 
+        /// <summary>
+        /// 出力 0 で ArgumentException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void ZeroOutputsShouldThrowException()
         {
@@ -31,6 +43,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<ArgumentException>(() => new MultiplexingSampleProvider(new ISampleProvider[] { input1.Object }, 0));
         }
 
+        /// <summary>
+        /// 無効な WaveFormat（16bit 等）で ArgumentException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void InvalidWaveFormatShouldThowException()
         {
@@ -39,6 +54,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<ArgumentException>(() => new MultiplexingSampleProvider(new ISampleProvider[] { input1.Object }, 1));
         }
 
+        /// <summary>
+        /// 1 入 1 出で WaveFormat がコピーされることを確認する。
+        /// </summary>
         [Test]
         public void OneInOneOutShouldCopyWaveFormat()
         {
@@ -49,6 +67,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(inputWaveFormat, mp.WaveFormat);
         }
 
+        /// <summary>
+        /// 1 入 2 出で WaveFormat がコピーされステレオになることを確認する。
+        /// </summary>
         [Test]
         public void OneInTwoOutShouldCopyWaveFormatButBeStereo()
         {
@@ -60,6 +81,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(expectedOutputWaveFormat, mp.WaveFormat);
         }
 
+        /// <summary>
+        /// 1 入 1 出で Read が入力通り返すことを確認する。
+        /// </summary>
         [Test]
         public void OneInOneOutShouldCopyInReadMethod()
         {
@@ -69,6 +93,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// 1 入 2 出でモノラルがステレオに複製されることを確認する。
+        /// </summary>
         [Test]
         public void OneInTwoOutShouldConvertMonoToStereo()
         {
@@ -78,6 +105,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// 2 入 1 出で左チャンネルが選ばれることを確認する。
+        /// </summary>
         [Test]
         public void TwoInOneOutShouldSelectLeftChannel()
         {
@@ -87,6 +117,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// ConnectInputToOutput で右チャンネルを選択できることを確認する。
+        /// </summary>
         [Test]
         public void TwoInOneOutShouldCanBeConfiguredToSelectRightChannel()
         {
@@ -97,6 +130,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// ステレオ 1 入 2 出でそのままコピーされることを確認する。
+        /// </summary>
         [Test]
         public void StereoInTwoOutShouldCopyStereo()
         {
@@ -105,6 +141,9 @@ namespace NAudioTests.WaveStreams
             var mp = new MultiplexingSampleProvider(new ISampleProvider[] { input1 }, 2);
         }
 
+        /// <summary>
+        /// モノ 2 入 2 出でインターリーブされたステレオになることを確認する。
+        /// </summary>
         [Test]
         public void TwoMonoInTwoOutShouldCreateStereo()
         {
@@ -115,6 +154,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// ConnectInputToOutput で左右を入れ替えられることを確認する。
+        /// </summary>
         [Test]
         public void StereoInTwoOutCanBeConfiguredToSwapLeftAndRight()
         {
@@ -126,6 +168,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// ConnectInputToOutput を呼び出せることを確認する。
+        /// </summary>
         [Test]
         public void HasConnectInputToOutputMethod()
         {
@@ -134,6 +179,9 @@ namespace NAudioTests.WaveStreams
             mp.ConnectInputToOutput(1, 0);
         }
 
+        /// <summary>
+        /// 無効な入力チャンネルで ConnectInputToOutput が例外をスローすることを確認する。
+        /// </summary>
         [Test]
         public void ConnectInputToOutputThrowsExceptionForInvalidInput()
         {
@@ -142,6 +190,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<ArgumentException>(() => mp.ConnectInputToOutput(2, 0));
         }
 
+        /// <summary>
+        /// 無効な出力チャンネルで ConnectInputToOutput が例外をスローすることを確認する。
+        /// </summary>
         [Test]
         public void ConnectInputToOutputThrowsExceptionForInvalidOutput()
         {
@@ -150,6 +201,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<ArgumentException>(() => mp.ConnectInputToOutput(1, 1));
         }
 
+        /// <summary>
+        /// InputChannelCount が正しいことを確認する。
+        /// </summary>
         [Test]
         public void InputChannelCountIsCorrect()
         {
@@ -159,6 +213,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(3, mp.InputChannelCount);
         }
 
+        /// <summary>
+        /// OutputChannelCount が正しいことを確認する。
+        /// </summary>
         [Test]
         public void OutputChannelCountIsCorrect()
         {
@@ -167,6 +224,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(3, mp.OutputChannelCount);
         }
 
+        /// <summary>
+        /// 入力のサンプルレートが異なると ArgumentException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void ThrowsExceptionIfSampleRatesDiffer()
         {
@@ -175,6 +235,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<ArgumentException>(() => new MultiplexingSampleProvider(new ISampleProvider[] { input1, input2 }, 1));
         }
 
+        /// <summary>
+        /// 単一入力が終端に達すると Read が 0 を返すことを確認する。
+        /// </summary>
         [Test]
         public void ReadReturnsZeroIfSingleInputHasReachedEnd()
         {
@@ -186,6 +249,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, read);
         }
 
+        /// <summary>
+        /// 一方の入力のみ終了した場合に Read が要求数を返すことを確認する。
+        /// </summary>
         [Test]
         public void ReadReturnsCountIfOneInputHasEndedButTheOtherHasnt()
         {
@@ -196,6 +262,9 @@ namespace NAudioTests.WaveStreams
             mp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// 入力が不足した分がバッファでゼロ埋めされることを確認する。
+        /// </summary>
         [Test]
         public void ShouldZeroOutBufferIfInputStopsShort()
         {
@@ -212,6 +281,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(expected, buffer);
         }
 
+        /// <summary>
+        /// マルチプレックス処理のパフォーマンス計測用メソッド。
+        /// </summary>
         public void PerformanceTest()
         {
             var input1 = new TestSampleProvider(32000, 1);

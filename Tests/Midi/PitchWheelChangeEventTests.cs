@@ -5,10 +5,16 @@ using System.IO;
 
 namespace NAudioTests.Midi
 {
+    /// <summary>
+    /// PitchWheelChangeEvent の GetAsShortMessage と Export のテスト。
+    /// </summary>
     [TestFixture]
-    [Category("UnitTest")]    
+    [Category("UnitTest")]
     public class PitchWheelChangeEventTests
     {
+        /// <summary>
+        /// GetAsShortMessage が期待した値を返すことを確認する。
+        /// </summary>
         [Test]
         public void GetAsShortMessageReturnsCorrectValue()
         {
@@ -19,6 +25,9 @@ namespace NAudioTests.Midi
             ClassicAssert.AreEqual(0x007F7FE1, p.GetAsShortMessage());
         }
 
+        /// <summary>
+        /// Export で正しいバイト列が出力されることを確認する。
+        /// </summary>
         [Test]
         public void ExportsCorrectValue()
         {

@@ -5,15 +5,24 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Dmo
 {
+    /// <summary>
+    /// ResamplerDmoStream の作成・読み取り・リサンプル出力のテスト。
+    /// </summary>
     [TestFixture]
     public class ResamplerDmoStreamTests
     {
+        /// <summary>
+        /// テスト実行前に Vista 以上であることを要求する。
+        /// </summary>
         [SetUp]
         public void SetUp()
         {
             OSUtils.RequireVista();
         }
 
+        /// <summary>
+        /// ResamplerDmoStream を生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateResamplerStream()
@@ -30,6 +39,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// リサンプラストリームから 1 ブロック読み取りできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanReadABlockFromResamplerStream()
@@ -49,6 +61,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// ストリーム全体を IEEE float にリサンプルできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanResampleAWholeStreamToIEEE()
@@ -58,6 +73,9 @@ namespace NAudioTests.Dmo
             ResampleAWholeStream(inputFormat, outputFormat);
         }
 
+        /// <summary>
+        /// ストリーム全体を 48kHz PCM にリサンプルできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanResampleAWholeStreamTo48000PCM()
@@ -68,6 +86,9 @@ namespace NAudioTests.Dmo
         }
 
 
+        /// <summary>
+        /// ストリーム全体を 44100Hz IEEE にリサンプルできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanResampleAWholeStreamTo44100IEEE()
@@ -77,6 +98,9 @@ namespace NAudioTests.Dmo
             ResampleAWholeStream(inputFormat, outputFormat);
         }
 
+        /// <summary>
+        /// ストリーム全体を 44100Hz PCM にリサンプルできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanResampleAWholeStreamTo44100PCM()

@@ -10,15 +10,24 @@ using NAudio.Wave;
 
 namespace NAudioTests.Dmo
 {
+    /// <summary>
+    /// DMO オーディオエフェクトの作成と DmoEffectWaveProvider のテスト。
+    /// </summary>
     [TestFixture]
     public class DmoEffectorTests
     {
+        /// <summary>
+        /// テスト実行前に Vista 以上であることを要求する。
+        /// </summary>
         [SetUp]
         public void SetUp()
         {
             OSUtils.RequireVista();
         }
 
+        /// <summary>
+        /// DmoGargle エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoGargle()
@@ -45,6 +54,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoChorus エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoChorus()
@@ -71,6 +83,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoFlanger エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoFlanger()
@@ -97,6 +112,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoEcho エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoEcho()
@@ -123,6 +141,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoDistortion エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoDistortion()
@@ -149,6 +170,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoCompressor エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoCompressor()
@@ -175,6 +199,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoParamEq エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoParamEq()
@@ -201,6 +228,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoI3DL2Reverb エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoI3DL2Reverb()
@@ -227,6 +257,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoWavesReverb エフェクトを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoWavesReverb()
@@ -253,6 +286,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoEffectWaveProvider を生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoEffectWaveProvider()
@@ -274,6 +310,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// DmoEffectWaveProvider から 1 ブロック読み取りできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanReadABlockFromDmoEffectWaveProvider()

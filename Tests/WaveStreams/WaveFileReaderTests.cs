@@ -10,9 +10,15 @@ using NAudio.FileFormats.Wav;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WaveFileReader の空ファイル・サンプルアクセス・Dispose・Mp3 のテスト。
+    /// </summary>
     [TestFixture]
     public class WaveFileReaderTests
     {
+        /// <summary>
+        /// 空の WAV ヘッダを正しくパースできることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void TestEmptyFile()
@@ -52,6 +58,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// モノラルファイルでサンプルを 1 フレームずつ読めることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void CanAccessSamplesIndividuallyInAMonoFile()
@@ -75,6 +84,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// ステレオファイルでサンプルを 1 フレームずつ読めることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void CanAccessSamplesIndividuallyInAStereoFile()
@@ -101,6 +113,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 24bit ステレオファイルでサンプルを 1 フレームずつ読めることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void CanAccessSamplesIndividuallyInAStereo24BitFile()
@@ -127,6 +142,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 問題になりがちな WAV を開いて最後まで読めることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemWavFiles()
@@ -155,6 +173,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// ヘッダのないファイルでパスから構築した場合に例外となることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void DisposeOfStreamWhenConstructedFromFilePath()
@@ -177,6 +198,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// Mp3FileReader がパース失敗時にファイルを閉じることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void Mp3FileReaderDisposesFileOnFailToParse()

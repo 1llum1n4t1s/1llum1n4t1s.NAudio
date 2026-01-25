@@ -5,10 +5,16 @@ using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// BlockAlignReductionStream の作成・読み取り・シークのテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class BlockAlignmentReductionStreamTests
     {
+        /// <summary>
+        /// BlockAlignReductionStream を生成できることを確認する。
+        /// </summary>
         [Test]
         public void CanCreateBlockAlignmentReductionStream()
         {
@@ -18,6 +24,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(2, blockStream.BlockAlign);
         }
 
+        /// <summary>
+        /// ブロック境界に揃わない長さで読み取りできることを確認する。
+        /// </summary>
         [Test]
         public void CanReadNonBlockAlignedLengths()
         {
@@ -40,6 +49,9 @@ namespace NAudioTests.WaveStreams
 
         }
 
+        /// <summary>
+        /// ブロック境界に揃わない位置にシークできることを確認する。
+        /// </summary>
         [Test]
         public void CanRepositionToNonBlockAlignedPositions()
         {

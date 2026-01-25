@@ -5,10 +5,16 @@ using NAudio.Wave;
 
 namespace NAudioTests.WaveFormats
 {
+    /// <summary>
+    /// AdpcmWaveFormat の構造体サイズと内容のテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class AdpcmWaveFormatTests
     {
+        /// <summary>
+        /// WaveFormat および AdpcmWaveFormat の Marshal サイズが期待通りであることを確認する。
+        /// </summary>
         [Test]
         public void StructureSizeIsCorrect()
         {
@@ -18,6 +24,9 @@ namespace NAudioTests.WaveFormats
             ClassicAssert.AreEqual(18 + 32, Marshal.SizeOf(adpcmWaveFormat), "WaveFormat Size");            
         }
 
+        /// <summary>
+        /// AdpcmWaveFormat の各フィールドが期待値であることを確認する。
+        /// </summary>
         [Test]
         public void StructureContentsAreCorrect()
         {

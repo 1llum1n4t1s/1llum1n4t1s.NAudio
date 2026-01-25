@@ -5,9 +5,15 @@ using System.IO;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WaveChannel32 で WAV を作成するテスト。
+    /// </summary>
     [TestFixture]
     public class WaveChannel32Tests
     {
+        /// <summary>
+        /// WaveChannel32 から WAV ファイルを生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateWavFileFromWaveChannel32()

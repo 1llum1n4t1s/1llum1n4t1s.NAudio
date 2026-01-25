@@ -7,10 +7,16 @@ using NAudio.Wave.Compression;
 
 namespace NAudioTests.Acm
 {
+    /// <summary>
+    /// ACM ドライバー列挙・検索・オープン／クローズのテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class AcmDriverTests
     {
+        /// <summary>
+        /// ACM ドライバーを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateDrivers()
         {
@@ -24,24 +30,36 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// 存在しないコーデックでは false が返ることを確認する。
+        /// </summary>
         [Test]
         public void DoesntFindNonexistentCodec()
         {
             ClassicAssert.IsFalse(AcmDriver.IsCodecInstalled("ASJHASDHJSAK"));
         }
 
+        /// <summary>
+        /// 標準コーデック（MS-ADPCM）がインストールされていることを確認する。
+        /// </summary>
         [Test]
         public void FindsStandardCodec()
         {
             ClassicAssert.IsTrue(AcmDriver.IsCodecInstalled("MS-ADPCM"));
         }
 
+        /// <summary>
+        /// ショート名でドライバーを検索できることを確認する。
+        /// </summary>
         [Test]
         public void HasFindByShortNameMethod()
         {
             var driver = AcmDriver.FindByShortName("WM-AUDIO");
         }
 
+        /// <summary>
+        /// 各ドライバーをオープン・クローズできることを確認する。
+        /// </summary>
         [Test]
         public void CanOpenAndCloseDriver()
         {
@@ -54,6 +72,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// 各ドライバーのフォーマットタグを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateFormatTags()
         {
@@ -77,6 +98,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// フォーマットタグに属するフォーマットを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateFormats()
         {

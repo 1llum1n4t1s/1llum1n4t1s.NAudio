@@ -5,9 +5,15 @@ using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// VolumeWaveProvider16 のデフォルト値・透過・ボリューム・クリップのテスト。
+    /// </summary>
     [TestFixture]
     public class VolumeWaveProvider16Tests
     {
+        /// <summary>
+        /// デフォルトの Volume が 1 であることを確認する。
+        /// </summary>
         [Test]
         public void DefaultVolumeIs1()
         {
@@ -16,6 +22,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(1.0f, vwp.Volume);
         }
 
+        /// <summary>
+        /// WaveFormat がソースをそのまま返すことを確認する。
+        /// </summary>
         [Test]
         public void PassesThroughSourceWaveFormat()
         {
@@ -24,6 +33,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreSame(testProvider.WaveFormat, vwp.WaveFormat);
         }
 
+        /// <summary>
+        /// Volume 1 でデータがそのまま通過することを確認する。
+        /// </summary>
         [Test]
         public void PassesThroughDataUnchangedAtVolume1()
         {
@@ -35,6 +47,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }, buffer);
         }
 
+        /// <summary>
+        /// 0.5 倍ボリュームが正しく適用されることを確認する。
+        /// </summary>
         [Test]
         public void HalfVolumeWorks()
         {
@@ -47,6 +62,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(new byte[] { 50, 50, 50, 50 }, buffer);
         }
 
+        /// <summary>
+        /// 0 ボリュームで無音になることを確認する。
+        /// </summary>
         [Test]
         public void ZeroVolumeWorks()
         {
@@ -59,6 +77,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(new byte[] { 0, 0, 0, 0 }, buffer);
         }
 
+        /// <summary>
+        /// 2 倍ボリュームが正しく適用されることを確認する。
+        /// </summary>
         [Test]
         public void DoubleVolumeWorks()
         {
@@ -74,6 +95,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(BitConverter.GetBytes(sampleValue), buffer);
         }
 
+        /// <summary>
+        /// 2 倍ボリュームでクリップすることを確認する。
+        /// </summary>
         [Test]
         public void DoubleVolumeClips()
         {

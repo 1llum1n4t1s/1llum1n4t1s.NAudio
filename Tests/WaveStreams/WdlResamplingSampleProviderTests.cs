@@ -8,9 +8,15 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WdlResamplingSampleProvider のダウンサンプル・アップ/ダウンリサンプルのテスト。
+    /// </summary>
     [TestFixture]
     public class WdlResamplingSampleProviderTests
     {
+        /// <summary>
+        /// MP3 ファイルをダウンサンプルして WAV に書き出せることを確認する。
+        /// </summary>
         [Test]
         public void CanDownsampleAnMp3File()
         {
@@ -38,6 +44,11 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 指定サンプルレートから別レートへリサンプルして読めることを確認する。
+        /// </summary>
+        /// <param name="from">入力サンプルレート。</param>
+        /// <param name="to">出力サンプルレート。</param>
         [TestCase(8000, 16000)]
         [TestCase(8000, 22050)]
         [TestCase(8000, 32000)]

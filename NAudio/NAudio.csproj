@@ -1,24 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0-windows</TargetFrameworks>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWindowsForms>true</UseWindowsForms>
-    <PackageId>YAudio</PackageId>
-    <Version>1.0.6</Version>
-    <Authors>Mark Heath,Contributors,ゆろち</Authors>
+    <PackageId>1llum1n4t1s.NAudio</PackageId>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>NAudio, an audio library for .NET</Description>
-    <PackageProjectUrl>https://github.com/1llum1n4t1s/YAudio</PackageProjectUrl>
     <PackageTags>C# .NET audio sound</PackageTags>
-    <RepositoryUrl>https://github.com/1llum1n4t1s/YAudio</RepositoryUrl>
-    <Copyright>Copyright (c) 2001-2025 Mark Heath, 2026 ゆろち</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageLicenseFile>license.txt</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\NAudioStrongNameKey.snk</AssemblyOriginatorKeyFile>
-    <PackageIcon>naudio-icon.png</PackageIcon>
+    <PackageIcon>app_icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -70,7 +60,7 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-    <None Include="..\naudio-icon.png">
+    <None Include="..\icon\app_icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
@@ -79,4 +69,8 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <Target Name="GenerateIcon" BeforeTargets="Build">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)..\icon\generate_icon.ps1&quot;" />
+  </Target>
 </Project>

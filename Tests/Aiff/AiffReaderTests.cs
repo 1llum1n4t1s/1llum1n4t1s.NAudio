@@ -7,9 +7,15 @@ using System.Diagnostics;
 
 namespace NAudioTests.Aiff
 {
+    /// <summary>
+    /// AIFF ファイル読み取りと WAV 変換のテスト。
+    /// </summary>
     [TestFixture]
     public class AiffReaderTests
     {
+        /// <summary>
+        /// 指定フォルダ内の AIFF を WAV に変換できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ConvertAiffToWav()

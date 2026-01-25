@@ -6,10 +6,16 @@ using System.Diagnostics;
 
 namespace NAudioTests
 {
+    /// <summary>
+    /// ミキサー API（デバイス列挙・WaveIn 関連）のテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MixerApiTests
     {
+        /// <summary>
+        /// 全ミキサーデバイスのコントロールを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateAllMixerControls()
         {
@@ -22,6 +28,9 @@ namespace NAudioTests
             }
         }
 
+        /// <summary>
+        /// デフォルト WaveIn のミキサーおよびマイクボリュームを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanFindDefaultWaveIn()
         {
@@ -62,6 +71,9 @@ namespace NAudioTests
             }
         }
 
+        /// <summary>
+        /// WaveIn からミキサーラインを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetWaveInMixerLine()
         {

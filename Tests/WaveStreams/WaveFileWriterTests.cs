@@ -8,10 +8,16 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WaveFileWriter の Write/Flush/CreateWaveFile/WriteSample/大ファイルのテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class WaveFileWriterTests
     {
+        /// <summary>
+        /// Write で書き込んだデータを Reader で同一に読めることを確認する。
+        /// </summary>
         [Test]
         public void ReaderShouldReadBackSameDataWrittenWithWrite()
         {
@@ -40,6 +46,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// Dispose 前に Flush すればヘッダが更新されることを確認する。
+        /// </summary>
         [Test]
         public void FlushUpdatesHeaderEvenIfDisposeNotCalled()
         {
@@ -74,6 +83,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// CreateWaveFile で指定長のファイルができることを確認する。
+        /// </summary>
         [Test]
         public void CreateWaveFileCreatesFileOfCorrectLength()
         {
@@ -98,6 +110,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 16bit ファイルに WriteSample で書き込めることを確認する。
+        /// </summary>
         [Test]
         public void CanUseWriteSampleToA16BitFile()
         {
@@ -113,6 +128,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 2GB 超の WAV ファイルを作成できることを確認する（Explicit）。
+        /// </summary>
         [Test]
         [Explicit]
         public void CanCreateWaveFileGreaterThan2Gb()
@@ -130,8 +148,11 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 4GB 超の WAV 作成が ArgumentException で失敗することを確認する（Explicit）。
+        /// </summary>
         [Test]
-        [Explicit]        
+        [Explicit]
         public void FailsToCreateWaveFileGreaterThan4Gb()
         {
             var tempFile = Path.GetTempFileName();

@@ -8,15 +8,24 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Dmo
 {
+    /// <summary>
+    /// DMO リサンプラーの入力/出力フォーマット・処理のテスト。
+    /// </summary>
     [TestFixture]
     public class ResamplerDmoTests
     {
+        /// <summary>
+        /// テスト実行前に Vista 以上であることを要求する。
+        /// </summary>
         [SetUp]
         public void SetUp()
         {
             OSUtils.RequireVista();            
         }
 
+        /// <summary>
+        /// DmoResampler を生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateResamplerMediaObject()
@@ -24,6 +33,9 @@ namespace NAudioTests.Dmo
             var dmoResampler = new DmoResampler();
         }
 
+        /// <summary>
+        /// リサンプラーの入力メディアタイプを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineInputTypesOnResampler()
@@ -39,6 +51,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// リサンプラーの出力メディアタイプを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineOutputTypesOnResampler()
@@ -54,6 +69,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// 44.1kHz 16bit PCM 入力がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupports16BitPCM41000Input()
@@ -62,6 +80,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
+        /// <summary>
+        /// 8kHz 16bit PCM 入力がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupports16BitPCM8000Input()
@@ -70,6 +91,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
+        /// <summary>
+        /// 44.1kHz IEEE float 入力がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupportsIEEE44100Input()
@@ -78,6 +102,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
+        /// <summary>
+        /// 8kHz IEEE float 入力がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupportsIEEE8000Input()
@@ -86,6 +113,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerInputFormatSupported(waveFormat));
         }
 
+        /// <summary>
+        /// 8kHz から 44.1kHz IEEE への変換がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupports8000To44100IEEE()
@@ -95,6 +125,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerConversionSupported(inputFormat, outputFormat));
         }
 
+        /// <summary>
+        /// 44.1kHz から 48kHz IEEE への変換がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupports41000To48000IEEE()
@@ -104,6 +137,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerConversionSupported(inputFormat, outputFormat));
         }
 
+        /// <summary>
+        /// PCM から IEEE float への変換がサポートされることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerSupportsPCMToIEEE()
@@ -113,6 +149,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsTrue(IsResamplerConversionSupported(inputFormat, outputFormat));
         }
 
+        /// <summary>
+        /// 入出力バッファサイズを取得できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerCanGetInputAndOutputBufferSizes()
@@ -128,6 +167,9 @@ namespace NAudioTests.Dmo
             Debug.WriteLine(outputSizeInfo.ToString());
         }
 
+        /// <summary>
+        /// ProcessInput を呼び出せることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerCanCallProcessInput()
@@ -142,6 +184,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// ProcessOutput を呼び出せることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ResamplerCanCallProcessOutput()

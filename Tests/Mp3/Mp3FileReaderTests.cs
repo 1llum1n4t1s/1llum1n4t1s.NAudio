@@ -7,9 +7,15 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Mp3
 {
+    /// <summary>
+    /// Mp3FileReader の読み取り・フレーム・例外のテスト。
+    /// </summary>
     [TestFixture]
     public class Mp3FileReaderTests
     {
+        /// <summary>
+        /// 問題になりがちな MP3 ファイルを開いて最後まで読めることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemMp3Files()
@@ -38,6 +44,9 @@ namespace NAudioTests.Mp3
             }
         }
 
+        /// <summary>
+        /// ReadNextFrame で Position が進むことを確認する。
+        /// </summary>
         [Test]
         public void ReadFrameAdvancesPosition()
         {
@@ -62,6 +71,9 @@ namespace NAudioTests.Mp3
             }
         }
 
+        /// <summary>
+        /// 長さ 0 のストリームで InvalidDataException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void CopesWithZeroLengthMp3()
         {

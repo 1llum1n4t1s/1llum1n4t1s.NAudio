@@ -5,10 +5,16 @@ using NAudio.Midi;
 
 namespace NAudioTests.Midi
 {
+    /// <summary>
+    /// MidiEventCollection の Type0/Type1 および PrepareForExport のテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class MidiEventCollectionTest
     {
+        /// <summary>
+        /// Type1 で複数トラックが正しく集約されることを確認する。
+        /// </summary>
         [Test]
         public void TestType1()
         {
@@ -30,6 +36,9 @@ namespace NAudioTests.Midi
             ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
+        /// <summary>
+        /// Type0 で単一トラックになることを確認する。
+        /// </summary>
         [Test]
         public void TestType0()
         {
@@ -49,6 +58,9 @@ namespace NAudioTests.Midi
             ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
+        /// <summary>
+        /// Type1 から Type0 に変更すると単一トラックになることを確認する。
+        /// </summary>
         [Test]
         public void TestType1ToType0()
         {
@@ -69,6 +81,9 @@ namespace NAudioTests.Midi
             ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
+        /// <summary>
+        /// Type0 から Type1 に変更すると複数トラックに分かれることを確認する。
+        /// </summary>
         [Test]
         public void TestType0ToType1()
         {

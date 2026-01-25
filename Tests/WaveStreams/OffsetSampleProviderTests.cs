@@ -7,9 +7,15 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// OffsetSampleProvider のディレイ・スキップ・Take・リードアウト・ブロックアラインのテスト。
+    /// </summary>
     [TestFixture]
     public class OffsetSampleProviderTests
     {
+        /// <summary>
+        /// 既定ではソースがそのまま通過することを確認する。
+        /// </summary>
         [Test]
         public void DefaultShouldPassStraightThrough()
         {
@@ -20,6 +26,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// プリディレイ（サンプル数）を追加できることを確認する。
+        /// </summary>
         [Test]
         public void CanAddPreDelay()
         {
@@ -31,6 +40,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// TimeSpan でプリディレイを追加できることを確認する。
+        /// </summary>
         [Test]
         public void CanAddPreDelayUsingTimeSpan()
         {
@@ -42,6 +54,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// ステレオソースに TimeSpan でプリディレイを追加できることを確認する。
+        /// </summary>
         [Test]
         public void CanAddPreDelayToStereoSourceUsingTimeSpan()
         {
@@ -53,6 +68,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected);
         }
         
+        /// <summary>
+        /// TimeSpan で設定したプリディレイが正しく返ることを確認する。
+        /// </summary>
         [Test]
         public void SettingPreDelayUsingTimeSpanReturnsCorrectTimeSpan()
         {
@@ -63,6 +81,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(500, osp.DelayBySamples);
         }
 
+        /// <summary>
+        /// SkipOverSamples で先頭をスキップできることを確認する。
+        /// </summary>
         [Test]
         public void CanSkipOver()
         {
@@ -73,6 +94,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// TakeSamples で指定サンプル数だけ取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanTake()
         {
@@ -84,6 +108,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// Take で 30 秒分だけ取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanTakeThirtySeconds()
         {
@@ -103,6 +130,9 @@ namespace NAudioTests.WaveStreams
 
         }
 
+        /// <summary>
+        /// リードアウト（末尾無音）を追加できることを確認する。
+        /// </summary>
         [Test]
         public void CanAddLeadOut()
         {
@@ -115,6 +145,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected2, 100);
         }
 
+        /// <summary>
+        /// Take なしの場合、リードアウトはソース読み取り完了後にのみ始まることを確認する。
+        /// </summary>
         [Test]
         public void LeadOutWithoutTakeOnlyBeginsAfterSourceIsCompletelyRead()
         {
@@ -129,6 +162,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected3, 6);
         }
 
+        /// <summary>
+        /// WaveFormat がソースと同一であることを確認する。
+        /// </summary>
         [Test]
         public void WaveFormatIsSampeAsSource()
         {
@@ -138,6 +174,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// プリディレイの内部状態が維持されることを確認する。
+        /// </summary>
         [Test]
         public void MaintainsPredelayState()
         {
@@ -152,6 +191,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected3);
         }
 
+        /// <summary>
+        /// Take の直後にリードアウトを続けられることを確認する。
+        /// </summary>
         [Test]
         public void CanFollowTakeWithLeadout()
         {
@@ -163,6 +205,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected);
         }
 
+        /// <summary>
+        /// Take の読み取り状態が維持されることを確認する。
+        /// </summary>
         [Test]
         public void MaintainsTakeState()
         {
@@ -175,6 +220,9 @@ namespace NAudioTests.WaveStreams
             osp.AssertReadsExpected(expected2, 20);
         }
 
+        /// <summary>
+        /// Read 呼び出し後に DelayBySamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetDelayBySamplesAfterCallingRead()
         {
@@ -186,6 +234,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<InvalidOperationException>(() => osp.DelayBySamples = 4);
         }
 
+        /// <summary>
+        /// Read 呼び出し後に LeadOutSamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetLeadOutSamplesAfterCallingRead()
         {
@@ -197,6 +248,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<InvalidOperationException>(() => osp.LeadOutSamples = 4);
         }
 
+        /// <summary>
+        /// Read 呼び出し後に SkipOverSamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetSkipOverSamplesAfterCallingRead()
         {
@@ -208,6 +262,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<InvalidOperationException>(() => osp.SkipOverSamples = 4);
         }
 
+        /// <summary>
+        /// Read 呼び出し後に TakeSamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetTakeSamplesAfterCallingRead()
         {
@@ -219,6 +276,9 @@ namespace NAudioTests.WaveStreams
             Assert.Throws<InvalidOperationException>(() => osp.TakeSamples = 4);
         }
 
+        /// <summary>
+        /// ソース全体をスキップした場合に正しく空になることを確認する。
+        /// </summary>
         [Test]
         public void HandlesSkipOverEntireSourceCorrectly()
         {
@@ -231,6 +291,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// ブロック境界に揃わない DelayBySamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetNonBlockAlignedDelayBySamples()
         {
@@ -241,6 +304,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.That(ex.Message.Contains("DelayBySamples"));
         }
 
+        /// <summary>
+        /// ブロック境界に揃わない SkipOverSamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetNonBlockAlignedSkipOverSamples()
         {
@@ -251,6 +317,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.That(ex.Message.Contains("SkipOverSamples"));
         }
 
+        /// <summary>
+        /// ブロック境界に揃わない TakeSamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetNonBlockAlignedTakeSamples()
         {
@@ -262,6 +331,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// ブロック境界に揃わない LeadOutSamples を設定すると例外になることを確認する。
+        /// </summary>
         [Test]
         public void CantSetNonBlockAlignedLeadOutSamples()
         {

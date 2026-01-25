@@ -9,15 +9,24 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Dmo
 {
+    /// <summary>
+    /// DmoMp3FrameDecompressor および Windows Media MP3 デコーダのテスト。
+    /// </summary>
     [TestFixture]
     public class DmoMp3FrameDecompressorTests
     {
+        /// <summary>
+        /// テスト実行前に Vista 以上であることを要求する。
+        /// </summary>
         [SetUp]
         public void SetUp()
         {
             OSUtils.RequireVista();
         }
 
+        /// <summary>
+        /// DmoMp3FrameDecompressor を生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoMp3FrameDecompressor()
@@ -27,6 +36,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsNotNull(frameDecompressor);
         }
 
+        /// <summary>
+        /// MP3 フレームをデコードできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanDecompressAnMp3()
@@ -52,6 +64,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// MP3 デコーダの入力メディアタイプを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineInputTypesOnMp3Decoder()
@@ -64,6 +79,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// デコーダの出力メディアタイプを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineOutputTypesOnDecoder()
@@ -78,6 +96,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// Windows Media MP3 デコーダがステレオ MP3 をサポートすることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void WindowsMediaMp3DecoderSupportsStereoMp3()

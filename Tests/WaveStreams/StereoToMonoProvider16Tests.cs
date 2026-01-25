@@ -4,10 +4,16 @@ using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// StereoToMonoProvider16 の右チャンネルのみ出力のテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class StereoToMonoProvider16Tests
     {
+        /// <summary>
+        /// 右チャンネルのみにボリュームを付けてモノラルで読めることを確認する。
+        /// </summary>
         [Test]
         public void RightChannelOnly()
         {

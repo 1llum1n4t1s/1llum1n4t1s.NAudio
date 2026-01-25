@@ -5,9 +5,15 @@ using System.IO;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// AudioFileReader の Dispose のテスト。
+    /// </summary>
     [TestFixture]
     public class AudioFileReaderTests
     {
+        /// <summary>
+        /// 複数回 Dispose しても例外が発生しないことを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanBeDisposedMoreThanOnce()

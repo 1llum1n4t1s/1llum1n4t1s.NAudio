@@ -1,22 +1,19 @@
 <Solution>
   <Configurations>
-    <Platform Name="Any CPU" />
-    <Platform Name="ARM" />
     <Platform Name="x64" />
-    <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Samples/">
     <Project Path="NAudio/AudioFileInspector/AudioFileInspector.csproj">
+      <Platform Project="x64" />
       <Build Solution="*|x64" Project="false" />
-      <Build Solution="*|x86" Project="false" />
     </Project>
     <Project Path="NAudio/MidiFileConverter/MidiFileConverter.csproj">
+      <Platform Project="x64" />
       <Build Solution="*|x64" Project="false" />
-      <Build Solution="*|x86" Project="false" />
     </Project>
     <Project Path="NAudio/MixDiff/MixDiff.csproj">
+      <Platform Project="x64" />
       <Build Solution="*|x64" Project="false" />
-      <Build Solution="*|x86" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/Solution Items/">
@@ -60,11 +57,9 @@
     <File Path="Docs/WaveProviders.md" />
   </Folder>
   <Project Path="NAudio/NAudio.csproj">
-    <Build Solution="*|x64" Project="false" />
-    <Build Solution="*|x86" Project="false" />
+    <Platform Project="x64" />
   </Project>
   <Project Path="Tests/NAudioTests.csproj">
-    <Build Solution="*|x64" Project="false" />
-    <Build Solution="*|x86" Project="false" />
+    <Platform Project="x64" />
   </Project>
 </Solution>

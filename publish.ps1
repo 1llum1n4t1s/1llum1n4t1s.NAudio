@@ -7,7 +7,7 @@ if (-not $apiKey)
     throw "Need to set the API key first"
 }
 
-# publish the unified YAudio package
+# publish the unified 1llum1n4t1s.NAudio package
 $folder = "$PSScriptRoot\NAudio\bin\Release"
 $recent = gci "$folder\*.nupkg" | sort LastWriteTime | select -last 1
 if ($recent)

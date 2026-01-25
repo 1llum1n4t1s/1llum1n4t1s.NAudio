@@ -5,9 +5,15 @@ using System.Diagnostics;
 
 namespace NAudioTests.Dmo
 {
+    /// <summary>
+    /// DMO オーディオエフェクト・エンコーダ・デコーダ列挙のテスト。
+    /// </summary>
     [TestFixture]
     public class DmoTests
     {
+        /// <summary>
+        /// オーディオエフェクト DMO を列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanEnumerateAudioEffects()
@@ -20,6 +26,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// オーディオエンコーダ DMO を列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanEnumerateAudioEncoders()
@@ -31,6 +40,9 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// オーディオデコーダ DMO を列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanEnumerateAudioDecoders()

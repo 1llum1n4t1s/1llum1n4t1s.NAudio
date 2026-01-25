@@ -5,17 +5,26 @@ using NAudio.Wave;
 
 namespace NAudioTests
 {
+    /// <summary>
+    /// WaveIn / WaveOut デバイス数・ケーパビリティ・レジストリ名のテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class WaveInDevicesTests
     {
+        /// <summary>
+        /// WaveIn デバイス数を取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanRequestNumberOfWaveInDevices()
         {
             var deviceCount = WaveIn.DeviceCount;
             ClassicAssert.That(deviceCount > 0, "Expected at least one WaveIn device");
         }
-        
+
+        /// <summary>
+        /// 各 WaveIn デバイスのケーパビリティを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetWaveInDeviceCapabilities()
         {
@@ -28,6 +37,9 @@ namespace NAudioTests
             }
         }
 
+        /// <summary>
+        /// WaveIn の Caps2 名をレジストリから取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetWaveInCaps2NamesFromRegistry()
         {
@@ -42,6 +54,9 @@ namespace NAudioTests
         }
 
 
+        /// <summary>
+        /// WaveOut の Caps2 名をレジストリから取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetWaveOutCaps2NamesFromRegistry()
         {

@@ -6,10 +6,17 @@ using NAudio.Wave.SampleProviders;
 
 namespace NAudioTests.Acm
 {
+    /// <summary>
+    /// GSM 610 エンコード／デコードのテスト。
+    /// </summary>
     [TestFixture]
     public class GsmEncodeTest
     {
         private string tempFolder;
+
+        /// <summary>
+        /// テスト用一時フォルダを準備する。
+        /// </summary>
         [OneTimeSetUp]
         public void Setup()
         {
@@ -39,6 +46,9 @@ namespace NAudioTests.Acm
             return new RawSourceWaveStream(new MemoryStream(data), outFormat);
         }
 
+        /// <summary>
+        /// PCM を GSM でエンコードして WAV に書き出せることを確認する。
+        /// </summary>
         [Test]
         public void CanEncodeGsm()
         {            
@@ -51,6 +61,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// GSM WAV を PCM にデコードできることを確認する。
+        /// </summary>
         [Test]
         public void CanDecodeGsm()
         {

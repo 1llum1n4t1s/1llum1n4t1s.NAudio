@@ -8,10 +8,16 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.MediaFoundation
 {
+    /// <summary>
+    /// MediaFoundationReader で AAC 等を読み取るテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MediaFoundationReaderTests
     {
+        /// <summary>
+        /// AAC ファイルを読み取れることを確認する。
+        /// </summary>
         [Test]
         public void CanReadAnAac()
         {
@@ -30,10 +36,16 @@ namespace NAudioTests.MediaFoundation
         }
     }
 
+    /// <summary>
+    /// MediaFoundation によるエンコードのテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MediaFoundationEncoderTests
     {
+        /// <summary>
+        /// 大きい GSM610 WAV を MP3 にエンコードできることを確認する。
+        /// </summary>
         [Test]
         public void CanEncodeLargeGSM610FileToMp3()
         {

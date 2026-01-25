@@ -9,10 +9,16 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Acm
 {
+    /// <summary>
+    /// WaveFormatConversionStream によるフォーマット変換のテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class WaveFormatConversionStreamTests
     {
+        /// <summary>
+        /// PCM から μLaw への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertPcmToMuLaw()
         {
@@ -23,6 +29,9 @@ namespace NAudioTests.Acm
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.MuLaw, sampleRate, channels, sampleRate * channels, 1, 8));
         }
 
+        /// <summary>
+        /// PCM から A-law への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertPcmToALaw()
         {
@@ -47,6 +56,9 @@ namespace NAudioTests.Acm
                 new Mp3WaveFormat(sampleRate, channels, 0, 128000/8)); 
         }*/
 
+        /// <summary>
+        /// A-law から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertALawToPcm()
         {
@@ -57,6 +69,9 @@ namespace NAudioTests.Acm
                 new WaveFormat(sampleRate, 16, channels));
         }
 
+        /// <summary>
+        /// μLaw から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertMuLawToPcm()
         {
@@ -67,6 +82,9 @@ namespace NAudioTests.Acm
                 new WaveFormat(sampleRate, 16, channels));
         }
 
+        /// <summary>
+        /// ADPCM から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertAdpcmToPcm()
         {
@@ -77,6 +95,9 @@ namespace NAudioTests.Acm
                 new WaveFormat(sampleRate, 16, channels));
         }
 
+        /// <summary>
+        /// ADPCM を推奨 PCM フォーマットに変換できることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertAdpcmToSuggestedPcm()
         {
@@ -86,6 +107,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// A-law を推奨 PCM フォーマットに変換できることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertALawToSuggestedPcm()
         {
@@ -95,6 +119,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// μLaw を推奨 PCM フォーマットに変換できることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertMuLawToSuggestedPcm()
         {
@@ -104,6 +131,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// PCM から ADPCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertPcmToAdpcm()
         {
@@ -114,6 +144,9 @@ namespace NAudioTests.Acm
                 new AdpcmWaveFormat(8000, 1));
         }
 
+        /// <summary>
+        /// IMA/IMA ADPCM から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertImeAdpcmToPcm()
         {

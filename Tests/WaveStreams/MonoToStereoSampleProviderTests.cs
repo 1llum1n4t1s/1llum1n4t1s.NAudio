@@ -5,9 +5,16 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// モノラルをステレオに変換する ToStereo のテスト。
+    /// </summary>
+    [TestFixture]
     [Category("UnitTest")]
     public class MonoToStereoSampleProviderTests
     {
+        /// <summary>
+        /// 左チャンネルのみにゲインを付けてステレオ出力されることを確認する。
+        /// </summary>
         [Test]
         public void LeftChannelOnly()
         {

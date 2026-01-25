@@ -5,10 +5,16 @@ using NAudio.Utils;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// CircularBuffer の MaxLength/Count/Read/Write/ラップのテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class CircularBufferTests
     {
+        /// <summary>
+        /// CircularBuffer が MaxLength と Count を持つことを確認する。
+        /// </summary>
         [Test]
         public void CircularBufferHasMaxLengthAndCount()
         {
@@ -17,6 +23,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, circularBuffer.Count);
         }
 
+        /// <summary>
+        /// 空バッファから Read すると 0 が返ることを確認する。
+        /// </summary>
         [Test]
         public void ReadFromEmptyBufferReturnsNothing()
         {
@@ -26,6 +35,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, read);
         }
 
+        /// <summary>
+        /// バッファに書き込め、Count が増えることを確認する。
+        /// </summary>
         [Test]
         public void CanWriteToBuffer()
         {
@@ -37,6 +49,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(150, circularBuffer.Count);
         }
 
+        /// <summary>
+        /// Read が利用可能量だけ返すことを確認する。
+        /// </summary>
         [Test]
         public void BufferReturnsAsMuchAsIsAvailable()
         {
@@ -49,6 +64,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(100, read);
         }
 
+        /// <summary>
+        /// 最大長を超える書き込みが打ち切られることを確認する。
+        /// </summary>
         [Test]
         public void RejectsTooMuchData()
         {
@@ -59,6 +77,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(100, written, "Wrote the wrong amount");
         }
 
+        /// <summary>
+        /// 満杯時は追加書き込みが一部だけ受け入れられることを確認する。
+        /// </summary>
         [Test]
         public void RejectsWhenFull()
         {
@@ -69,6 +90,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(25, written, "Wrote the wrong amount");
         }
 
+        /// <summary>
+        /// ちょうど満杯のときは追加で 0 バイトしか書き込めないことを確認する。
+        /// </summary>
         [Test]
         public void RejectsWhenExactlyFull()
         {
@@ -79,6 +103,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, written, "Wrote the wrong amount");
         }
 
+        /// <summary>
+        /// 読み取り後に先頭からラップして書き込めることを確認する。
+        /// </summary>
         [Test]
         public void CanWritePastEnd()
         {
@@ -98,6 +125,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, circularBuffer.Count, "Final Count");
         }
 
+        /// <summary>
+        /// ラップ後もデータが正しく読み取りできることを確認する。
+        /// </summary>
         [Test]
         public void DataIntegrityTest()
         {
@@ -125,6 +155,12 @@ namespace NAudioTests.WaveStreams
             
         }
 
+        /// <summary>
+        /// バッファの指定範囲が startNumber からの連続値であることを検証する。
+        /// </summary>
+        /// <param name="buffer">検証するバッファ。</param>
+        /// <param name="startNumber">先頭の期待値。</param>
+        /// <param name="length">検証する長さ。</param>
         public void CheckBuffer(byte[] buffer, int startNumber, int length)
         {
             for (var n = 0; n < length; n++)

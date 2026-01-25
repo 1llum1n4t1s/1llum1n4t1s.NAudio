@@ -4,10 +4,16 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// ステレオをモノラルに変換する ToMono のテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class StereoToMonoSampleProviderTests
     {
+        /// <summary>
+        /// 右チャンネルのみでモノラルになることを確認する。
+        /// </summary>
         [Test]
         public void RightChannelOnly()
         {
@@ -23,6 +29,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 出力 WaveFormat がモノラル IEEE float であることを確認する。
+        /// </summary>
         [Test]
         public void CorrectOutputFormat()
         {
@@ -33,6 +42,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(44100, mono.WaveFormat.SampleRate);
         }
 
+        /// <summary>
+        /// 左右のオフセットが正しく適用されることを確認する。
+        /// </summary>
         [Test]
         public void CorrectOffset()
         {

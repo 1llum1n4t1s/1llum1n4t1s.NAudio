@@ -7,10 +7,16 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Wasapi
 {
+    /// <summary>
+    /// MMDeviceEnumerator の作成・列挙・デフォルトエンドポイント・オーディオクロックのテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MMDeviceEnumeratorTests
     {
+        /// <summary>
+        /// Vista 以上で MMDeviceEnumerator を生成できることを確認する。
+        /// </summary>
         [Test]
         public void CanCreateMMDeviceEnumeratorInVista()
         {
@@ -18,6 +24,9 @@ namespace NAudioTests.Wasapi
             var enumerator = new MMDeviceEnumerator();
         }
 
+        /// <summary>
+        /// Vista でオーディオエンドポイントを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateDevicesInVista()
         {
@@ -38,6 +47,9 @@ namespace NAudioTests.Wasapi
             }
         }
 
+        /// <summary>
+        /// キャプチャデバイスを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateCaptureDevices()
         {
@@ -58,6 +70,9 @@ namespace NAudioTests.Wasapi
             }
         }
 
+        /// <summary>
+        /// デフォルトオーディオエンドポイントを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetDefaultAudioEndpoint()
         {
@@ -67,6 +82,9 @@ namespace NAudioTests.Wasapi
             ClassicAssert.IsNotNull(defaultAudioEndpoint);
         }
 
+        /// <summary>
+        /// デフォルトエンドポイントから AudioClient をアクティベートできることを確認する。
+        /// </summary>
         [Test]
         public void CanActivateDefaultAudioEndpoint()
         {
@@ -77,6 +95,9 @@ namespace NAudioTests.Wasapi
             ClassicAssert.IsNotNull(audioClient);
         }
 
+        /// <summary>
+        /// XP では MMDeviceEnumerator 生成時に NotSupportedException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void ThrowsNotSupportedExceptionInXP()
         {
@@ -84,6 +105,9 @@ namespace NAudioTests.Wasapi
             Assert.Throws<NotSupportedException>(() => new MMDeviceEnumerator());
         }
 
+        /// <summary>
+        /// 初期化後に AudioClockClient を取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetAudioClockClient()
         {

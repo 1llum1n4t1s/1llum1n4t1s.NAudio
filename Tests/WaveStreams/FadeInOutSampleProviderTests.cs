@@ -4,9 +4,15 @@ using NAudio.Wave.SampleProviders;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// FadeInOutSampleProvider のフェードイン/アウト・WaveFormat のテスト。
+    /// </summary>
     [TestFixture]
     public class FadeInOutSampleProviderTests
     {
+        /// <summary>
+        /// フェードインが適用されることを確認する。
+        /// </summary>
         [Test]
         public void CanFadeIn()
         {
@@ -24,6 +30,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(100, buffer[15]); // fully fade in
         }
 
+        /// <summary>
+        /// フェードアウトが適用されることを確認する。
+        /// </summary>
         [Test]
         public void CanFadeOut()
         {
@@ -41,6 +50,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, buffer[15]); // fully fade out
         }
 
+        /// <summary>
+        /// フェード期間が 1 回の Read より長い場合も正しく補間されることを確認する。
+        /// </summary>
         [Test]
         public void FadeDurationCanBeLongerThanOneRead()
         {
@@ -72,6 +84,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(100, buffer[3]);
         }
 
+        /// <summary>
+        /// WaveFormat がソースの WaveFormat を返すことを確認する。
+        /// </summary>
         [Test]
         public void WaveFormatReturnsSourceWaveFormat()
         {
@@ -80,6 +95,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreSame(source.WaveFormat, fade.WaveFormat);
         }
 
+        /// <summary>
+        /// ステレオのサンプルペアでもフェードが正しく動作することを確認する。
+        /// </summary>
         [Test]
         public void FadeWorksOverSamplePairs()
         {
@@ -99,6 +117,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(90, buffer[19], 0.0001); // fully fade in
         }
 
+        /// <summary>
+        /// フェードアウト後はバッファがゼロになることを確認する。
+        /// </summary>
         [Test]
         public void BufferIsZeroedAfterFadeOut()
         {

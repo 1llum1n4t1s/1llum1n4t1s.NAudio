@@ -4,9 +4,15 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.Utils
 {
+    /// <summary>
+    /// ByteEncoding のデコード・切り詰めのテスト。
+    /// </summary>
     [TestFixture]
     public class ByteEncodingTests
     {
+        /// <summary>
+        /// バイト配列を文字列にデコードできることを確認する。
+        /// </summary>
         [Test]
         public void CanDecodeString()
         {
@@ -14,6 +20,9 @@ namespace NAudioTests.Utils
             ClassicAssert.AreEqual("Hello", ByteEncoding.Instance.GetString(b));
         }
 
+        /// <summary>
+        /// 末尾の null が切り捨てられることを確認する。
+        /// </summary>
         [Test]
         public void CanTruncate()
         {
@@ -21,6 +30,9 @@ namespace NAudioTests.Utils
             ClassicAssert.AreEqual("Hello", ByteEncoding.Instance.GetString(b));
         }
 
+        /// <summary>
+        /// 3 引数オーバーロードで切り詰めできることを確認する。
+        /// </summary>
         [Test]
         public void CanTruncateWithThreeParamOverride()
         {
