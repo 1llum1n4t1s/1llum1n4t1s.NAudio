@@ -32,6 +32,10 @@ public partial class MainWindow : Window
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string[] CommandLineArguments { get; set; }
 
+    /// <summary>
+    /// 指定したインスペクター一覧でメインウィンドウを初期化する。
+    /// </summary>
+    /// <param name="inspectors">MEF でインポートされた IAudioFileInspector の一覧。</param>
     [ImportingConstructor]
     public MainWindow([ImportMany(typeof(IAudioFileInspector))] IEnumerable<IAudioFileInspector> inspectors)
     {

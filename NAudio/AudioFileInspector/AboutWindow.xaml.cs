@@ -21,7 +21,7 @@ public partial class AboutWindow : Window
             LabelProductName.Text = name.Name ?? "Audio File Inspector";
             var ver = name.Version;
             LabelVersion.Text = ver != null ? $"Version: {ver}" : "Version: 1.0";
-            LabelCopyright.Text = "Copyright © Mark Heath";
+            LabelCopyright.Text = asm.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright ?? string.Empty;
             Title = $"About {LabelProductName.Text}";
         };
     }

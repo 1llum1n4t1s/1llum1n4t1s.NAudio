@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -45,14 +46,18 @@ public partial class FindWindow : Window
             idx = fullText.IndexOf(findText, System.StringComparison.OrdinalIgnoreCase);
         if (idx < 0) return;
         var docStart = _target.Document.ContentStart;
-        TextPointer startPos = docStart;
-        for (var i = 0; i < idx && startPos != null; i++)
-            startPos = startPos?.GetNextInsertionPosition(LogicalDirection.Forward);
-        if (startPos == null) return;
-        var endPos = startPos;
-        for (var i = 0; i < findText.Length && endPos != null; i++)
-            endPos = endPos.GetNextInsertionPosition(LogicalDirection.Forward);
-        if (endPos == null) return;
+        TextPointer startPos;
+        TextPointer endPos;
+        try
+        {
+            startPos = docStart.GetPositionAtOffset(idx, LogicalDirection.Forward);
+            endPos = docStart.GetPositionAtOffset(idx + findText.Length, LogicalDirection.Forward);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return;
+        }
+        if (startPos == null || endPos == null) return;
         _target.Selection.Select(startPos, endPos);
         _target.Focus();
     }

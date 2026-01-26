@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
@@ -26,7 +27,7 @@ public partial class AboutWindow : Window
         LabelProductName.Text = name.Name ?? "MixDiff";
         var ver = name.Version;
         LabelVersion.Text = ver != null ? $"Version: {ver}" : "Version: 1.0";
-        LabelCopyright.Text = "Copyright © Mark Heath 2007";
+        LabelCopyright.Text = asm.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright ?? string.Empty;
         Title = $"About {LabelProductName.Text}";
     }
 

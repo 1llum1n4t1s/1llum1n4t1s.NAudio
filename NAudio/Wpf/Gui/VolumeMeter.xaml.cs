@@ -51,6 +51,10 @@ public partial class VolumeMeter
     /// </summary>
     public System.Windows.Controls.Orientation Orientation { get; set; }
 
+    /// <summary>
+    /// レンダリングサイズ変更時にメーター表示を更新する。
+    /// </summary>
+    /// <param name="sizeInfo">サイズ変更情報。</param>
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
     {
         base.OnRenderSizeChanged(sizeInfo);

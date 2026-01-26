@@ -1,121 +1,123 @@
 using System;
 using NAudio.Wave;
 
-namespace MarkHeath.AudioUtils
+namespace MarkHeath.AudioUtils;
+
+/// <summary>
+/// ミックスダウン用のオフセット・ボリューム付き Wave ストリーム。
+/// </summary>
+public class MixDiffStream : WaveStream
 {
-    public class MixDiffStream : WaveStream
+    private WaveOffsetStream offsetStream;
+    private WaveChannel32 channelSteam;
+    private bool muted;
+    private float volume;
+
+    /// <summary>
+    /// 指定ファイルで MixDiffStream を初期化する。
+    /// </summary>
+    /// <param name="fileName">WAV ファイルパス。</param>
+    public MixDiffStream(string fileName)
     {
-        WaveOffsetStream offsetStream;
-        WaveChannel32 channelSteam;
-        bool muted;
-        float volume;
+        var reader = new WaveFileReader(fileName);
+        offsetStream = new WaveOffsetStream(reader);
+        channelSteam = new WaveChannel32(offsetStream);
+        muted = false;
+        volume = 1.0f;
+    }
 
-        public MixDiffStream(string fileName)
+    /// <inheritdoc />
+    public override int BlockAlign
+    {
+        get => channelSteam.BlockAlign;
+    }
+
+    /// <inheritdoc />
+    public override WaveFormat WaveFormat
+    {
+        get { return channelSteam.WaveFormat; }
+    }
+
+    /// <inheritdoc />
+    public override long Length
+    {
+        get { return channelSteam.Length; }
+    }
+
+    /// <inheritdoc />
+    public override long Position
+    {
+        get => channelSteam.Position;
+        set => channelSteam.Position = value;
+    }
+
+    /// <summary>
+    /// ミュートするかどうか。
+    /// </summary>
+    public bool Mute
+    {
+        get => muted;
+        set
         {
-            var reader = new WaveFileReader(fileName);
-            offsetStream = new WaveOffsetStream(reader);
-            channelSteam = new WaveChannel32(offsetStream);
-            muted = false;
-            volume = 1.0f;
+            muted = value;
+            if (muted)
+                channelSteam.Volume = 0.0f;
+            else
+                Volume = Volume;
         }
+    }
 
-        public override int BlockAlign
+    /// <inheritdoc />
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        return channelSteam.Read(buffer, offset, count);
+    }
+
+    /// <inheritdoc />
+    public override bool HasData(int count)
+    {
+        return channelSteam.HasData(count);
+    }
+
+    /// <summary>
+    /// 再生ボリューム (0.0〜1.0)。
+    /// </summary>
+    public float Volume
+    {
+        get => volume;
+        set
         {
-            get
-            {
-                return channelSteam.BlockAlign;
-            }
+            volume = value;
+            if (!Mute)
+                channelSteam.Volume = volume;
         }
+    }
 
-        public override WaveFormat WaveFormat
+    /// <summary>
+    /// 再生開始までのプリディレイ。
+    /// </summary>
+    public TimeSpan PreDelay
+    {
+        get => offsetStream.StartTime;
+        set => offsetStream.StartTime = value;
+    }
+
+    /// <summary>
+    /// ソース内の再生オフセット。
+    /// </summary>
+    public TimeSpan Offset
+    {
+        get => offsetStream.SourceOffset;
+        set => offsetStream.SourceOffset = value;
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (channelSteam != null)
         {
-            get { return channelSteam.WaveFormat; }
+            channelSteam.Dispose();
         }
-
-        public override long Length
-        {
-            get { return channelSteam.Length; }
-        }
-
-        public override long Position
-        {
-            get
-            {
-                return channelSteam.Position;
-            }
-            set
-            {
-                channelSteam.Position = value;
-            }
-        }
-
-        public bool Mute
-        {
-            get
-            {
-                return muted;
-            }
-            set
-            {
-                muted = value;
-                if (muted)
-                {
-                    channelSteam.Volume = 0.0f;
-                }
-                else
-                {
-                    // reset the volume                
-                    Volume = Volume;
-                }
-            }
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            return channelSteam.Read(buffer, offset, count);
-        }
-
-        public override bool HasData(int count)
-        {
-            return channelSteam.HasData(count);
-        }
-
-        public float Volume
-        {
-            get 
-            { 
-                return volume; 
-            }
-            set 
-            {
-                volume = value;
-                if (!Mute)
-                {
-                    channelSteam.Volume = volume;
-                }
-            }
-        }
-
-        public TimeSpan PreDelay
-        {
-            get { return offsetStream.StartTime; }
-            set { offsetStream.StartTime = value; }
-        }
-
-        public TimeSpan Offset
-        {
-            get { return offsetStream.SourceOffset; }
-            set { offsetStream.SourceOffset = value; }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (channelSteam != null)
-            {
-                channelSteam.Dispose();
-            }
-
-            base.Dispose(disposing);
-        }
+        base.Dispose(disposing);
     }
 }

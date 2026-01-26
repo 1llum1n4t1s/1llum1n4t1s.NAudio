@@ -56,6 +56,10 @@ public partial class VolumeSlider
         }
     }
 
+    /// <summary>
+    /// レンダリングサイズ変更時に表示を更新する。
+    /// </summary>
+    /// <param name="sizeInfo">サイズ変更情報。</param>
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
     {
         base.OnRenderSizeChanged(sizeInfo);
