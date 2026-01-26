@@ -141,7 +141,11 @@ namespace NAudio.CoreAudioApi
                 {
                     var client = new AudioClient(ac);
                     capture = new WasapiCapture(client, true, 100, true);
-                    capture.WaveFormat = new WaveFormat();
+                    // Process Loopback は再生側と同じフォーマットで初期化する必要があるため、
+                    // GetMixFormat が使えない仮想デバイスでは、デフォルト（ユーザーが選択したアクティブな）再生デバイスの MixFormat を使用する。
+                    var enumerator = new MMDeviceEnumerator();
+                    var renderDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                    capture.WaveFormat = renderDevice.AudioClient.MixFormat;
                 });
                 var hActivateParams = GCHandle.Alloc(activateParams, GCHandleType.Pinned);
                 try
