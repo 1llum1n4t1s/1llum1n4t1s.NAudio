@@ -35,7 +35,7 @@ dotnet add package 1llum1n4t1s.NAudio
 
 **PackageReference:**
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.8" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.18" />
 ```
 
 ## Documentation

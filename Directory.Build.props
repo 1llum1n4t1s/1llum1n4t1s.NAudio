@@ -5,7 +5,8 @@
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetFramework>net10.0-windows10.0.20348.0</TargetFramework>
-    <Version>1.0.16</Version>
+    <!-- バージョン変更時は README.md の PackageReference の Version も同期すること -->
+    <Version>1.0.18</Version>
     <Authors>Mark Heath,Contributors,ゆろち</Authors>
     <Copyright>Copyright (c) 2001-2025 Mark Heath, 2026 ゆろち</Copyright>
     <RepositoryUrl>https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio</RepositoryUrl>
