@@ -44,6 +44,12 @@ namespace NAudio.CoreAudioApi
         public event EventHandler<StoppedEventArgs> RecordingStopped;
 
         /// <summary>
+        /// 診断用。GetBuffer から返された各パケットのバッファフラグ（Silent 等）を通知する。
+        /// Process Loopback で無音になる原因が OS の SILENT 返却かどうかの切り分けに利用できる。
+        /// </summary>
+        public event EventHandler<WasapiCapturePacketEventArgs> CapturePacketReceived;
+
+        /// <summary>
         /// Initialises a new instance of the WASAPI capture class
         /// </summary>
         public WasapiCapture() : 
@@ -394,6 +400,7 @@ namespace NAudio.CoreAudioApi
             while (packetSize != 0)
             {
                 var buffer = capture.GetBuffer(out var framesAvailable, out var flags);
+                CapturePacketReceived?.Invoke(this, new WasapiCapturePacketEventArgs(flags, framesAvailable));
 
                 var bytesAvailable = framesAvailable * bytesPerFrame;
 
