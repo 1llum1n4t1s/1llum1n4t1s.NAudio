@@ -1,4 +1,4 @@
-﻿using NAudio.CoreAudioApi.Interfaces;
+using NAudio.CoreAudioApi.Interfaces;
 using NAudio.Wasapi.CoreAudioApi.Interfaces;
 using System;
 using System.Runtime.CompilerServices;
@@ -21,17 +21,13 @@ namespace NAudio.Wasapi.CoreAudioApi
 
         public void ActivateCompleted(IActivateAudioInterfaceAsyncOperation activateOperation)
         {
-            // First get the activation results, and see if anything bad happened then
-            activateOperation.GetActivateResult(out var hr, out var unk);
+            activateOperation.GetActivateResult(out var hr, out var ptr);
             if (hr != 0)
             {
                 tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));
                 return;
             }
-
-            var pAudioClient = (T)unk;
-
-            // Next try to call the client's (synchronous, blocking) initialization method.
+            var pAudioClient = (T)Marshal.GetObjectForIUnknown(ptr);
             try
             {
                 initializeAction(pAudioClient);
@@ -41,8 +37,6 @@ namespace NAudio.Wasapi.CoreAudioApi
             {
                 tcs.TrySetException(ex);
             }
-
-
         }
 
 
@@ -67,17 +61,13 @@ namespace NAudio.Wasapi.CoreAudioApi
 
         public void ActivateCompleted(IActivateAudioInterfaceAsyncOperation activateOperation)
         {
-            // First get the activation results, and see if anything bad happened then
-            activateOperation.GetActivateResult(out var hr, out var unk);
+            activateOperation.GetActivateResult(out var hr, out var ptr);
             if (hr != 0)
             {
                 tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));
                 return;
             }
-
-            var pAudioClient = (IAudioClient)unk;
-
-            // Next try to call the client's (synchronous, blocking) initialization method.
+            var pAudioClient = (IAudioClient)Marshal.GetObjectForIUnknown(ptr);
             try
             {
                 initializeAction(pAudioClient);
@@ -87,8 +77,6 @@ namespace NAudio.Wasapi.CoreAudioApi
             {
                 tcs.TrySetException(ex);
             }
-
-
         }
 
 
