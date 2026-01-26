@@ -76,7 +76,10 @@ public partial class MainWindow : Window
                 catch (SettingsPropertyNotFoundException) { }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.TraceWarning("Settings upgrade failed: {0}", ex.Message);
+        }
     }
 
     private static string ProductName => Assembly.GetExecutingAssembly().GetName().Name ?? "MIDI File Converter";
