@@ -7,7 +7,6 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 using MarkHeath.MidiUtils.Properties;
-using Application = System.Windows.Application;
 
 namespace MarkHeath.MidiUtils;
 

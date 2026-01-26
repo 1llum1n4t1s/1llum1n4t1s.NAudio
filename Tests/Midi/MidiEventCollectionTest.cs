@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Midi;

@@ -98,14 +98,18 @@ namespace NAudio.CoreAudioApi
         private WasapiCapture(AudioClient audioClient, bool useEventSync, int audioBufferMillisecondsLength, bool isProcessLoopback)
         {
             syncContext = SynchronizationContext.Current;
+#if DEBUG
+            if (isProcessLoopback && syncContext == null)
+                System.Diagnostics.Debug.WriteLine("WasapiCapture (Process Loopback): SynchronizationContext.Current is null. Call CreateForProcessCaptureAsync and StartRecording from an STA thread (e.g. UI thread) with a synchronization context to avoid COM errors or invalid audio.");
+#endif
             this.audioClient = audioClient;
             ShareMode = AudioClientShareMode.Shared;
             isUsingEventSync = useEventSync;
             this.audioBufferMillisecondsLength = audioBufferMillisecondsLength;
             this.isProcessLoopback = isProcessLoopback;
-            // Process Loopback: 一部環境では AUDCLNT_STREAMFLAGS_LOOPBACK が必要（0 だと 0x88890021 になる）。ドキュメントによっては 0 と書いてあるが実機では Loopback で成功する場合がある。
+            // Process Loopback: LOOPBACK | AUTOCONVERTPCM でエンジン内部フォーマットから要求フォーマット(44.1k 16bit 2ch)へ変換を依頼。仮想デバイスが異なる内部フォーマットを持つ場合に必要。通常キャプチャは AUTOCONVERTPCM | SrcDefaultQuality。
             audioClientStreamFlags = isProcessLoopback
-                ? AudioClientStreamFlags.Loopback
+                ? AudioClientStreamFlags.Loopback | AudioClientStreamFlags.AutoConvertPcm
                 : AudioClientStreamFlags.AutoConvertPcm | AudioClientStreamFlags.SrcDefaultQuality;
         }
 
@@ -115,6 +119,16 @@ namespace NAudio.CoreAudioApi
         /// <param name="processId">The process ID to capture audio from.</param>
         /// <param name="includeProcessTree">If true, includes the target process and its child processes; otherwise, excludes them.</param>
         /// <returns>A WasapiCapture instance configured for process audio capture.</returns>
+        /// <remarks>
+        /// Threading (Process Loopback): This method performs COM activation asynchronously; the resulting
+        /// <see cref="WasapiCapture"/> and all its COM usage must be bound to a single STA thread (typically the UI thread).
+        /// You must await this method from that STA thread and must not use ConfigureAwait(false) on this await
+        /// (or on any await in the calling chain), so that the continuation runs on the same thread. That thread's
+        /// <see cref="SynchronizationContext.Current"/> is captured and used for all IAudioClient/IAudioCaptureClient calls
+        /// during capture. Call <see cref="StartRecording"/> from the same thread immediately after await. If you call
+        /// from a thread with no SynchronizationContext (e.g. thread pool), Process Loopback may fail with E_NOINTERFACE
+        /// or return invalid/placeholder audio.
+        /// </remarks>
         public static async Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree)
         {
             // https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/ApplicationLoopback/cpp/LoopbackCapture.cpp
@@ -142,22 +156,35 @@ namespace NAudio.CoreAudioApi
                         Data = data
                     }
                 };
-                WasapiCapture capture = null;
-                var icbh = new ProcessLoopbackActivateCompletionHandler(ac =>
-                {
-                    var client = new AudioClient(ac);
-                    capture = new WasapiCapture(client, true, 100, true);
-                    // Process Loopback 仮想デバイスでは IAudioClient::GetMixFormat が E_NOTIMPL を返すため、
-                    // 公式サンプルと同様に CD 品質の固定フォーマット（16bit PCM, 2ch, 44.1kHz）で初期化する。
-                    // https://learn.microsoft.com/en-us/answers/questions/1125409/loopbackcapture-getmixformat-failed-with-e-notimpl
-                    capture.WaveFormat = new WaveFormat(44100, 16, 2);
-                });
+                const int processLoopbackBufferMs = 20;
+                var icbh = new ProcessLoopbackActivateCompletionHandler();
                 var hActivateParams = GCHandle.Alloc(activateParams, GCHandleType.Pinned);
                 try
                 {
                     NativeMethods.ActivateAudioInterfaceAsync(VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, typeof(IAudioClient).GUID, hActivateParams.AddrOfPinnedObject(), icbh, out var activationOperation);
-                    await icbh;
-                    return capture;
+                    try
+                    {
+                        var ptr = await icbh;
+                        try
+                        {
+                            var ac = (IAudioClient)Marshal.GetTypedObjectForIUnknown(ptr, typeof(IAudioClient));
+                            var client = new AudioClient(ac);
+                            var capture = new WasapiCapture(client, true, processLoopbackBufferMs, true);
+                            // Process Loopback 仮想デバイスでは IAudioClient::GetMixFormat が E_NOTIMPL のため固定フォーマット。48kHz 16bit 2ch（44.1kHz だと無音になる環境あり）。
+                            capture.WaveFormat = new WaveFormat(48000, 16, 2);
+                            return capture;
+                        }
+                        finally
+                        {
+                            if (ptr != IntPtr.Zero)
+                                Marshal.Release(ptr);
+                        }
+                    }
+                    finally
+                    {
+                        if (activationOperation != null)
+                            Marshal.ReleaseComObject(activationOperation);
+                    }
                 }
                 finally
                 {
@@ -278,6 +305,11 @@ namespace NAudio.CoreAudioApi
         /// <summary>
         /// Start Capturing
         /// </summary>
+        /// <remarks>
+        /// For Process Loopback instances (created via <see cref="CreateForProcessCaptureAsync"/>), call this method
+        /// from the same thread that awaited <see cref="CreateForProcessCaptureAsync"/> (typically the UI thread).
+        /// Do not call from a background or thread-pool thread.
+        /// </remarks>
         public void StartRecording()
         {
             if (captureState != CaptureState.Stopped)
@@ -285,27 +317,12 @@ namespace NAudio.CoreAudioApi
                 throw new InvalidOperationException("Previous recording still in progress");
             }
             captureState = CaptureState.Starting;
-            if (isProcessLoopback)
+            InitializeCaptureDevice();
+            captureThread = new Thread(() => CaptureThread(audioClient))
             {
-                Task.Run(() =>
-                {
-                    InitializeCaptureDevice();
-                    captureThread = new Thread(() => CaptureThread(audioClient))
-                    {
-                        IsBackground = true,
-                    };
-                    captureThread.Start();
-                }).GetAwaiter().GetResult();
-            }
-            else
-            {
-                InitializeCaptureDevice();
-                captureThread = new Thread(() => CaptureThread(audioClient))
-                {
-                    IsBackground = true,
-                };
-                captureThread.Start();
-            }
+                IsBackground = true,
+            };
+            captureThread.Start();
         }
 
         /// <summary>
@@ -330,8 +347,28 @@ namespace NAudio.CoreAudioApi
             }
             finally
             {
-                client.Stop();
-                // don't dispose - the AudioClient only gets disposed when WasapiCapture is disposed
+                if (isProcessLoopback && syncContext != null)
+                {
+                    try
+                    {
+                        syncContext.Send(_ => client.Stop(), null);
+                    }
+                    catch (Exception stopEx)
+                    {
+                        exception = exception ?? stopEx;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        client.Stop();
+                    }
+                    catch (Exception stopEx)
+                    {
+                        exception = exception ?? stopEx;
+                    }
+                }
             }
             captureThread = null;
             captureState = CaptureState.Stopped;
@@ -340,20 +377,33 @@ namespace NAudio.CoreAudioApi
 
         private void DoRecording(AudioClient client)
         {
-            //Debug.WriteLine(String.Format("Client buffer frame count: {0}", client.BufferSize));
-            var bufferFrameCount = client.BufferSize;
-            if (bufferFrameCount < 1) // BufferSize is faulted
+            int bufferFrameCount;
+            AudioCaptureClient capture;
+            if (isProcessLoopback && syncContext != null)
+            {
+                var holder = new object[2];
+                syncContext.Send(_ =>
+                {
+                    holder[0] = client.BufferSize;
+                    holder[1] = client.AudioCaptureClient;
+                }, null);
+                bufferFrameCount = (int)holder[0];
+                capture = (AudioCaptureClient)holder[1];
+            }
+            else
+            {
+                bufferFrameCount = client.BufferSize;
+                capture = client.AudioCaptureClient;
+            }
+            if (bufferFrameCount < 1)
                 bufferFrameCount = FALLBACK_BUFFER_LENGTH;
-
-            // Calculate the actual duration of the allocated buffer.
-            var actualDuration = (long)((double)ReftimesPerSec *
-                             bufferFrameCount / waveFormat.SampleRate);
+            var actualDuration = (long)((double)ReftimesPerSec * bufferFrameCount / waveFormat.SampleRate);
             var sleepMilliseconds = (int)(actualDuration / ReftimesPerMillisec / 2);
             var waitMilliseconds = (int)(3 * actualDuration / ReftimesPerMillisec);
-
-            var capture = client.AudioCaptureClient;
-            client.Start();
-            // avoid race condition where we stop immediately after starting
+            if (isProcessLoopback && syncContext != null)
+                syncContext.Send(_ => client.Start(), null);
+            else
+                client.Start();
             if (captureState == CaptureState.Starting)
             {
                 captureState = CaptureState.Capturing;
@@ -371,8 +421,10 @@ namespace NAudio.CoreAudioApi
                 if (captureState != CaptureState.Capturing)
                     break;
 
-                // If still recording
-                ReadNextPacket(capture);
+                if (isProcessLoopback && syncContext != null)
+                    syncContext.Send(_ => ReadNextPacket(capture), null);
+                else
+                    ReadNextPacket(capture);
             }
         }
 

@@ -58,8 +58,9 @@ namespace NAudio.CoreAudioApi
     /// <summary>
     /// AUDIOCLIENT_ACTIVATION_PARAMS
     /// https://docs.microsoft.com/en-us/windows/win32/api/audioclientactivationparams/ns-audioclientactivationparams-audioclient_activation_params
+    /// C++ と同一レイアウトのため Pack=4 を指定。
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct AudioClientActivationParams
     {
         /// <summary>
@@ -75,12 +76,12 @@ namespace NAudio.CoreAudioApi
     /// <summary>
     /// AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS
     /// https://docs.microsoft.com/en-us/windows/win32/api/audioclientactivationparams/ns-audioclientactivationparams-audioclient_process_loopback_params
+    /// メンバー順は SDK 定義どおり TargetProcessId, ProcessLoopbackMode。
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct AudioClientProcessLoopbackParams
     {
         /// <summary>
-        /// AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS
         /// The ID of the process for which the render streams, and the render streams of its child processes, will be included or excluded when activating the process loopback stream.
         /// </summary>
         public uint TargetProcessId;
