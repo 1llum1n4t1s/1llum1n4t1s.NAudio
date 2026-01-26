@@ -49,6 +49,7 @@
     <File Path="Docs/RecordWavFileWinFormsWaveIn.md" />
     <File Path="Docs/Resampling.md" />
     <File Path="Docs/WasapiLoopbackCapture.md" />
+    <File Path="Docs/ProcessLoopbackCapture.md" />
     <File Path="Docs/WasapiOut.md" />
     <File Path="Docs/WaveFormRendering.md" />
     <File Path="Docs/WaveProviders.md" />
