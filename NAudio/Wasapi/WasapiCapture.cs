@@ -137,7 +137,7 @@ namespace NAudio.CoreAudioApi
                     }
                 };
                 WasapiCapture capture = null;
-                var icbh = new ActivateAudioInterfaceCompletionHandler1(ac =>
+                var icbh = new ProcessLoopbackActivateCompletionHandler(ac =>
                 {
                     var client = new AudioClient(ac);
                     capture = new WasapiCapture(client, true, 100, true);
