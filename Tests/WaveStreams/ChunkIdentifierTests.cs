@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NAudio.Utils;
 using NAudio.Wave;
 using NUnit.Framework;
@@ -9,9 +5,16 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// ChunkIdentifier を Int32 に変換するテスト。
+    /// </summary>
     [TestFixture]
     public class ChunkIdentifierTests
     {
+        /// <summary>
+        /// チャンク識別子文字列を Int32 に変換できることを確認する。
+        /// </summary>
+        /// <param name="chunkIdentifier">チャンク識別子（4 文字）。</param>
         [TestCase("WAVE")]
         [TestCase("data")]
         [TestCase("fmt ")]

@@ -1,16 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave.SampleProviders;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// FadeInOutSampleProvider のフェードイン/アウト・WaveFormat のテスト。
+    /// </summary>
     [TestFixture]
     public class FadeInOutSampleProviderTests
     {
+        /// <summary>
+        /// フェードインが適用されることを確認する。
+        /// </summary>
         [Test]
         public void CanFadeIn()
         {
@@ -19,8 +21,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeIn(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(0, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(50, buffer[5]); // half-way
@@ -28,6 +30,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(100, buffer[15]); // fully fade in
         }
 
+        /// <summary>
+        /// フェードアウトが適用されることを確認する。
+        /// </summary>
         [Test]
         public void CanFadeOut()
         {
@@ -36,8 +41,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeOut(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(100, buffer[0]); // start of fade-out
             ClassicAssert.AreEqual(50, buffer[5]); // half-way
@@ -45,6 +50,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, buffer[15]); // fully fade out
         }
 
+        /// <summary>
+        /// フェード期間が 1 回の Read より長い場合も正しく補間されることを確認する。
+        /// </summary>
         [Test]
         public void FadeDurationCanBeLongerThanOneRead()
         {
@@ -53,8 +61,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeIn(1000);
-            float[] buffer = new float[4];
-            int read = fade.Read(buffer, 0, 4);
+            var buffer = new float[4];
+            var read = fade.Read(buffer, 0, 4);
             ClassicAssert.AreEqual(4, read);
             ClassicAssert.AreEqual(0, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(10, buffer[1]);
@@ -76,6 +84,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(100, buffer[3]);
         }
 
+        /// <summary>
+        /// WaveFormat がソースの WaveFormat を返すことを確認する。
+        /// </summary>
         [Test]
         public void WaveFormatReturnsSourceWaveFormat()
         {
@@ -84,6 +95,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreSame(source.WaveFormat, fade.WaveFormat);
         }
 
+        /// <summary>
+        /// ステレオのサンプルペアでもフェードが正しく動作することを確認する。
+        /// </summary>
         [Test]
         public void FadeWorksOverSamplePairs()
         {
@@ -92,8 +106,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeIn(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(0, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(0, buffer[1]); // start of fade-in
@@ -103,6 +117,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(90, buffer[19], 0.0001); // fully fade in
         }
 
+        /// <summary>
+        /// フェードアウト後はバッファがゼロになることを確認する。
+        /// </summary>
         [Test]
         public void BufferIsZeroedAfterFadeOut()
         {
@@ -111,8 +128,8 @@ namespace NAudioTests.WaveStreams
             source.ConstValue = 100;
             var fade = new FadeInOutSampleProvider(source);
             fade.BeginFadeOut(1000);
-            float[] buffer = new float[20];
-            int read = fade.Read(buffer, 0, 20);
+            var buffer = new float[20];
+            var read = fade.Read(buffer, 0, 20);
             ClassicAssert.AreEqual(20, read);
             ClassicAssert.AreEqual(100, buffer[0]); // start of fade-in
             ClassicAssert.AreEqual(50, buffer[5]); // half-way

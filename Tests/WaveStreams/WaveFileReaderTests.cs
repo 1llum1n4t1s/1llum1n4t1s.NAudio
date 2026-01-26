@@ -10,9 +10,15 @@ using NAudio.FileFormats.Wav;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WaveFileReader の空ファイル・サンプルアクセス・Dispose・Mp3 のテスト。
+    /// </summary>
     [TestFixture]
     public class WaveFileReaderTests
     {
+        /// <summary>
+        /// 空の WAV ヘッダを正しくパースできることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void TestEmptyFile()
@@ -52,6 +58,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// モノラルファイルでサンプルを 1 フレームずつ読めることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void CanAccessSamplesIndividuallyInAMonoFile()
@@ -75,6 +84,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// ステレオファイルでサンプルを 1 フレームずつ読めることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void CanAccessSamplesIndividuallyInAStereoFile()
@@ -101,6 +113,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 24bit ステレオファイルでサンプルを 1 フレームずつ読めることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void CanAccessSamplesIndividuallyInAStereo24BitFile()
@@ -127,24 +142,27 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 問題になりがちな WAV を開いて最後まで読めることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemWavFiles()
         {
-            string testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
+            var testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
             if (!Directory.Exists(testDataFolder))
             {
                 ClassicAssert.Ignore($"{testDataFolder} not found");
             }
-            foreach (string file in Directory.GetFiles(testDataFolder, "*.wav"))
+            foreach (var file in Directory.GetFiles(testDataFolder, "*.wav"))
             {
-                string wavFile = Path.Combine(testDataFolder, file);
+                var wavFile = Path.Combine(testDataFolder, file);
                 Debug.WriteLine(String.Format("Opening {0}", wavFile));
                 using (var reader = new WaveFileReader(wavFile))
                 {
-                    byte[] buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
+                    var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
                     int bytesRead;
-                    int total = 0;
+                    var total = 0;
                     do
                     {
                         bytesRead = reader.Read(buffer, 0, buffer.Length);
@@ -155,15 +173,18 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// ヘッダのないファイルでパスから構築した場合に例外となることを確認する。
+        /// </summary>
         [Test]
         [Category("UnitTest")]
         public void DisposeOfStreamWhenConstructedFromFilePath()
         {
-            string tempFilePath = System.IO.Path.GetTempFileName();
+            var tempFilePath = System.IO.Path.GetTempFileName();
             System.IO.File.WriteAllText(tempFilePath, "Some test content");
             try
             {
-                WaveFileReader waveReader = new WaveFileReader(tempFilePath);
+                var waveReader = new WaveFileReader(tempFilePath);
 
                 ClassicAssert.Fail("Expected exception System.FormatException was not thrown for file missing a header.");
             }
@@ -177,11 +198,14 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// Mp3FileReader がパース失敗時にファイルを閉じることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void Mp3FileReaderDisposesFileOnFailToParse()
         {
-            string tempFilePath = Path.GetTempFileName();
+            var tempFilePath = Path.GetTempFileName();
             File.WriteAllText(tempFilePath, "Some test content");
             try
             {

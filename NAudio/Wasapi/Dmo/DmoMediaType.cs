@@ -107,9 +107,8 @@ namespace NAudio.Dmo
         public void SetWaveFormat(WaveFormat waveFormat)
         {
             majortype = MediaTypes.MEDIATYPE_Audio;
-            
-            var wfe = waveFormat as WaveFormatExtensible;
-            if (wfe != null)
+
+            if (waveFormat is WaveFormatExtensible wfe)
             {
                 subtype = wfe.SubFormat;
             }

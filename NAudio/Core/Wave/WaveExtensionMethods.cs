@@ -27,7 +27,7 @@ namespace NAudio.Wave
         /// <param name="convertTo16Bit"></param>
         public static void Init(this IWavePlayer wavePlayer, ISampleProvider sampleProvider, bool convertTo16Bit = false)
         {
-            IWaveProvider provider = convertTo16Bit ? (IWaveProvider)new SampleToWaveProvider16(sampleProvider) : new SampleToWaveProvider(sampleProvider);
+            var provider = convertTo16Bit ? (IWaveProvider)new SampleToWaveProvider16(sampleProvider) : new SampleToWaveProvider(sampleProvider);
             wavePlayer.Init(provider);
         }
 
@@ -38,8 +38,7 @@ namespace NAudio.Wave
         /// <returns>A standard PCM or IEEE waveformat, or the original waveformat</returns>
         public static WaveFormat AsStandardWaveFormat(this WaveFormat waveFormat)
         {
-            var wfe = waveFormat as WaveFormatExtensible;
-            return wfe != null ? wfe.ToStandardWaveFormat() : waveFormat;
+            return waveFormat is WaveFormatExtensible wfe ? wfe.ToStandardWaveFormat() : waveFormat;
         }
 
         /// <summary>

@@ -9,25 +9,34 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Acm
 {
+    /// <summary>
+    /// WaveFormatConversionStream によるフォーマット変換のテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class WaveFormatConversionStreamTests
     {
+        /// <summary>
+        /// PCM から μLaw への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertPcmToMuLaw()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new WaveFormat(sampleRate, 16, channels),
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.MuLaw, sampleRate, channels, sampleRate * channels, 1, 8));
         }
 
+        /// <summary>
+        /// PCM から A-law への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertPcmToALaw()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new WaveFormat(sampleRate, 16, channels),
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.ALaw, sampleRate, channels, sampleRate * channels, 1, 8));
@@ -47,36 +56,48 @@ namespace NAudioTests.Acm
                 new Mp3WaveFormat(sampleRate, channels, 0, 128000/8)); 
         }*/
 
+        /// <summary>
+        /// A-law から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertALawToPcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.ALaw, sampleRate, channels, sampleRate * channels, 1, 8),
                 new WaveFormat(sampleRate, 16, channels));
         }
 
+        /// <summary>
+        /// μLaw から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertMuLawToPcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 WaveFormat.CreateCustomFormat(WaveFormatEncoding.MuLaw, sampleRate, channels, sampleRate * channels, 1, 8),
                 new WaveFormat(sampleRate, 16, channels));
         }
 
+        /// <summary>
+        /// ADPCM から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertAdpcmToPcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new AdpcmWaveFormat(8000,1),
                 new WaveFormat(sampleRate, 16, channels));
         }
 
+        /// <summary>
+        /// ADPCM を推奨 PCM フォーマットに変換できることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertAdpcmToSuggestedPcm()
         {
@@ -86,6 +107,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// A-law を推奨 PCM フォーマットに変換できることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertALawToSuggestedPcm()
         {
@@ -95,6 +119,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// μLaw を推奨 PCM フォーマットに変換できることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertMuLawToSuggestedPcm()
         {
@@ -104,20 +131,26 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// PCM から ADPCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertPcmToAdpcm()
         {
-            int channels = 1;
-            int sampleRate = 8000;
+            var channels = 1;
+            var sampleRate = 8000;
             CanCreateConversionStream(
                 new WaveFormat(sampleRate, 16, channels),
                 new AdpcmWaveFormat(8000, 1));
         }
 
+        /// <summary>
+        /// IMA/IMA ADPCM から PCM への変換ができることを確認する。
+        /// </summary>
         [Test]
         public void CanConvertImeAdpcmToPcm()
         {
-            AcmDriver driver = AcmDriver.FindByShortName("Microsoft IMA ADPCM");
+            var driver = AcmDriver.FindByShortName("Microsoft IMA ADPCM");
             driver.Open();
             try
             {
@@ -144,8 +177,8 @@ namespace NAudioTests.Acm
             using (var stream = new WaveFormatConversionStream(
                 outputFormat, inputStream))
             {
-                byte[] buffer = new byte[stream.WaveFormat.AverageBytesPerSecond];
-                int totalRead = 0;
+                var buffer = new byte[stream.WaveFormat.AverageBytesPerSecond];
+                var totalRead = 0;
                 int bytesRead;
                 do
                 {

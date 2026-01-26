@@ -107,7 +107,7 @@ namespace NAudio.Wave
             {
                 return false;
             }
-            for (int n = bytes; n < buffer.Length; n++)
+            for (var n = bytes; n < buffer.Length; n++)
             {
                 buffer[n] = 0;
             }

@@ -1,14 +1,18 @@
-using System;
-using System.Linq;
 using NAudio.Wave.SampleProviders;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// ConcatenatingSampleProvider で複数プロバイダを連結するテスト。
+    /// </summary>
     [TestFixture]
     public class ConcatenatingSampleProviderTests
     {
+        /// <summary>
+        /// 単一プロバイダを渡して先頭から末尾まで読めることを確認する。
+        /// </summary>
         [Test]
         public void CanPassASingleProvider()
         {
@@ -30,6 +34,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.That(totalRead == expectedLength);
         }
 
+        /// <summary>
+        /// 2 つのプロバイダを連結して順に読めることを確認する。
+        /// </summary>
         [Test]
         public void CanPassTwoProviders()
         {

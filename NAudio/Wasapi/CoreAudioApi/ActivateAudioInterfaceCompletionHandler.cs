@@ -22,7 +22,7 @@ namespace NAudio.Wasapi.CoreAudioApi
         public void ActivateCompleted(IActivateAudioInterfaceAsyncOperation activateOperation)
         {
             // First get the activation results, and see if anything bad happened then
-            activateOperation.GetActivateResult(out int hr, out object unk);
+            activateOperation.GetActivateResult(out var hr, out var unk);
             if (hr != 0)
             {
                 tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));
@@ -68,7 +68,7 @@ namespace NAudio.Wasapi.CoreAudioApi
         public void ActivateCompleted(IActivateAudioInterfaceAsyncOperation activateOperation)
         {
             // First get the activation results, and see if anything bad happened then
-            activateOperation.GetActivateResult(out int hr, out object unk);
+            activateOperation.GetActivateResult(out var hr, out var unk);
             if (hr != 0)
             {
                 tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));

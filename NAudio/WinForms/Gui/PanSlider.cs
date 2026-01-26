@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
 using System.Windows.Forms;
 
 namespace NAudio.Gui
@@ -68,7 +66,7 @@ namespace NAudio.Gui
         /// </summary>
 		protected override void OnPaint(PaintEventArgs pe)
 		{
-			StringFormat format = new StringFormat();
+			var format = new StringFormat();
 			format.LineAlignment = StringAlignment.Center;
 			format.Alignment = StringAlignment.Center;
 			string panValue;

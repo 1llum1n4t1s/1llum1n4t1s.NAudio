@@ -44,7 +44,7 @@ namespace NAudio.CoreAudioApi
                     throw new IndexOutOfRangeException();
                 }
 
-                partsListInterface.GetPart(index, out IPart part);
+                partsListInterface.GetPart(index, out var part);
                 return new Part(part);
             }
         }

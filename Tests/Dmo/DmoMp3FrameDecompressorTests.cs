@@ -1,4 +1,3 @@
-using System;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.FileFormats.Mp3;
@@ -10,15 +9,24 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Dmo
 {
+    /// <summary>
+    /// DmoMp3FrameDecompressor および Windows Media MP3 デコーダのテスト。
+    /// </summary>
     [TestFixture]
     public class DmoMp3FrameDecompressorTests
     {
+        /// <summary>
+        /// テスト実行前に Vista 以上であることを要求する。
+        /// </summary>
         [SetUp]
         public void SetUp()
         {
             OSUtils.RequireVista();
         }
 
+        /// <summary>
+        /// DmoMp3FrameDecompressor を生成できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanCreateDmoMp3FrameDecompressor()
@@ -28,6 +36,9 @@ namespace NAudioTests.Dmo
             ClassicAssert.IsNotNull(frameDecompressor);
         }
 
+        /// <summary>
+        /// MP3 フレームをデコードできることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanDecompressAnMp3()
@@ -42,7 +53,7 @@ namespace NAudioTests.Dmo
                     var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
                     while ((frame = reader.ReadNextFrame()) != null)
                     {
-                        int decompressed = frameDecompressor.DecompressFrame(frame, buffer, 0);
+                        var decompressed = frameDecompressor.DecompressFrame(frame, buffer, 0);
                         Debug.WriteLine($"Decompressed {frame.FrameLength} bytes to {decompressed}");
                     }
                 }
@@ -53,18 +64,24 @@ namespace NAudioTests.Dmo
             }
         }
 
+        /// <summary>
+        /// MP3 デコーダの入力メディアタイプを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineInputTypesOnMp3Decoder()
         {
             var decoder = new WindowsMediaMp3Decoder();
             ClassicAssert.AreEqual(decoder.MediaObject.InputStreamCount, 1);
-            foreach (DmoMediaType mediaType in decoder.MediaObject.GetInputTypes(0))
+            foreach (var mediaType in decoder.MediaObject.GetInputTypes(0))
             {
                 Debug.WriteLine($"{mediaType.MajorTypeName}:{mediaType.SubTypeName}:{mediaType.FormatTypeName}");
             }
         }
 
+        /// <summary>
+        /// デコーダの出力メディアタイプを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanExamineOutputTypesOnDecoder()
@@ -73,12 +90,15 @@ namespace NAudioTests.Dmo
             decoder.MediaObject.SetInputWaveFormat(0,new Mp3WaveFormat(44100, 2, 200, 32000));
             ClassicAssert.AreEqual(decoder.MediaObject.OutputStreamCount, 1);
 
-            foreach (DmoMediaType mediaType in decoder.MediaObject.GetOutputTypes(0))
+            foreach (var mediaType in decoder.MediaObject.GetOutputTypes(0))
             {
                 Debug.WriteLine($"{mediaType.MajorTypeName}:{mediaType.SubTypeName}:{mediaType.FormatTypeName}");
             }
         }
 
+        /// <summary>
+        /// Windows Media MP3 デコーダがステレオ MP3 をサポートすることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void WindowsMediaMp3DecoderSupportsStereoMp3()

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.CoreAudioApi;
@@ -9,25 +7,34 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.Wasapi
 {
+    /// <summary>
+    /// MMDeviceEnumerator の作成・列挙・デフォルトエンドポイント・オーディオクロックのテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MMDeviceEnumeratorTests
     {
+        /// <summary>
+        /// Vista 以上で MMDeviceEnumerator を生成できることを確認する。
+        /// </summary>
         [Test]
         public void CanCreateMMDeviceEnumeratorInVista()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            var enumerator = new MMDeviceEnumerator();
         }
 
+        /// <summary>
+        /// Vista でオーディオエンドポイントを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateDevicesInVista()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            var enumerator = new MMDeviceEnumerator();
             var devices = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.All);
 
-            foreach (MMDevice device in devices)
+            foreach (var device in devices)
             {
                 if (device.State != DeviceState.NotPresent)
                 {
@@ -40,14 +47,17 @@ namespace NAudioTests.Wasapi
             }
         }
 
+        /// <summary>
+        /// キャプチャデバイスを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateCaptureDevices()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            var enumerator = new MMDeviceEnumerator();
             var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All);
 
-            foreach (MMDevice device in devices)
+            foreach (var device in devices)
             {
                 if (device.State != DeviceState.NotPresent)
                 {
@@ -60,25 +70,34 @@ namespace NAudioTests.Wasapi
             }
         }
 
+        /// <summary>
+        /// デフォルトオーディオエンドポイントを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetDefaultAudioEndpoint()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            MMDevice defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            var enumerator = new MMDeviceEnumerator();
+            var defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
             ClassicAssert.IsNotNull(defaultAudioEndpoint);
         }
 
+        /// <summary>
+        /// デフォルトエンドポイントから AudioClient をアクティベートできることを確認する。
+        /// </summary>
         [Test]
         public void CanActivateDefaultAudioEndpoint()
         {
             OSUtils.RequireVista();
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            MMDevice defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
-            AudioClient audioClient = defaultAudioEndpoint.AudioClient;
+            var enumerator = new MMDeviceEnumerator();
+            var defaultAudioEndpoint = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            var audioClient = defaultAudioEndpoint.AudioClient;
             ClassicAssert.IsNotNull(audioClient);
         }
 
+        /// <summary>
+        /// XP では MMDeviceEnumerator 生成時に NotSupportedException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void ThrowsNotSupportedExceptionInXP()
         {
@@ -86,6 +105,9 @@ namespace NAudioTests.Wasapi
             Assert.Throws<NotSupportedException>(() => new MMDeviceEnumerator());
         }
 
+        /// <summary>
+        /// 初期化後に AudioClockClient を取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetAudioClockClient()
         {

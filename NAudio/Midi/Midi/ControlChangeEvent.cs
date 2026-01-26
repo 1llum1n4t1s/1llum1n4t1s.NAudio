@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 
 namespace NAudio.Midi 
 {
@@ -18,7 +17,7 @@ namespace NAudio.Midi
         /// <param name="br">Binary reader on the MIDI stream</param>
         public ControlChangeEvent(BinaryReader br) 
         {
-            byte c = br.ReadByte();
+            var c = br.ReadByte();
             controllerValue = br.ReadByte();
             if((c & 0x80) != 0) 
             {
@@ -63,7 +62,7 @@ namespace NAudio.Midi
         /// </summary>
         public override int GetAsShortMessage()
         {
-            byte c = (byte)controller;
+            var c = (byte)controller;
             return base.GetAsShortMessage() + (c << 8) + (controllerValue << 16);
         }
 

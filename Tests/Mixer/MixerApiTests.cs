@@ -6,46 +6,55 @@ using System.Diagnostics;
 
 namespace NAudioTests
 {
+    /// <summary>
+    /// ミキサー API（デバイス列挙・WaveIn 関連）のテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MixerApiTests
     {
+        /// <summary>
+        /// 全ミキサーデバイスのコントロールを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateAllMixerControls()
         {
-            int devices = Mixer.NumberOfDevices;
+            var devices = Mixer.NumberOfDevices;
             ClassicAssert.That(devices > 0, "Expected at least one mixer device");
-            for (int device = 0; device < devices; device++)
+            for (var device = 0; device < devices; device++)
             {
                 ExploreMixerDevice(device);
                 Debug.WriteLine("");
             }
         }
 
+        /// <summary>
+        /// デフォルト WaveIn のミキサーおよびマイクボリュームを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanFindDefaultWaveIn()
         {
-            int defaultWaveInMixerId = MixerLine.GetMixerIdForWaveIn(0);
-            Mixer mixer = new Mixer(defaultWaveInMixerId);
-            foreach (MixerLine destination in mixer.Destinations)
+            var defaultWaveInMixerId = MixerLine.GetMixerIdForWaveIn(0);
+            var mixer = new Mixer(defaultWaveInMixerId);
+            foreach (var destination in mixer.Destinations)
             {
                 Debug.WriteLine($"DESTINATION: {destination.Name} {destination.TypeDescription} (Type: {destination.ComponentType}, Target: {destination.TargetName})");
 
                 if (destination.ComponentType == MixerLineComponentType.DestinationWaveIn)
                 {
-                    foreach (MixerLine source in destination.Sources)
+                    foreach (var source in destination.Sources)
                     {
                         Debug.WriteLine($"{source.Name} {source.TypeDescription} (Source: {source.IsSource}, Target: {source.TargetName})");
                         if (source.ComponentType == MixerLineComponentType.SourceMicrophone)
                         {
                             Debug.WriteLine($"Found the microphone: {source.Name}");
-                            foreach (MixerControl control in source.Controls)
+                            foreach (var control in source.Controls)
                             {
                                 if (control.ControlType == MixerControlType.Volume)
                                 {
                                     Debug.WriteLine($"Volume Found: {control}");
-                                    UnsignedMixerControl umc = (UnsignedMixerControl)control;
-                                    uint originalValue = umc.Value;
+                                    var umc = (UnsignedMixerControl)control;
+                                    var originalValue = umc.Value;
                                     umc.Value = umc.MinValue;
                                     ClassicAssert.AreEqual(umc.MinValue, umc.Value, "Set Minimum Correctly");
                                     umc.Value = umc.MaxValue;
@@ -62,24 +71,27 @@ namespace NAudioTests
             }
         }
 
+        /// <summary>
+        /// WaveIn からミキサーラインを取得できることを確認する。
+        /// </summary>
         [Test]
         public void CanGetWaveInMixerLine()
         {
             using (var waveIn = new WaveInEvent())
             {
-                MixerLine line = waveIn.GetMixerLine();                
+                var line = waveIn.GetMixerLine();                
                 //Debug.WriteLine(String.Format("Mic Level {0}", level));
             }
         }
 
         private static void ExploreMixerDevice(int deviceIndex)
         {
-            Mixer mixer = new Mixer(deviceIndex);
+            var mixer = new Mixer(deviceIndex);
             Debug.WriteLine($"Device {deviceIndex}: {mixer.Name}");
             Debug.WriteLine("--------------------------------------------");
-            int destinations = mixer.DestinationCount;
+            var destinations = mixer.DestinationCount;
             ClassicAssert.That(destinations > 0, "Expected at least one destination");
-            for (int destinationIndex = 0; destinationIndex < destinations; destinationIndex++)
+            for (var destinationIndex = 0; destinationIndex < destinations; destinationIndex++)
             {
                 ExploreMixerDestination(mixer, destinationIndex);
             }
@@ -89,12 +101,12 @@ namespace NAudioTests
         {
             var destination = mixer.GetDestination(destinationIndex);
             Debug.WriteLine($"Destination {destinationIndex}: {destination} ({destination.Channels})");
-            foreach (MixerControl control in destination.Controls)
+            foreach (var control in destination.Controls)
             {
                 Debug.WriteLine($"CONTROL: {control}");
             }
-            int sources = destination.SourceCount;
-            for (int sourceIndex = 0; sourceIndex < sources; sourceIndex++)
+            var sources = destination.SourceCount;
+            for (var sourceIndex = 0; sourceIndex < sources; sourceIndex++)
             {
                 ExploreMixerSource(destination, sourceIndex);
             }
@@ -104,7 +116,7 @@ namespace NAudioTests
         {
             var sourceLine = destinationLine.GetSource(sourceIndex);
             Debug.WriteLine($"Source {sourceIndex}: {sourceLine}");
-            foreach (MixerControl control in sourceLine.Controls)
+            foreach (var control in sourceLine.Controls)
             {
                 Debug.WriteLine($"CONTROL: {control}");
             }

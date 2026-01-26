@@ -31,10 +31,10 @@ namespace NAudio.Wave
         {
             if (value < 0) throw new ArgumentOutOfRangeException(nameof(value), "Volume must be between 0.0 and 1.0");
             if (value > 1) throw new ArgumentOutOfRangeException(nameof(value), "Volume must be between 0.0 and 1.0");
-            float left = value;
-            float right = value;
+            var left = value;
+            var right = value;
 
-            int stereoVolume = (int)(left * 0xFFFF) + ((int)(right * 0xFFFF) << 16);
+            var stereoVolume = (int)(left * 0xFFFF) + ((int)(right * 0xFFFF) << 16);
             MmResult result;
             lock (lockObject)
             {

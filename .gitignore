@@ -15,6 +15,7 @@ _ReSharper*/
 # Jetbrains
 *.idea
 .vs/
+.vscode/
 .fake/
 # cake:
 Tools/

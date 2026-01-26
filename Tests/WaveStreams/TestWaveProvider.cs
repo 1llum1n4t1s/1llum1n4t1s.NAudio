@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using NAudio.Wave;
 
 namespace NAudioTests.WaveStreams
@@ -20,7 +17,7 @@ namespace NAudioTests.WaveStreams
 
         public int Read(byte[] buffer, int offset, int count)
         {
-            int n = 0;
+            var n = 0;
             while (n < count && Position < length)
             {
                 buffer[n + offset] = (ConstValue == -1) ? (byte)Position : (byte)ConstValue;

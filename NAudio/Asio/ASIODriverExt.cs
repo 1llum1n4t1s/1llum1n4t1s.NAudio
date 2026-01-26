@@ -192,15 +192,15 @@ namespace NAudio.Wave.Asio
             this.numberOfOutputChannels = numberOfOutputChannels;
             this.numberOfInputChannels = numberOfInputChannels;
             // Ask for maximum of output channels even if we use only the nbOutputChannelsArg
-            int nbTotalChannels = capability.NbInputChannels + capability.NbOutputChannels;
+            var nbTotalChannels = capability.NbInputChannels + capability.NbOutputChannels;
             bufferInfos = new AsioBufferInfo[nbTotalChannels];
             currentOutputBuffers = new IntPtr[numberOfOutputChannels];
             currentInputBuffers = new IntPtr[numberOfInputChannels];
 
             // and do the same for output channels
             // ONLY work on output channels (just put isInput = true for InputChannel)
-            int totalIndex = 0;
-            for (int index = 0; index < capability.NbInputChannels; index++, totalIndex++)
+            var totalIndex = 0;
+            for (var index = 0; index < capability.NbInputChannels; index++, totalIndex++)
             {
                 bufferInfos[totalIndex].isInput = true;
                 bufferInfos[totalIndex].channelNum = index;
@@ -208,7 +208,7 @@ namespace NAudio.Wave.Asio
                 bufferInfos[totalIndex].pBuffer1 = IntPtr.Zero;
             }
 
-            for (int index = 0; index < capability.NbOutputChannels; index++, totalIndex++)
+            for (var index = 0; index < capability.NbOutputChannels; index++, totalIndex++)
             {
                 bufferInfos[totalIndex].isInput = false;
                 bufferInfos[totalIndex].channelNum = index;
@@ -231,7 +231,7 @@ namespace NAudio.Wave.Asio
             {
                 fixed (AsioBufferInfo* infos = &bufferInfos[0])
                 {
-                    IntPtr pOutputBufferInfos = new IntPtr(infos);
+                    var pOutputBufferInfos = new IntPtr(infos);
 
                     // Create the ASIO Buffers with the callbacks
                     driver.CreateBuffers(pOutputBufferInfos, nbTotalChannels, bufferSize, ref callbacks);
@@ -259,13 +259,13 @@ namespace NAudio.Wave.Asio
             capability.OutputChannelInfos = new AsioChannelInfo[capability.NbOutputChannels];
 
             // Get ChannelInfo for Inputs
-            for (int i = 0; i < capability.NbInputChannels; i++)
+            for (var i = 0; i < capability.NbInputChannels; i++)
             {
                 capability.InputChannelInfos[i] = driver.GetChannelInfo(i, true);
             }
 
             // Get ChannelInfo for Output
-            for (int i = 0; i < capability.NbOutputChannels; i++)
+            for (var i = 0; i < capability.NbOutputChannels; i++)
             {
                 capability.OutputChannelInfos[i] = driver.GetChannelInfo(i, false);
             }
@@ -294,12 +294,12 @@ namespace NAudio.Wave.Asio
         /// <param name="directProcess">if set to <c>true</c> [direct process].</param>
         private void BufferSwitchCallBack(int doubleBufferIndex, bool directProcess)
         {
-            for (int i = 0; i < numberOfInputChannels; i++)
+            for (var i = 0; i < numberOfInputChannels; i++)
             {
                 currentInputBuffers[i] = bufferInfos[i + inputChannelOffset].Buffer(doubleBufferIndex);
             }
 
-            for (int i = 0; i < numberOfOutputChannels; i++)
+            for (var i = 0; i < numberOfOutputChannels; i++)
             {
                 currentOutputBuffers[i] = bufferInfos[i + outputChannelOffset + capability.NbInputChannels].Buffer(doubleBufferIndex);
             }
@@ -336,7 +336,7 @@ namespace NAudio.Wave.Asio
             switch (selector)
             {
                 case AsioMessageSelector.kAsioSelectorSupported:
-                    AsioMessageSelector subValue = (AsioMessageSelector)Enum.ToObject(typeof(AsioMessageSelector), value);
+                    var subValue = (AsioMessageSelector)Enum.ToObject(typeof(AsioMessageSelector), value);
                     switch (subValue)
                     {
                         case AsioMessageSelector.kAsioEngineVersion:

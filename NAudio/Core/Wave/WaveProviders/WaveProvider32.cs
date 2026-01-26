@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace NAudio.Wave
+﻿namespace NAudio.Wave
 {
     /// <summary>
     /// Base class for creating a 32 bit floating point wave provider
@@ -46,9 +42,9 @@ namespace NAudio.Wave
         /// </summary>
         public int Read(byte[] buffer, int offset, int count)
         {
-            WaveBuffer waveBuffer = new WaveBuffer(buffer);
-            int samplesRequired = count / 4;
-            int samplesRead = Read(waveBuffer.FloatBuffer, offset / 4, samplesRequired);
+            var waveBuffer = new WaveBuffer(buffer);
+            var samplesRequired = count / 4;
+            var samplesRead = Read(waveBuffer.FloatBuffer, offset / 4, samplesRequired);
             return samplesRead * 4;
         }
 

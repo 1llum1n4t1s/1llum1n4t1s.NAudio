@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 
 namespace NAudio.Midi 
 {
@@ -55,10 +54,10 @@ namespace NAudio.Midi
         /// <returns>A new MetaEvent object</returns>
         public static MetaEvent ReadMetaEvent(BinaryReader br) 
         {
-            MetaEventType metaEvent = (MetaEventType) br.ReadByte();
-            int length = ReadVarInt(br);
+            var metaEvent = (MetaEventType) br.ReadByte();
+            var length = ReadVarInt(br);
             
-            MetaEvent me = new MetaEvent();
+            var me = new MetaEvent();
             switch(metaEvent) 
             {
             case MetaEventType.TrackSequenceNumber: // Sets the track's sequence number.

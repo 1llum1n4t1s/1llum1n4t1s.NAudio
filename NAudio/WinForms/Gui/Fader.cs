@@ -1,7 +1,4 @@
-using System;
 using System.ComponentModel;
-using System.Collections;
-using System.Diagnostics;
 using System.Windows.Forms;
 using System.Drawing;
 
@@ -57,7 +54,7 @@ namespace NAudio.Gui
         private void DrawSlider(Graphics g)
         {
             Brush block = new SolidBrush(Color.White);
-            Pen centreLine = new Pen(Color.Black);
+            var centreLine = new Pen(Color.Black);
             sliderRectangle.X = (this.Width - SliderWidth) / 2;
             sliderRectangle.Width = SliderWidth;
             sliderRectangle.Y = (int) ((this.Height - SliderHeight) * percent);
@@ -83,7 +80,7 @@ namespace NAudio.Gui
         /// </summary>
         protected override void OnPaint(PaintEventArgs e)
         {
-            Graphics g = e.Graphics;
+            var g = e.Graphics;
             if(this.Orientation == Orientation.Vertical)
             {
                 Brush groove = new SolidBrush(Color.Black);
@@ -119,7 +116,7 @@ namespace NAudio.Gui
         {
             if(dragging)
             {
-                int sliderTop = e.Y - dragY;
+                var sliderTop = e.Y - dragY;
                 if(sliderTop < 0)
                 {
                     this.percent = 0;

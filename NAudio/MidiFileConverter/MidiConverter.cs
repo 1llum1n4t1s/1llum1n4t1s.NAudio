@@ -4,7 +4,6 @@ using System.Text;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using NAudio.Utils;
 using NAudio.Midi;
 
 namespace MarkHeath.MidiUtils
@@ -71,7 +70,7 @@ namespace MarkHeath.MidiUtils
             }
 
             ProcessFolder(settings.InputFolder, settings.OutputFolder, new string[0]);
-            TimeSpan timeTaken = DateTime.Now - startTime;
+            var timeTaken = DateTime.Now - startTime;
             LogInformation("Finished in {0}", timeTaken);
             LogInformation(Summary);
 
@@ -79,8 +78,8 @@ namespace MarkHeath.MidiUtils
 
         private string[] CreateNewContext(string[] oldContext, string newContextItem)
         {
-            string[] newContext = new string[oldContext.Length + 1];
-            for (int n = 0; n < oldContext.Length; n++)
+            var newContext = new string[oldContext.Length + 1];
+            for (var n = 0; n < oldContext.Length; n++)
             {
                 newContext[n] = oldContext[n];
             }
@@ -90,8 +89,8 @@ namespace MarkHeath.MidiUtils
 
         private void ProcessFolder(string folder, string outputFolder, string[] context)
         {
-            string[] midiFiles = Directory.GetFiles(folder);
-            foreach (string midiFile in midiFiles)
+            var midiFiles = Directory.GetFiles(folder);
+            foreach (var midiFile in midiFiles)
             {
                 try
                 {
@@ -105,12 +104,12 @@ namespace MarkHeath.MidiUtils
                 }
             }
 
-            string[] subfolders = Directory.GetDirectories(folder);
-            foreach (string subfolder in subfolders)
+            var subfolders = Directory.GetDirectories(folder);
+            foreach (var subfolder in subfolders)
             {
-                string folderName = Path.GetFileName(subfolder);
-                string newOutputFolder = Path.Combine(outputFolder, folderName);
-                string[] newContext = CreateNewContext(context, folderName);
+                var folderName = Path.GetFileName(subfolder);
+                var newOutputFolder = Path.Combine(outputFolder, folderName);
+                var newContext = CreateNewContext(context, folderName);
 
                 if (!Directory.Exists(newOutputFolder))
                 {                    
@@ -128,13 +127,13 @@ namespace MarkHeath.MidiUtils
 
         private void ProcessFile(string file, string outputFolder, string[] context)
         {
-            bool copy = false;
-            string fileName = Path.GetFileName(file);
-            string target = Path.Combine(outputFolder, fileName);
+            var copy = false;
+            var fileName = Path.GetFileName(file);
+            var target = Path.Combine(outputFolder, fileName);
 
             if (Path.GetExtension(file).ToLower() == ".mid")
             {
-                MidiFile midiFile = new MidiFile(file);
+                var midiFile = new MidiFile(file);
                 ConvertMidi(midiFile, target, CreateNewContext(context, Path.GetFileNameWithoutExtension(file)));
                 filesConverted++;
             }
@@ -157,7 +156,7 @@ namespace MarkHeath.MidiUtils
 
         private void ConvertMidi(MidiFile midiFile, string target, string[] context)
         {
-            string fileNameWithoutExtension = context[context.Length - 1];
+            var fileNameWithoutExtension = context[context.Length - 1];
             string name = null;
             long endTrackTime = -1;
             if (settings.UseFileName)
@@ -172,7 +171,7 @@ namespace MarkHeath.MidiUtils
                 }
             }
 
-            int outputFileType = midiFile.FileFormat;
+            var outputFileType = midiFile.FileFormat;
             int outputTrackCount;
             if (settings.OutputMidiType == OutputMidiType.Type0)
             {
@@ -196,14 +195,14 @@ namespace MarkHeath.MidiUtils
             }
 
 
-            MidiEventCollection events = new MidiEventCollection(outputFileType, midiFile.DeltaTicksPerQuarterNote);
-            for (int track = 0; track < outputTrackCount; track++)
+            var events = new MidiEventCollection(outputFileType, midiFile.DeltaTicksPerQuarterNote);
+            for (var track = 0; track < outputTrackCount; track++)
             {
                 events.AddTrack();
             }
             if (name != null)
             {
-                for (int track = 0; track < outputTrackCount; track++)
+                for (var track = 0; track < outputTrackCount; track++)
                 {
                     events[track].Add(new TextEvent(name, MetaEventType.SequenceTrackName, 0));
                 }
@@ -213,14 +212,13 @@ namespace MarkHeath.MidiUtils
                 }
             }
 
-            foreach (MidiEvent midiEvent in midiFile.Events[0])
+            foreach (var midiEvent in midiFile.Events[0])
             {
                 if (settings.OutputChannelNumber != -1)
                     midiEvent.Channel = settings.OutputChannelNumber;
-                MetaEvent metaEvent = midiEvent as MetaEvent;
-                if (metaEvent != null)
+                if (midiEvent is MetaEvent metaEvent)
                 {
-                    bool exclude = false;
+                    var exclude = false;
                     switch (metaEvent.MetaEventType)
                     {
                         case MetaEventType.SequenceTrackName:
@@ -246,7 +244,7 @@ namespace MarkHeath.MidiUtils
                         case MetaEventType.TextEvent:
                             if (settings.TrimTextEvents)
                             {
-                                TextEvent textEvent = (TextEvent)midiEvent;
+                                var textEvent = (TextEvent)midiEvent;
                                 textEvent.Text = textEvent.Text.Trim();
                                 if (textEvent.Text.Length == 0)
                                 {
@@ -281,7 +279,7 @@ namespace MarkHeath.MidiUtils
             }
 
             // now do track 1 (Groove Monkee)                
-            for (int inputTrack = 1; inputTrack < midiFile.Tracks; inputTrack++)
+            for (var inputTrack = 1; inputTrack < midiFile.Tracks; inputTrack++)
             {
                 int outputTrack;
                 if(outputFileType == 1)
@@ -289,13 +287,12 @@ namespace MarkHeath.MidiUtils
                 else
                     outputTrack = 0;
 
-                foreach (MidiEvent midiEvent in midiFile.Events[inputTrack])
+                foreach (var midiEvent in midiFile.Events[inputTrack])
                 {                    
                     if (settings.OutputChannelNumber != -1)
                         midiEvent.Channel = settings.OutputChannelNumber;
-                    bool exclude = false;                    
-                    MetaEvent metaEvent = midiEvent as MetaEvent;
-                    if (metaEvent != null)
+                    var exclude = false;
+                    if (midiEvent is MetaEvent metaEvent)
                     {
                         switch (metaEvent.MetaEventType)
                         {
@@ -361,12 +358,12 @@ namespace MarkHeath.MidiUtils
 
             if (settings.RemoveEmptyTracks)
             {
-                MidiEventCollection newList = new MidiEventCollection(events.MidiFileType, events.DeltaTicksPerQuarterNote);
+                var newList = new MidiEventCollection(events.MidiFileType, events.DeltaTicksPerQuarterNote);
                 
-                int removed = 0;
-                for (int track = 0; track < events.Tracks; track++)
+                var removed = 0;
+                for (var track = 0; track < events.Tracks; track++)
                 {
-                    IList<MidiEvent> trackEvents = events[track];
+                    var trackEvents = events[track];
                     if (track < 2)
                     {
                         newList.AddTrack(events[track]);
@@ -417,11 +414,11 @@ namespace MarkHeath.MidiUtils
 
         private string CreateEzdName(string[] context)
         {
-            StringBuilder name = new StringBuilder();
-            int contextLevels = Math.Min(namingRules.ContextDepth, context.Length);
-            for (int n = 0; n < contextLevels; n++)
+            var name = new StringBuilder();
+            var contextLevels = Math.Min(namingRules.ContextDepth, context.Length);
+            for (var n = 0; n < contextLevels; n++)
             {
-                string filtered = ApplyNameFilters(context[context.Length - contextLevels + n]);
+                var filtered = ApplyNameFilters(context[context.Length - contextLevels + n]);
                 if (filtered.Length > 0)
                 {
                     name.Append(filtered);
@@ -435,7 +432,7 @@ namespace MarkHeath.MidiUtils
 
         private string ApplyNameFilters(string name)
         {
-            foreach (NamingRule rule in namingRules.Rules)
+            foreach (var rule in namingRules.Rules)
             {
                 name = Regex.Replace(name, rule.Regex, rule.Replacement);
             }

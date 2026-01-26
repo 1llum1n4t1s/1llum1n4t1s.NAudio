@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
@@ -37,9 +35,9 @@ namespace AudioFileInspector
 
             try
             {
-                string extension = System.IO.Path.GetExtension(fileName).ToLower();
-                bool described = false;
-                foreach (IAudioFileInspector inspector in Inspectors)
+                var extension = System.IO.Path.GetExtension(fileName).ToLower();
+                var described = false;
+                foreach (var inspector in Inspectors)
                 {
                     if (extension == inspector.FileExtension)
                     {
@@ -61,17 +59,17 @@ namespace AudioFileInspector
 
         private void CreateFilterString()
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             if (Inspectors.Count > 0)
             {
                 stringBuilder.Append("All Supported Files|");
-                foreach (IAudioFileInspector inspector in Inspectors)
+                foreach (var inspector in Inspectors)
                 {
                     stringBuilder.AppendFormat("*{0};", inspector.FileExtension);
                 }
                 stringBuilder.Length--;
                 stringBuilder.Append("|");
-                foreach (IAudioFileInspector inspector in Inspectors)
+                foreach (var inspector in Inspectors)
                 {
                     stringBuilder.AppendFormat("{0}|*{1}|", inspector.FileTypeDescription, inspector.FileExtension);
                 }
@@ -83,7 +81,7 @@ namespace AudioFileInspector
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
+            var ofd = new OpenFileDialog();
 
             ofd.Filter = filterString;
             ofd.FilterIndex = filterIndex;
@@ -104,7 +102,7 @@ namespace AudioFileInspector
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            NAudio.Utils.AboutForm aboutForm = new NAudio.Utils.AboutForm();
+            var aboutForm = new NAudio.Utils.AboutForm();
             aboutForm.ShowDialog();
         }
 
@@ -119,7 +117,7 @@ namespace AudioFileInspector
 
         private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OptionsForm optionsForm = new OptionsForm(Inspectors);
+            var optionsForm = new OptionsForm(Inspectors);
             optionsForm.ShowDialog();
 
         }
@@ -138,7 +136,7 @@ namespace AudioFileInspector
             {
                 return;
             }            
-            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
             if (files.Length > 0)
             {
@@ -148,7 +146,7 @@ namespace AudioFileInspector
 
         private void saveLogToolStripMenuItem_Click(object sender, EventArgs args)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            var saveFileDialog = new SaveFileDialog();
             saveFileDialog.DefaultExt = ".txt";
             if (currentFile != null)
             {
@@ -162,9 +160,9 @@ namespace AudioFileInspector
                 try
                 {
 
-                    using (StreamWriter writer = new StreamWriter(saveFileDialog.FileName))
+                    using (var writer = new StreamWriter(saveFileDialog.FileName))
                     {
-                        string text = textLog.Text;
+                        var text = textLog.Text;
                         if (!text.Contains("\r"))
                         {
                             text = text.Replace("\n", "\r\n");
@@ -187,7 +185,7 @@ namespace AudioFileInspector
 
         private void contentsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string helpFilePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "audio_file_inspector.html");
+            var helpFilePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "audio_file_inspector.html");
             try
             {
                 System.Diagnostics.Process.Start(helpFilePath);

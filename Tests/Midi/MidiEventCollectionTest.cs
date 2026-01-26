@@ -1,20 +1,24 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Midi;
 
 namespace NAudioTests.Midi
 {
+    /// <summary>
+    /// MidiEventCollection の Type0/Type1 および PrepareForExport のテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class MidiEventCollectionTest
     {
+        /// <summary>
+        /// Type1 で複数トラックが正しく集約されることを確認する。
+        /// </summary>
         [Test]
         public void TestType1()
         {
-            MidiEventCollection collection = new MidiEventCollection(1,120);
+            var collection = new MidiEventCollection(1,120);
             collection.AddEvent(new TextEvent("Test",MetaEventType.TextEvent,0),0);
             collection.AddEvent(new NoteOnEvent(0, 1, 30, 100, 15), 1);
             collection.AddEvent(new NoteOnEvent(15, 1, 30, 100, 15), 1);
@@ -25,17 +29,20 @@ namespace NAudioTests.Midi
             ClassicAssert.AreEqual(collection.Tracks, 11);
             collection.PrepareForExport();
             ClassicAssert.AreEqual(collection.Tracks, 3);
-            IList<MidiEvent> track0 = collection.GetTrackEvents(0);
+            var track0 = collection.GetTrackEvents(0);
             ClassicAssert.AreEqual(track0.Count, 2);
             ClassicAssert.AreEqual(collection.GetTrackEvents(1).Count, 4);
             ClassicAssert.AreEqual(collection.GetTrackEvents(2).Count, 4);
             ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
+        /// <summary>
+        /// Type0 で単一トラックになることを確認する。
+        /// </summary>
         [Test]
         public void TestType0()
         {
-            MidiEventCollection collection = new MidiEventCollection(0, 120);
+            var collection = new MidiEventCollection(0, 120);
             collection.AddEvent(new TextEvent("Test", MetaEventType.TextEvent, 0), 0);
             collection.AddEvent(new NoteOnEvent(0, 1, 30, 100, 15), 1);
             collection.AddEvent(new NoteOnEvent(15, 1, 30, 100, 15), 1);
@@ -46,15 +53,18 @@ namespace NAudioTests.Midi
             ClassicAssert.AreEqual(collection.Tracks, 1);
             collection.PrepareForExport();
             ClassicAssert.AreEqual(collection.Tracks, 1);
-            IList<MidiEvent> track0 = collection.GetTrackEvents(0);
+            var track0 = collection.GetTrackEvents(0);
             ClassicAssert.AreEqual(track0.Count, 8);
             ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
+        /// <summary>
+        /// Type1 から Type0 に変更すると単一トラックになることを確認する。
+        /// </summary>
         [Test]
         public void TestType1ToType0()
         {
-            MidiEventCollection collection = new MidiEventCollection(1, 120);
+            var collection = new MidiEventCollection(1, 120);
             collection.AddEvent(new TextEvent("Test", MetaEventType.TextEvent, 0), 0);
             collection.AddEvent(new NoteOnEvent(0, 1, 30, 100, 15), 1);
             collection.AddEvent(new NoteOnEvent(15, 1, 30, 100, 15), 1);
@@ -66,15 +76,18 @@ namespace NAudioTests.Midi
             collection.MidiFileType = 0;
             collection.PrepareForExport();
             ClassicAssert.AreEqual(collection.Tracks, 1);
-            IList<MidiEvent> track0 = collection.GetTrackEvents(0);
+            var track0 = collection.GetTrackEvents(0);
             ClassicAssert.AreEqual(track0.Count, 8);
             ClassicAssert.IsTrue(MidiEvent.IsEndTrack(track0[track0.Count - 1]));
         }
 
+        /// <summary>
+        /// Type0 から Type1 に変更すると複数トラックに分かれることを確認する。
+        /// </summary>
         [Test]
         public void TestType0ToType1()
         {
-            MidiEventCollection collection = new MidiEventCollection(0, 120);
+            var collection = new MidiEventCollection(0, 120);
             collection.AddEvent(new TextEvent("Test", MetaEventType.TextEvent, 0), 0);
             collection.AddEvent(new NoteOnEvent(0, 1, 30, 100, 15), 1);
             collection.AddEvent(new NoteOnEvent(15, 1, 30, 100, 15), 1);
@@ -86,7 +99,7 @@ namespace NAudioTests.Midi
             collection.MidiFileType = 1;
             collection.PrepareForExport();
             ClassicAssert.AreEqual(3, collection.Tracks, "Wrong number of tracks");
-            IList<MidiEvent> track0 = collection.GetTrackEvents(0);
+            var track0 = collection.GetTrackEvents(0);
             ClassicAssert.AreEqual(track0.Count, 2);
             ClassicAssert.AreEqual(collection.GetTrackEvents(1).Count, 4);
             ClassicAssert.AreEqual(collection.GetTrackEvents(2).Count, 4);

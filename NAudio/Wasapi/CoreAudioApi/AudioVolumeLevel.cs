@@ -22,7 +22,7 @@ namespace NAudio.Wasapi.CoreAudioApi
         {
             get
             {
-                audioVolumeLevelInterface.GetChannelCount(out uint result);
+                audioVolumeLevelInterface.GetChannelCount(out var result);
                 return result;
             }
         }
@@ -46,7 +46,7 @@ namespace NAudio.Wasapi.CoreAudioApi
         /// <returns>Volume Level</returns>
         public float GetLevel(uint channel)
         {
-            audioVolumeLevelInterface.GetLevel(channel, out float result);
+            audioVolumeLevelInterface.GetLevel(channel, out var result);
             return result;
         }
 

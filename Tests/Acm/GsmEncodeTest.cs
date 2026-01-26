@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using NAudio.Wave;
@@ -8,10 +6,17 @@ using NAudio.Wave.SampleProviders;
 
 namespace NAudioTests.Acm
 {
+    /// <summary>
+    /// GSM 610 エンコード／デコードのテスト。
+    /// </summary>
     [TestFixture]
     public class GsmEncodeTest
     {
         private string tempFolder;
+
+        /// <summary>
+        /// テスト用一時フォルダを準備する。
+        /// </summary>
         [OneTimeSetUp]
         public void Setup()
         {
@@ -35,12 +40,15 @@ namespace NAudioTests.Acm
             var sp = sg.ToWaveProvider16();
 
 
-            byte[] data = new byte[outFormat.AverageBytesPerSecond * durationInSeconds];
+            var data = new byte[outFormat.AverageBytesPerSecond * durationInSeconds];
             var bytesRead = sp.Read(data, 0, data.Length);
             ClassicAssert.AreEqual(bytesRead, data.Length);
             return new RawSourceWaveStream(new MemoryStream(data), outFormat);
         }
 
+        /// <summary>
+        /// PCM を GSM でエンコードして WAV に書き出せることを確認する。
+        /// </summary>
         [Test]
         public void CanEncodeGsm()
         {            
@@ -53,6 +61,9 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// GSM WAV を PCM にデコードできることを確認する。
+        /// </summary>
         [Test]
         public void CanDecodeGsm()
         {

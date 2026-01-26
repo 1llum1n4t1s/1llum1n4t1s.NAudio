@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -7,9 +6,15 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// MixingSampleProvider の入力なし・1入力・ReadFully・MixerInputEnded のテスト。
+    /// </summary>
     [TestFixture]
     public class MixingSampleProviderTests
     {
+        /// <summary>
+        /// 入力がなければ最初の Read で 0 が返ることを確認する。
+        /// </summary>
         [Test]
         public void WithNoInputsFirstReadReturnsNoSamples()
         {
@@ -17,6 +22,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, msp.Read(new float[1000], 0, 1000));
         }
 
+        /// <summary>
+        /// ReadFully が true で入力がなければ要求サンプル数が返ることを確認する。
+        /// </summary>
         [Test]
         public void WithReadFullySetNoInputsReturnsSampleCountRequested()
         {
@@ -26,6 +34,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(buffer.Length, msp.Read(buffer, 0, buffer.Length));
         }
 
+        /// <summary>
+        /// 入力が1つのとき、末尾まで読めることを確認する。
+        /// </summary>
         [Test]
         public void WithOneInputReadsToTheEnd()
         {
@@ -37,7 +48,10 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(567, buffer[567]);
         }
 
-        [Test] 
+        /// <summary>
+        /// 入力が足りない場合は読み取れたサンプル数が返ることを確認する。
+        /// </summary>
+        [Test]
         public void WithOneInputReturnsSamplesReadIfNotEnoughToFullyRead()
         {
             var input1 = new TestSampleProvider(44100, 2, 800);
@@ -48,6 +62,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(567, buffer[567]);
         }
 
+        /// <summary>
+        /// ReadFully で読み取った場合、不足分がゼロ埋めされることを確認する。
+        /// </summary>
         [Test]
         public void FullyReadCausesPartialBufferToBeZeroedOut()
         {
@@ -65,6 +82,9 @@ namespace NAudioTests.WaveStreams
             ClassicAssert.AreEqual(0, buffer[999]);
         }
 
+        /// <summary>
+        /// いずれかの入力が終わったときに MixerInputEnded が発生することを確認する。
+        /// </summary>
         [Test]
         public void MixerInputEndedInvoked()
         {

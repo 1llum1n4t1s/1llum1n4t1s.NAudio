@@ -26,16 +26,16 @@ namespace NAudio.Wave.SampleProviders
         /// </summary>
         public override int Read(float[] buffer, int offset, int count)
         {
-            int bytesNeeded = count * 4;
+            var bytesNeeded = count * 4;
             EnsureSourceBuffer(bytesNeeded);
-            int bytesRead = source.Read(sourceBuffer, 0, bytesNeeded);
-            int samplesRead = bytesRead / 4;
-            int outputIndex = offset;
+            var bytesRead = source.Read(sourceBuffer, 0, bytesNeeded);
+            var samplesRead = bytesRead / 4;
+            var outputIndex = offset;
             unsafe
             {
                 fixed(byte* pBytes = &sourceBuffer[0])
                 {
-                    float* pFloat = (float*)pBytes;
+                    var pFloat = (float*)pBytes;
                     for (int n = 0, i = 0; n < bytesRead; n += 4, i++)
                     {
                         buffer[outputIndex++] = *(pFloat + i);

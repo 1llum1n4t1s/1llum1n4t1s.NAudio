@@ -1,16 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.Threading;
-using System.Xml;
 using System.Configuration;
 using MarkHeath.MidiUtils.Properties;
-using NAudio.Utils;
 
 namespace MarkHeath.MidiUtils
 {
@@ -39,7 +34,7 @@ namespace MarkHeath.MidiUtils
 
         private void UpgradeSettings()
         {
-            string productVersion = (string)settings.GetPreviousVersion("ProductVersion");
+            var productVersion = (string)settings.GetPreviousVersion("ProductVersion");
             if ((productVersion != null) && (productVersion.Length > 0))
             {
                 settings.InputFolder = (string)settings.GetPreviousVersion("InputFolder");
@@ -68,7 +63,7 @@ namespace MarkHeath.MidiUtils
 
         private void LoadSettings()
         {
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             
             if (settings.InputFolder.Length == 0)
                 textBoxInputFolder.Text = Path.Combine(programFiles, "Toontrack\\EZDrummer\\Midi");
@@ -123,7 +118,7 @@ namespace MarkHeath.MidiUtils
 
         private void MainForm_Load(object sender, EventArgs args)
         {
-            string executableFolder = Path.GetDirectoryName(Application.ExecutablePath);
+            var executableFolder = Path.GetDirectoryName(Application.ExecutablePath);
             try
             {
                 namingRules = NamingRules.LoadRules(Path.Combine(executableFolder, "NamingRules.xml"));
@@ -159,7 +154,7 @@ namespace MarkHeath.MidiUtils
             }
         }
 
-        protected override void OnClosing(CancelEventArgs e)
+        protected override void OnFormClosing(FormClosingEventArgs e)
         {
             if (workQueued)
             {
@@ -174,7 +169,7 @@ namespace MarkHeath.MidiUtils
                 settings.ProductVersion = Application.ProductVersion;
                 settings.Save();
             }
-            base.OnClosing(e);
+            base.OnFormClosing(e);
         }
 
         private void ConvertThreadProc(object state)
@@ -225,7 +220,7 @@ namespace MarkHeath.MidiUtils
         {
             if (!Directory.Exists(textBoxInputFolder.Text))
             {
-                DialogResult result = MessageBox.Show("Your selected input folder does not exist.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                var result = MessageBox.Show("Your selected input folder does not exist.", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             return true;
@@ -235,7 +230,7 @@ namespace MarkHeath.MidiUtils
         {
             if (!Directory.Exists(textBoxOutputFolder.Text))
             {
-                DialogResult result = MessageBox.Show("Your selected output folder does not exist.\r\nWould you like to create it now?", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                var result = MessageBox.Show("Your selected output folder does not exist.\r\nWould you like to create it now?", Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (result == DialogResult.Yes)
                 {
                     Directory.CreateDirectory(textBoxOutputFolder.Text);
@@ -263,7 +258,7 @@ namespace MarkHeath.MidiUtils
 
         private void buttonBrowseEZDrummer_Click(object sender, EventArgs e)
         {
-            FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+            var folderBrowser = new FolderBrowserDialog();
             folderBrowser.Description = "Select Input Folder";
             folderBrowser.SelectedPath = textBoxInputFolder.Text;
             if (folderBrowser.ShowDialog() == DialogResult.OK)
@@ -274,7 +269,7 @@ namespace MarkHeath.MidiUtils
 
         private void buttonBrowseOutputFolder_Click(object sender, EventArgs e)
         {
-            FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+            var folderBrowser = new FolderBrowserDialog();
             folderBrowser.Description = "Select Output Folder";
             folderBrowser.SelectedPath = textBoxOutputFolder.Text;
             if (folderBrowser.ShowDialog() == DialogResult.OK)
@@ -294,7 +289,7 @@ namespace MarkHeath.MidiUtils
 
         private void contentsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string helpFilePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "midi_file_converter.html");
+            var helpFilePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "midi_file_converter.html");
             try
             {
                 System.Diagnostics.Process.Start(helpFilePath);
@@ -307,7 +302,7 @@ namespace MarkHeath.MidiUtils
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            NAudio.Utils.AboutForm aboutForm = new NAudio.Utils.AboutForm();
+            var aboutForm = new NAudio.Utils.AboutForm();
             aboutForm.ShowDialog();
         }
 
@@ -325,7 +320,7 @@ namespace MarkHeath.MidiUtils
             }
             else
             {
-                AdvancedOptionsForm optionsForm = new AdvancedOptionsForm();
+                var optionsForm = new AdvancedOptionsForm();
                 optionsForm.ShowDialog();
             }
         }
@@ -338,7 +333,7 @@ namespace MarkHeath.MidiUtils
             }
             else
             {
-                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                var saveFileDialog = new SaveFileDialog();
                 saveFileDialog.InitialDirectory = textBoxOutputFolder.Text;
                 saveFileDialog.DefaultExt = ".txt";
                 saveFileDialog.FileName = "Conversion Log.txt";
@@ -349,9 +344,9 @@ namespace MarkHeath.MidiUtils
                     try
                     {
                         
-                        using (StreamWriter writer = new StreamWriter(saveFileDialog.FileName))
+                        using (var writer = new StreamWriter(saveFileDialog.FileName))
                         {
-                            string text = progressLog1.Text;
+                            var text = progressLog1.Text;
                             if (!text.Contains("\r"))
                             {
                                 text = text.Replace("\n", "\r\n");

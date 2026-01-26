@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 
 namespace NAudio.Midi 
 {
@@ -94,7 +93,7 @@ namespace NAudio.Midi
         {
             get 
             {
-                string den = String.Format("Unknown ({0})",denominator);
+                var den = String.Format("Unknown ({0})",denominator);
                 switch(denominator) 
                 {
                 case 1:

@@ -112,7 +112,7 @@ namespace NAudio.Extras
         {
             var samplesRead = source.Read(buffer, offset, count);
 
-            for (int n = 0; n < samplesRead; n+=channels)
+            for (var n = 0; n < samplesRead; n+=channels)
             {
                 Add(buffer[n+offset]);
             }

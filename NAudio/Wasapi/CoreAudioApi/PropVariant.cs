@@ -26,7 +26,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using NAudio.Utils;
 
 namespace NAudio.CoreAudioApi.Interfaces
 {
@@ -212,7 +211,7 @@ namespace NAudio.CoreAudioApi.Interfaces
             }
             var items = blobByteLength/structSize;
             var array = new T[items];
-            for (int n = 0; n < items; n++)
+            for (var n = 0; n < items; n++)
             {
                 array[n] = (T) Activator.CreateInstance(typeof (T));
                 Marshal.PtrToStructure(new IntPtr((long) blobVal.Data + n*structSize), array[n]);
@@ -232,7 +231,7 @@ namespace NAudio.CoreAudioApi.Interfaces
         {
             get
             {
-                VarEnum ve = DataType;
+                var ve = DataType;
                 switch (ve)
                 {
                     case VarEnum.VT_I1:

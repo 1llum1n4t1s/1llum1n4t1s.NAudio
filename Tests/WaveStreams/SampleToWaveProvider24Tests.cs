@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using NUnit.Framework;
@@ -10,9 +6,15 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// SampleToWaveProvider24 でファイル変換するテスト。
+    /// </summary>
     [TestFixture]
     public class SampleToWaveProvider24Tests
     {
+        /// <summary>
+        /// WAV を 24bit に変換して書き出せることを確認する。
+        /// </summary>
         [Test]
         public void ConvertAFile()
         {

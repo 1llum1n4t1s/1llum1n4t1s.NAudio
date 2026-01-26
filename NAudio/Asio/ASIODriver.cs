@@ -74,7 +74,7 @@ namespace NAudio.Wave.Asio
         /// <returns></returns>
         public bool Init(IntPtr sysHandle)
         {
-            int ret = asioDriverVTable.init(pAsioComObject, sysHandle);
+            var ret = asioDriverVTable.init(pAsioComObject, sysHandle);
             return ret == 1;
         }
 
@@ -260,7 +260,7 @@ namespace NAudio.Wave.Asio
         /// </summary>
         public AsioError DisposeBuffers()
         {
-            AsioError result = asioDriverVTable.disposeBuffers(pAsioComObject);
+            var result = asioDriverVTable.disposeBuffers(pAsioComObject);
             Marshal.FreeHGlobal(pinnedcallbacks);
             return result;
         }
@@ -330,7 +330,7 @@ namespace NAudio.Wave.Asio
             // USE CoCreateInstance instead of builtin COM-Class instantiation,
             // because the AsioDriver expect to have the ASIOGuid used for both COM Object and COM interface
             // The CoCreateInstance is working only in STAThread mode.
-            int hresult = CoCreateInstance(ref asioGuid, IntPtr.Zero, CLSCTX_INPROC_SERVER, ref asioGuid, out pAsioComObject);
+            var hresult = CoCreateInstance(ref asioGuid, IntPtr.Zero, CLSCTX_INPROC_SERVER, ref asioGuid, out pAsioComObject);
             if ( hresult != 0 )
             {
                 throw new COMException("Unable to instantiate ASIO. Check if STAThread is set",hresult);
@@ -339,19 +339,19 @@ namespace NAudio.Wave.Asio
             // The first pointer at the adress of the ASIO Com Object is a pointer to the
             // C++ Virtual table of the object.
             // Gets a pointer to VTable.
-            IntPtr pVtable = Marshal.ReadIntPtr(pAsioComObject);
+            var pVtable = Marshal.ReadIntPtr(pAsioComObject);
 
             // Instantiate our Virtual table mapping
             asioDriverVTable = new AsioDriverVTable();
 
             // This loop is going to retrieve the pointer from the C++ VirtualTable
             // and attach an internal delegate in order to call the method on the COM Object.
-            FieldInfo[] fieldInfos =  typeof (AsioDriverVTable).GetFields();
-            for (int i = 0; i < fieldInfos.Length; i++)
+            var fieldInfos =  typeof (AsioDriverVTable).GetFields();
+            for (var i = 0; i < fieldInfos.Length; i++)
             {
-                FieldInfo fieldInfo = fieldInfos[i];
+                var fieldInfo = fieldInfos[i];
                 // Read the method pointer from the VTable
-                IntPtr pPointerToMethodInVTable = Marshal.ReadIntPtr(pVtable, (i + INDEX_VTABLE_FIRST_METHOD) * IntPtr.Size);
+                var pPointerToMethodInVTable = Marshal.ReadIntPtr(pVtable, (i + INDEX_VTABLE_FIRST_METHOD) * IntPtr.Size);
                 // Instantiate a delegate
                 object methodDelegate = Marshal.GetDelegateForFunctionPointer(pPointerToMethodInVTable, fieldInfo.FieldType);
                 // Store the delegate in our C# VTable

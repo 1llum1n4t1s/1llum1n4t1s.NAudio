@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Text;
 using System.Windows.Forms;
 
 namespace NAudio.Gui
@@ -120,20 +117,20 @@ namespace NAudio.Gui
         /// </summary>
         protected override void OnPaint(PaintEventArgs e)
         {
-            int diameter = Math.Min(this.Width-4,this.Height-4);
+            var diameter = Math.Min(this.Width-4,this.Height-4);
                         
-            Pen potPen = new Pen(ForeColor,3.0f);
+            var potPen = new Pen(ForeColor,3.0f);
             potPen.LineJoin = System.Drawing.Drawing2D.LineJoin.Round;
-            System.Drawing.Drawing2D.GraphicsState state = e.Graphics.Save();
+            var state = e.Graphics.Save();
             //e.Graphics.TranslateTransform(diameter / 2f, diameter / 2f);
             e.Graphics.TranslateTransform(this.Width / 2, this.Height / 2);
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             e.Graphics.DrawArc(potPen, new Rectangle(diameter / -2, diameter / -2, diameter, diameter), 135, 270);
             
-            double percent = (value - minimum) / (maximum - minimum);
-            double degrees = 135 + (percent * 270);
-            double x = (diameter / 2.0) * Math.Cos(Math.PI * degrees / 180);
-            double y = (diameter / 2.0) * Math.Sin(Math.PI * degrees / 180);
+            var percent = (value - minimum) / (maximum - minimum);
+            var degrees = 135 + (percent * 270);
+            var x = (diameter / 2.0) * Math.Cos(Math.PI * degrees / 180);
+            var y = (diameter / 2.0) * Math.Sin(Math.PI * degrees / 180);
             e.Graphics.DrawLine(potPen, 0, 0, (float) x, (float) y);
             e.Graphics.Restore(state);
             base.OnPaint(e);
@@ -166,10 +163,10 @@ namespace NAudio.Gui
         {
             if (dragging)
             {
-                int yDifference = beginDragY - e.Y;
+                var yDifference = beginDragY - e.Y;
                 // 100 is the number of pixels of vertical movement that represents the whole scale
-                double delta = (maximum - minimum) * (yDifference / 150.0);
-                double newValue = beginDragValue + delta;
+                var delta = (maximum - minimum) * (yDifference / 150.0);
+                var newValue = beginDragValue + delta;
                 if (newValue < minimum)
                     newValue = minimum;
                 if (newValue > maximum)

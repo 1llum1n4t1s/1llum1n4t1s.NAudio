@@ -76,12 +76,18 @@ namespace NAudio.Wave
         /// </summary>
         public byte[] GetChunkData(RiffChunk chunk)
         {
-            long oldPosition = waveStream.Position;
-            waveStream.Position = chunk.StreamPosition;
-            byte[] data = new byte[chunk.Length];
-            waveStream.Read(data, 0, data.Length);
-            waveStream.Position = oldPosition;
-            return data;
+            var oldPosition = waveStream.Position;
+            try
+            {
+                waveStream.Position = chunk.StreamPosition;
+                var data = new byte[chunk.Length];
+                waveStream.ReadExactly(data, 0, data.Length);
+                return data;
+            }
+            finally
+            {
+                waveStream.Position = oldPosition;
+            }
         }
 
         /// <summary>
@@ -168,7 +174,7 @@ namespace NAudio.Wave
 
         /// <summary>
         /// Reads bytes from the Wave File
-        /// <see cref="Stream.Read"/>
+        /// <see cref="Stream.Read(System.Byte[],System.Int32,System.Int32)"/>
         /// </summary>
         public override int Read(byte[] array, int offset, int count)
         {
@@ -205,13 +211,13 @@ namespace NAudio.Wave
                     throw new InvalidOperationException("Only 16, 24 or 32 bit PCM or IEEE float audio data supported");
             }
             var sampleFrame = new float[waveFormat.Channels];
-            int bytesToRead = waveFormat.Channels*(waveFormat.BitsPerSample/8);
-            byte[] raw = new byte[bytesToRead];
-            int bytesRead = Read(raw, 0, bytesToRead);
+            var bytesToRead = waveFormat.Channels*(waveFormat.BitsPerSample/8);
+            var raw = new byte[bytesToRead];
+            var bytesRead = Read(raw, 0, bytesToRead);
             if (bytesRead == 0) return null; // end of file
             if (bytesRead < bytesToRead) throw new InvalidDataException("Unexpected end of file");
-            int offset = 0;
-            for (int channel = 0; channel < waveFormat.Channels; channel++)
+            var offset = 0;
+            for (var channel = 0; channel < waveFormat.Channels; channel++)
             {
                 if (waveFormat.BitsPerSample == 16)
                 {

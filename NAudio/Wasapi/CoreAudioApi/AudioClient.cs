@@ -31,7 +31,7 @@ namespace NAudio.CoreAudioApi
 
                     if (audioClientProperties != null)
                     {
-                        IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf(audioClientProperties.Value));
+                        var p = Marshal.AllocHGlobal(Marshal.SizeOf(audioClientProperties.Value));
                         try
                         {
                             // TODO: consider whether we can marshal this without the need for AllocHGlobal
@@ -101,7 +101,7 @@ namespace NAudio.CoreAudioApi
             Guid audioSessionGuid)
         {
             this.shareMode = shareMode;
-            int hresult = audioClientInterface.Initialize(shareMode, streamFlags, bufferDuration, periodicity, waveFormat, ref audioSessionGuid);
+            var hresult = audioClientInterface.Initialize(shareMode, streamFlags, bufferDuration, periodicity, waveFormat, ref audioSessionGuid);
             Marshal.ThrowExceptionForHR(hresult);
             // may have changed the mix format so reset it
             mixFormat = null;
@@ -273,9 +273,9 @@ namespace NAudio.CoreAudioApi
         /// <returns>True if the format is supported</returns>
         public bool IsFormatSupported(AudioClientShareMode shareMode, WaveFormat desiredFormat, out WaveFormatExtensible closestMatchFormat)
         {
-            IntPtr pointerToPtr = GetPointerToPointer(); // IntPtr.Zero; // Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormatExtensible>());
+            var pointerToPtr = GetPointerToPointer(); // IntPtr.Zero; // Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormatExtensible>());
             closestMatchFormat = null;
-            int hresult = audioClientInterface.IsFormatSupported(shareMode, desiredFormat, pointerToPtr);
+            var hresult = audioClientInterface.IsFormatSupported(shareMode, desiredFormat, pointerToPtr);
 
             // -2147467263 0x80004001
             // E_NOTIMPL

@@ -22,7 +22,7 @@ namespace AudioFileInspector
         /// <returns>True if it is registered</returns>
         public static bool IsFileTypeRegistered(string extension)
         {
-            RegistryKey key = Registry.ClassesRoot.OpenSubKey(extension);
+            var key = Registry.ClassesRoot.OpenSubKey(extension);
             if(key == null)
                 return false;
             key.Close();
@@ -36,7 +36,7 @@ namespace AudioFileInspector
         /// <returns>The HKCR key name or null if not registered</returns>
         public static string GetFileTypeKey(string extension)
         {
-            RegistryKey key = Registry.ClassesRoot.OpenSubKey(extension);
+            var key = Registry.ClassesRoot.OpenSubKey(extension);
             string fileTypeKey = null;
             if (key != null)
             {
@@ -57,8 +57,8 @@ namespace AudioFileInspector
             if (IsFileTypeRegistered(extension))
                 throw new ArgumentException(extension + "is already registered");
             
-            RegistryKey key = Registry.ClassesRoot.CreateSubKey(extension);
-            string fileKey = extension.Substring(1) + "File";
+            var key = Registry.ClassesRoot.CreateSubKey(extension);
+            var fileKey = extension.Substring(1) + "File";
             key.SetValue(null, fileKey);            
             key.Close();
             key = Registry.ClassesRoot.CreateSubKey(fileKey);
@@ -84,10 +84,10 @@ namespace AudioFileInspector
         public static void AddAction(string extension, string actionKey, string actionDescription, string command)
         {
             // command e.g. notepad.exe "%1"
-            string fileTypeKey = GetFileTypeKey(extension);
+            var fileTypeKey = GetFileTypeKey(extension);
             if (fileTypeKey == null)
                 throw new ArgumentException(extension + "is not a registered file type");
-            RegistryKey key = Registry.ClassesRoot.CreateSubKey(fileTypeKey + "\\shell\\" + actionKey);
+            var key = Registry.ClassesRoot.CreateSubKey(fileTypeKey + "\\shell\\" + actionKey);
             key.SetValue(null, actionDescription);
             key.Close();
             
@@ -104,7 +104,7 @@ namespace AudioFileInspector
         /// <param name="actionKey">The unique key used to register this action</param>
         public static void RemoveAction(string extension, string actionKey)
         {
-            string fileTypeKey = GetFileTypeKey(extension);
+            var fileTypeKey = GetFileTypeKey(extension);
             if (fileTypeKey == null)
             {
                 return;

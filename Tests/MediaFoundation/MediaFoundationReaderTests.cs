@@ -1,19 +1,23 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using NAudio.MediaFoundation;
 using NAudio.Wave;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
-using NUnit.Framework.Internal;
 
 namespace NAudioTests.MediaFoundation
 {
+    /// <summary>
+    /// MediaFoundationReader で AAC 等を読み取るテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MediaFoundationReaderTests
     {
+        /// <summary>
+        /// AAC ファイルを読み取れることを確認する。
+        /// </summary>
         [Test]
         public void CanReadAnAac()
         {
@@ -32,17 +36,23 @@ namespace NAudioTests.MediaFoundation
         }
     }
 
+    /// <summary>
+    /// MediaFoundation によるエンコードのテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class MediaFoundationEncoderTests
     {
+        /// <summary>
+        /// 大きい GSM610 WAV を MP3 にエンコードできることを確認する。
+        /// </summary>
         [Test]
         public void CanEncodeLargeGSM610FileToMp3()
         {
-            string fileInPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.wav";
-            string fileOutPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.mp3";
+            var fileInPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.wav";
+            var fileOutPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.mp3";
             if (!File.Exists(fileInPath)) ClassicAssert.Ignore("Missing test file"); ;
-            Stopwatch sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
             using (var wavToConvert = new WaveFileReader(fileInPath))
             using (var converter = WaveFormatConversionStream.CreatePcmStream(wavToConvert))
             {

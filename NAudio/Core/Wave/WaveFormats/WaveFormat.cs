@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using NAudio.Utils;
 
 namespace NAudio.Wave
 {
@@ -53,7 +52,7 @@ namespace NAudio.Wave
         /// <returns></returns>
         public int ConvertLatencyToByteSize(int milliseconds)
         {
-            int bytes = (int) ((AverageBytesPerSecond/1000.0)*milliseconds);
+            var bytes = (int) ((AverageBytesPerSecond/1000.0)*milliseconds);
             if ((bytes%BlockAlign) != 0)
             {
                 // Return the upper BlockAligned
@@ -74,7 +73,7 @@ namespace NAudio.Wave
         /// <returns></returns>
         public static WaveFormat CreateCustomFormat(WaveFormatEncoding tag, int sampleRate, int channels, int averageBytesPerSecond, int blockAlign, int bitsPerSample)
         {
-            WaveFormat waveFormat = new WaveFormat();
+            var waveFormat = new WaveFormat();
             waveFormat.waveFormatTag = tag;
             waveFormat.channels = (short)channels;
             waveFormat.sampleRate = sampleRate;
@@ -186,8 +185,8 @@ namespace NAudio.Wave
         /// <returns>IntPtr to WaveFormat structure (needs to be freed by callee)</returns>
         public static IntPtr MarshalToPtr(WaveFormat format)
         {
-            int formatSize = Marshal.SizeOf(format);
-            IntPtr formatPointer = Marshal.AllocHGlobal(formatSize);
+            var formatSize = Marshal.SizeOf(format);
+            var formatPointer = Marshal.AllocHGlobal(formatSize);
             Marshal.StructureToPtr(format, formatPointer, false);
             return formatPointer;
         }
@@ -234,7 +233,7 @@ namespace NAudio.Wave
         /// <param name="br">A binary reader that wraps the stream</param>
         public WaveFormat(BinaryReader br)
         {
-            int formatChunkLength = br.ReadInt32();
+            var formatChunkLength = br.ReadInt32();
             ReadWaveFormat(br, formatChunkLength);
         }
 
@@ -264,8 +263,7 @@ namespace NAudio.Wave
         /// <returns>True if the objects are the same</returns>
         public override bool Equals(object obj)
         {
-            var other = obj as WaveFormat;
-            if(other != null)
+            if(obj is WaveFormat other)
             {
                 return waveFormatTag == other.waveFormatTag &&
                     channels == other.channels &&

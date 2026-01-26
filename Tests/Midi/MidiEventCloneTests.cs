@@ -7,9 +7,15 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.Midi
 {
+    /// <summary>
+    /// MidiEvent の Clone および型別クローンのテスト。
+    /// </summary>
     [TestFixture]
     public class MidiEventCloneTests
     {
+        /// <summary>
+        /// 同一トラック用にクローンし、元を変更しないことを確認する。
+        /// </summary>
         [Test]
         public void CanCloneForSameTrack()
         {
@@ -29,6 +35,9 @@ namespace NAudioTests.Midi
             ClassicAssert.That(((NoteOnEvent)collection[0][1]).NoteNumber, Is.EqualTo(31));
         }
 
+        /// <summary>
+        /// NoteOn のクローンが OffEvent も別インスタンスである深いクローンであることを確認する。
+        /// </summary>
         [Test]
         public void NoteOnIsDeepClone()
         {
@@ -37,6 +46,9 @@ namespace NAudioTests.Midi
             ClassicAssert.That(clone.OffEvent, Is.Not.SameAs(ev.OffEvent));
         }
 
+        /// <summary>
+        /// SequencerSpecific のクローンが Data 配列も別インスタンスである深いクローンであることを確認する。
+        /// </summary>
         [Test]
         public void SequencerSpecificIsDeepClone()
         {
@@ -70,6 +82,10 @@ namespace NAudioTests.Midi
             new TrackSequenceNumberEvent(1)
         }.ToDictionary(_ => _.GetType());
 
+        /// <summary>
+        /// 各 MidiEvent 型で Clone が同じ型を返すことを確認する。
+        /// </summary>
+        /// <param name="midiEventType">テスト対象の MidiEvent 型。</param>
         [Test, TestCaseSource(nameof(AllMidiEventTypes))]
         public void CloneReturnsCorrectType(Type midiEventType)
         {

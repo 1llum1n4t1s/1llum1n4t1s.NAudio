@@ -1,36 +1,39 @@
-using System;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System.IO;
 using NAudio.Wave;
 using System.Diagnostics;
-using NAudio.MediaFoundation;
-using NAudio.Wave.SampleProviders;
 using NAudioTests.Utils;
 
 namespace NAudioTests.Mp3
 {
+    /// <summary>
+    /// Mp3FileReader の読み取り・フレーム・例外のテスト。
+    /// </summary>
     [TestFixture]
     public class Mp3FileReaderTests
     {
+        /// <summary>
+        /// 問題になりがちな MP3 ファイルを開いて最後まで読めることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemMp3Files()
         {
-            string testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
+            var testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
             if (!Directory.Exists(testDataFolder))
             {
                 ClassicAssert.Ignore($"{testDataFolder} not found");
             }
-            foreach (string file in Directory.GetFiles(testDataFolder, "*.mp3"))
+            foreach (var file in Directory.GetFiles(testDataFolder, "*.mp3"))
             {
-                string mp3File = Path.Combine(testDataFolder, file);
+                var mp3File = Path.Combine(testDataFolder, file);
                 Debug.WriteLine($"Opening {mp3File}");
                 using (var reader = new Mp3FileReader(mp3File))
                 {
-                    byte[] buffer = new byte[4096];
+                    var buffer = new byte[4096];
                     int bytesRead;
-                    int total = 0;
+                    var total = 0;
                     do
                     {
                         bytesRead = reader.Read(buffer, 0, buffer.Length);
@@ -41,6 +44,9 @@ namespace NAudioTests.Mp3
             }
         }
 
+        /// <summary>
+        /// ReadNextFrame で Position が進むことを確認する。
+        /// </summary>
         [Test]
         public void ReadFrameAdvancesPosition()
         {
@@ -65,6 +71,9 @@ namespace NAudioTests.Mp3
             }
         }
 
+        /// <summary>
+        /// 長さ 0 のストリームで InvalidDataException がスローされることを確認する。
+        /// </summary>
         [Test]
         public void CopesWithZeroLengthMp3()
         {

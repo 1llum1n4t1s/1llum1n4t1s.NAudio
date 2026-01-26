@@ -1,16 +1,19 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
-using NUnit.Framework.Legacy;
 using NAudio.Wave;
 using System.Diagnostics;
 
 namespace NAudioTests.DirectSound
 {
+    /// <summary>
+    /// DirectSound デバイス列挙のテスト。
+    /// </summary>
     [TestFixture]
     public class DirectSoundTests
     {
+        /// <summary>
+        /// DirectSound デバイスを列挙できることを確認する。
+        /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanEnumerateDevices()

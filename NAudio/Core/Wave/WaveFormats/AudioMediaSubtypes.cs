@@ -328,7 +328,7 @@ namespace NAudio.Dmo
         /// </summary>
         public static string GetAudioSubtypeName(Guid subType)
         {
-            for (int index = 0; index < AudioSubTypes.Length; index++)
+            for (var index = 0; index < AudioSubTypes.Length; index++)
             {
                 if (subType == AudioSubTypes[index])
                 {

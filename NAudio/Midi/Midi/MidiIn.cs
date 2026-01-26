@@ -152,7 +152,7 @@ namespace NAudio.Midi
                     // parameter 2 is milliseconds since MidiInStart
                     if (SysexMessageReceived != null)
                     {
-                        MidiInterop.MIDIHDR hdr = (MidiInterop.MIDIHDR)Marshal.PtrToStructure(messageParameter1, typeof(MidiInterop.MIDIHDR));
+                        var hdr = (MidiInterop.MIDIHDR)Marshal.PtrToStructure(messageParameter1, typeof(MidiInterop.MIDIHDR));
 
                         //  Copy the bytes received into an array so that the buffer is immediately available for re-use
                         var sysexBytes = new byte[hdr.dwBytesRecorded];
@@ -184,8 +184,8 @@ namespace NAudio.Midi
         /// </summary>
         public static MidiInCapabilities DeviceInfo(int midiInDeviceNumber)
         {
-            MidiInCapabilities caps = new MidiInCapabilities();
-            int structSize = Marshal.SizeOf(caps);
+            var caps = new MidiInCapabilities();
+            var structSize = Marshal.SizeOf(caps);
             MmException.Try(MidiInterop.midiInGetDevCaps((IntPtr)midiInDeviceNumber,out caps,structSize),"midiInGetDevCaps");
             return caps;
         }
@@ -213,7 +213,7 @@ namespace NAudio.Midi
                     //  Free up all created and allocated buffers for incoming Sysex messages
                     foreach (var lpHeader in SysexBufferHeaders)
                     {
-                        MidiInterop.MIDIHDR hdr = (MidiInterop.MIDIHDR)Marshal.PtrToStructure(lpHeader, typeof(MidiInterop.MIDIHDR));
+                        var hdr = (MidiInterop.MIDIHDR)Marshal.PtrToStructure(lpHeader, typeof(MidiInterop.MIDIHDR));
                         MmException.Try(MidiInterop.midiInUnprepareHeader(hMidiIn, lpHeader, Marshal.SizeOf(typeof(MidiInterop.MIDIHDR))), "midiInPrepareHeader");
                         Marshal.FreeHGlobal(hdr.lpData);
                         Marshal.FreeHGlobal(lpHeader);

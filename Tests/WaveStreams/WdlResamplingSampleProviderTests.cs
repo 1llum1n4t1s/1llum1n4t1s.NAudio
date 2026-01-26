@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using NUnit.Framework;
@@ -9,15 +8,21 @@ using NUnit.Framework.Legacy;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WdlResamplingSampleProvider のダウンサンプル・アップ/ダウンリサンプルのテスト。
+    /// </summary>
     [TestFixture]
     public class WdlResamplingSampleProviderTests
     {
+        /// <summary>
+        /// MP3 ファイルをダウンサンプルして WAV に書き出せることを確認する。
+        /// </summary>
         [Test]
         public void CanDownsampleAnMp3File()
         {
-            string testFile =  @"D:\Audio\Music\Coldplay\Mylo Xyloto\03 - Paradise.mp3";
+            var testFile =  @"D:\Audio\Music\Coldplay\Mylo Xyloto\03 - Paradise.mp3";
             if (!File.Exists(testFile)) ClassicAssert.Ignore(testFile);
-            string outFile = @"d:\test22.wav";
+            var outFile = @"d:\test22.wav";
             using (var reader = new AudioFileReader(testFile))
             {
                 // downsample to 22kHz
@@ -25,10 +30,10 @@ namespace NAudioTests.WaveStreams
                 var wp = new SampleToWaveProvider(resampler);
                 using (var writer = new WaveFileWriter(outFile, wp.WaveFormat))
                 {
-                    byte[] b = new byte[wp.WaveFormat.AverageBytesPerSecond];
+                    var b = new byte[wp.WaveFormat.AverageBytesPerSecond];
                     while (true)
                     {
-                        int read = wp.Read(b, 0, b.Length);
+                        var read = wp.Read(b, 0, b.Length);
                         if (read > 0)
                             writer.Write(b, 0, read);
                         else
@@ -39,6 +44,11 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 指定サンプルレートから別レートへリサンプルして読めることを確認する。
+        /// </summary>
+        /// <param name="from">入力サンプルレート。</param>
+        /// <param name="to">出力サンプルレート。</param>
         [TestCase(8000, 16000)]
         [TestCase(8000, 22050)]
         [TestCase(8000, 32000)]
@@ -66,7 +76,7 @@ namespace NAudioTests.WaveStreams
             //WaveFileWriter.CreateWaveFile16(;
             var buffer = new float[to * channels];
             Debug.WriteLine(String.Format("From {0} to {1}", from, to));
-            for (int n = 0; n < 10; n++)
+            for (var n = 0; n < 10; n++)
             {
                 var read = resampler.Read(buffer, 0, buffer.Length);
                 Debug.WriteLine(String.Format("read {0}", read));

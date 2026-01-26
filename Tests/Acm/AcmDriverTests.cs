@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using NAudio.Wave;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System.Diagnostics;
@@ -9,16 +7,22 @@ using NAudio.Wave.Compression;
 
 namespace NAudioTests.Acm
 {
+    /// <summary>
+    /// ACM ドライバー列挙・検索・オープン／クローズのテスト。
+    /// </summary>
     [TestFixture]
     [Category("IntegrationTest")]
     public class AcmDriverTests
     {
+        /// <summary>
+        /// ACM ドライバーを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateDrivers()
         {
-            IEnumerable<AcmDriver> drivers = AcmDriver.EnumerateAcmDrivers();
+            var drivers = AcmDriver.EnumerateAcmDrivers();
             ClassicAssert.IsNotNull(drivers);
-            foreach (AcmDriver driver in drivers)
+            foreach (var driver in drivers)
             {
                 ClassicAssert.GreaterOrEqual((int)driver.DriverId, 0);
                 ClassicAssert.IsTrue(!String.IsNullOrEmpty(driver.ShortName));
@@ -26,46 +30,61 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// 存在しないコーデックでは false が返ることを確認する。
+        /// </summary>
         [Test]
         public void DoesntFindNonexistentCodec()
         {
             ClassicAssert.IsFalse(AcmDriver.IsCodecInstalled("ASJHASDHJSAK"));
         }
 
+        /// <summary>
+        /// 標準コーデック（MS-ADPCM）がインストールされていることを確認する。
+        /// </summary>
         [Test]
         public void FindsStandardCodec()
         {
             ClassicAssert.IsTrue(AcmDriver.IsCodecInstalled("MS-ADPCM"));
         }
 
+        /// <summary>
+        /// ショート名でドライバーを検索できることを確認する。
+        /// </summary>
         [Test]
         public void HasFindByShortNameMethod()
         {
-            AcmDriver driver = AcmDriver.FindByShortName("WM-AUDIO");
+            var driver = AcmDriver.FindByShortName("WM-AUDIO");
         }
 
+        /// <summary>
+        /// 各ドライバーをオープン・クローズできることを確認する。
+        /// </summary>
         [Test]
         public void CanOpenAndCloseDriver()
         {
-            IEnumerable<AcmDriver> drivers = AcmDriver.EnumerateAcmDrivers();
+            var drivers = AcmDriver.EnumerateAcmDrivers();
             ClassicAssert.IsNotNull(drivers);
-            foreach (AcmDriver driver in drivers)
+            foreach (var driver in drivers)
             {
                 driver.Open();
                 driver.Close();
             }
         }
 
+        /// <summary>
+        /// 各ドライバーのフォーマットタグを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateFormatTags()
         {
-            foreach(AcmDriver driver in AcmDriver.EnumerateAcmDrivers())
+            foreach(var driver in AcmDriver.EnumerateAcmDrivers())
             {
                 Debug.WriteLine("Enumerating Format Tags for " + driver.LongName);
                 driver.Open();
-                IEnumerable<AcmFormatTag> formatTags = driver.FormatTags;
+                var formatTags = driver.FormatTags;
                 ClassicAssert.IsNotNull(formatTags, "FormatTags");
-                foreach(AcmFormatTag formatTag in formatTags)
+                foreach(var formatTag in formatTags)
                 {
                     Debug.WriteLine(String.Format("{0} {1} {2} Standard formats: {3} Support Flags: {4} Format Size: {5}",
                         formatTag.FormatTagIndex, 
@@ -79,19 +98,22 @@ namespace NAudioTests.Acm
             }
         }
 
+        /// <summary>
+        /// フォーマットタグに属するフォーマットを列挙できることを確認する。
+        /// </summary>
         [Test]
         public void CanEnumerateFormats()
         {
-            using (AcmDriver driver = AcmDriver.FindByShortName("MS-ADPCM"))
+            using (var driver = AcmDriver.FindByShortName("MS-ADPCM"))
             {
                 driver.Open();
-                IEnumerable<AcmFormatTag> formatTags = driver.FormatTags;
+                var formatTags = driver.FormatTags;
                 ClassicAssert.IsNotNull(formatTags, "FormatTags");
-                foreach (AcmFormatTag formatTag in formatTags)
+                foreach (var formatTag in formatTags)
                 {                                        
-                    IEnumerable<AcmFormat> formats = driver.GetFormats(formatTag);
+                    var formats = driver.GetFormats(formatTag);
                     ClassicAssert.IsNotNull(formats);
-                    foreach (AcmFormat format in formats)
+                    foreach (var format in formats)
                     {
                         Debug.WriteLine(String.Format("{0} {1} {2} {3} {4}",
                             format.FormatIndex,

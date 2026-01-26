@@ -8,10 +8,16 @@ using NAudioTests.Utils;
 
 namespace NAudioTests.WaveStreams
 {
+    /// <summary>
+    /// WaveFileWriter の Write/Flush/CreateWaveFile/WriteSample/大ファイルのテスト。
+    /// </summary>
     [TestFixture]
     [Category("UnitTest")]
     public class WaveFileWriterTests
     {
+        /// <summary>
+        /// Write で書き込んだデータを Reader で同一に読めることを確認する。
+        /// </summary>
         [Test]
         public void ReaderShouldReadBackSameDataWrittenWithWrite()
         {
@@ -30,9 +36,9 @@ namespace NAudioTests.WaveStreams
                 ClassicAssert.AreEqual(1, reader.WaveFormat.Channels, "Channels");
                 ClassicAssert.AreEqual(testSequence.Length, reader.Length, "File Length");
                 var buffer = new byte[600]; // 24 bit audio, block align is 3
-                int read = reader.Read(buffer, 0, buffer.Length);
+                var read = reader.Read(buffer, 0, buffer.Length);
                 ClassicAssert.AreEqual(testSequence.Length, read, "Data Length");
-                for (int n = 0; n < read; n++)
+                for (var n = 0; n < read; n++)
                 {
                     ClassicAssert.AreEqual(testSequence[n], buffer[n], "Byte " + n);
                 }
@@ -40,6 +46,9 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// Dispose 前に Flush すればヘッダが更新されることを確認する。
+        /// </summary>
         [Test]
         public void FlushUpdatesHeaderEvenIfDisposeNotCalled()
         {
@@ -62,10 +71,10 @@ namespace NAudioTests.WaveStreams
                 ClassicAssert.AreEqual(1, reader.WaveFormat.Channels, "Channels");
                 ClassicAssert.AreEqual(testSequence.Length, reader.Length, "File Length");
                 var buffer = new byte[600]; // 24 bit audio, block align is 3
-                int read = reader.Read(buffer, 0, buffer.Length);
+                var read = reader.Read(buffer, 0, buffer.Length);
                 ClassicAssert.AreEqual(testSequence.Length, read, "Data Length");
                 
-                for (int n = 0; n < read; n++)
+                for (var n = 0; n < read; n++)
                 {
                     ClassicAssert.AreEqual(testSequence[n], buffer[n], "Byte " + n);
                 }
@@ -74,10 +83,13 @@ namespace NAudioTests.WaveStreams
         }
 
 
+        /// <summary>
+        /// CreateWaveFile で指定長のファイルができることを確認する。
+        /// </summary>
         [Test]
         public void CreateWaveFileCreatesFileOfCorrectLength()
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".wav");
+            var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".wav");
             try
             {
                 long length = 4200;
@@ -88,7 +100,7 @@ namespace NAudioTests.WaveStreams
                     ClassicAssert.AreEqual(waveFormat, reader.WaveFormat, "WaveFormat");
                     ClassicAssert.AreEqual(length, reader.Length, "Length");
                     var buffer = new byte[length + 20];
-                    int read = reader.Read(buffer, 0, buffer.Length);
+                    var read = reader.Read(buffer, 0, buffer.Length);
                     ClassicAssert.AreEqual(length, read, "Read");
                 }
             }
@@ -98,14 +110,17 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 16bit ファイルに WriteSample で書き込めることを確認する。
+        /// </summary>
         [Test]
         public void CanUseWriteSampleToA16BitFile()
         {
-            float amplitude = 0.25f;
+            var amplitude = 0.25f;
             float frequency = 1000;
             using (var writer = new WaveFileWriter(new MemoryStream(), new WaveFormat(16000, 16, 1)))
             {
-                for (int n = 0; n < 1000; n++)
+                for (var n = 0; n < 1000; n++)
                 {
                     var sample = (float)(amplitude * Math.Sin((2 * Math.PI * n * frequency) / writer.WaveFormat.SampleRate));
                     writer.WriteSample(sample);
@@ -113,6 +128,9 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 2GB 超の WAV ファイルを作成できることを確認する（Explicit）。
+        /// </summary>
         [Test]
         [Explicit]
         public void CanCreateWaveFileGreaterThan2Gb()
@@ -130,8 +148,11 @@ namespace NAudioTests.WaveStreams
             }
         }
 
+        /// <summary>
+        /// 4GB 超の WAV 作成が ArgumentException で失敗することを確認する（Explicit）。
+        /// </summary>
         [Test]
-        [Explicit]        
+        [Explicit]
         public void FailsToCreateWaveFileGreaterThan4Gb()
         {
             var tempFile = Path.GetTempFileName();

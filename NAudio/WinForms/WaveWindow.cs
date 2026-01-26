@@ -15,14 +15,14 @@ namespace NAudio.Wave
 
         protected override void WndProc(ref Message m)
         {
-            WaveInterop.WaveMessage message = (WaveInterop.WaveMessage)m.Msg;
+            var message = (WaveInterop.WaveMessage)m.Msg;
             
             switch(message)
             {
                 case WaveInterop.WaveMessage.WaveOutDone:
                 case WaveInterop.WaveMessage.WaveInData:
-                    IntPtr hOutputDevice = m.WParam;
-                    WaveHeader waveHeader = new WaveHeader();
+                    var hOutputDevice = m.WParam;
+                    var waveHeader = new WaveHeader();
                     Marshal.PtrToStructure(m.LParam, waveHeader);
                     waveCallback(hOutputDevice, message, IntPtr.Zero, waveHeader, IntPtr.Zero);
                     break;
@@ -50,14 +50,14 @@ namespace NAudio.Wave
 
         protected override void WndProc(ref Message m)
         {
-            WaveInterop.WaveMessage message = (WaveInterop.WaveMessage)m.Msg;
+            var message = (WaveInterop.WaveMessage)m.Msg;
             
             switch(message)
             {
                 case WaveInterop.WaveMessage.WaveOutDone:
                 case WaveInterop.WaveMessage.WaveInData:
-                    IntPtr hOutputDevice = m.WParam;
-                    WaveHeader waveHeader = new WaveHeader();
+                    var hOutputDevice = m.WParam;
+                    var waveHeader = new WaveHeader();
                     Marshal.PtrToStructure(m.LParam, waveHeader);
                     waveCallback(hOutputDevice, message, IntPtr.Zero, waveHeader, IntPtr.Zero);
                     break;
