@@ -19,10 +19,13 @@ namespace NAudioTests.Wasapi
         private readonly ComboBox _processComboBox;
         private readonly Button _refreshButton;
         private readonly CheckBox _includeProcessTreeCheckBox;
+        private readonly CheckBox _saveToFileCheckBox;
         private readonly Button _startStopButton;
         private readonly TextBox _logTextBox;
         private readonly Label _statusLabel;
         private WasapiCapture _capture;
+        private WaveFileWriter _waveFileWriter;
+        private string _savingFilePath;
         private long _totalBytesCaptured;
         private bool _isCapturing;
 
@@ -40,27 +43,34 @@ namespace NAudioTests.Wasapi
             var processLabel = new Label
             {
                 Text = "プロセス:",
-                Location = new Point(12, 14),
+                Location = new Point(12, 12),
                 AutoSize = true
             };
             _processComboBox = new ComboBox
             {
-                Location = new Point(80, 11),
-                Width = 280,
+                Location = new Point(80, 9),
+                Width = 276,
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             _refreshButton = new Button
             {
                 Text = "一覧を更新",
-                Location = new Point(370, 9),
+                Location = new Point(364, 8),
                 Width = 90
             };
             _refreshButton.Click += RefreshButton_Click;
 
             _includeProcessTreeCheckBox = new CheckBox
             {
-                Text = "子プロセスを含む (Include process tree)",
-                Location = new Point(80, 42),
+                Text = "子プロセスを含む",
+                Location = new Point(12, 38),
+                AutoSize = true,
+                Checked = false
+            };
+            _saveToFileCheckBox = new CheckBox
+            {
+                Text = "キャプチャをファイルに保存",
+                Location = new Point(12, 60),
                 AutoSize = true,
                 Checked = false
             };
@@ -68,28 +78,27 @@ namespace NAudioTests.Wasapi
             _startStopButton = new Button
             {
                 Text = "キャプチャ開始",
-                Location = new Point(80, 72),
+                Location = new Point(12, 88),
                 Width = 120
             };
             _startStopButton.Click += StartStopButton_Click;
-
             _statusLabel = new Label
             {
                 Text = "状態: 停止中",
-                Location = new Point(210, 76),
+                Location = new Point(140, 92),
                 AutoSize = true
             };
 
             var logLabel = new Label
             {
                 Text = "ログ:",
-                Location = new Point(12, 108),
+                Location = new Point(12, 120),
                 AutoSize = true
             };
             _logTextBox = new TextBox
             {
-                Location = new Point(12, 128),
-                Size = new Size(476, 240),
+                Location = new Point(12, 138),
+                Size = new Size(484, 250),
                 Multiline = true,
                 ReadOnly = true,
                 ScrollBars = ScrollBars.Vertical,
@@ -100,6 +109,7 @@ namespace NAudioTests.Wasapi
             Controls.Add(_processComboBox);
             Controls.Add(_refreshButton);
             Controls.Add(_includeProcessTreeCheckBox);
+            Controls.Add(_saveToFileCheckBox);
             Controls.Add(_startStopButton);
             Controls.Add(_statusLabel);
             Controls.Add(logLabel);
@@ -171,15 +181,47 @@ namespace NAudioTests.Wasapi
         /// <summary>
         /// 指定プロセスのループバックキャプチャを非同期で開始する。
         /// </summary>
+        /// <summary>
+        /// ファイル保存用の保存先パスをユーザーに選択させる。
+        /// </summary>
+        /// <returns>選択されたフルパス。キャンセル時は null。</returns>
+        private string AskSaveFilePath()
+        {
+            using var dlg = new SaveFileDialog
+            {
+                Filter = "WAV ファイル (*.wav)|*.wav|すべてのファイル (*.*)|*.*",
+                DefaultExt = "wav",
+                FileName = $"loopback_{DateTime.Now:yyyyMMdd_HHmmss}.wav",
+                Title = "キャプチャ保存先を指定"
+            };
+            return dlg.ShowDialog() == DialogResult.OK ? dlg.FileName : null;
+        }
+
         private async Task StartCaptureAsync(int processId, bool includeProcessTree)
         {
             _startStopButton.Enabled = false;
             _statusLabel.Text = "状態: 初期化中...";
             Log($"プロセス ID={processId} のキャプチャを開始します (子プロセス含む={includeProcessTree})");
+            var wantSaveToFile = _saveToFileCheckBox.Checked;
+            if (wantSaveToFile)
+            {
+                _savingFilePath = AskSaveFilePath();
+                if (string.IsNullOrEmpty(_savingFilePath))
+                {
+                    Log("ファイル保存をキャンセルしました。キャプチャのみ行います。");
+                    wantSaveToFile = false;
+                }
+            }
             try
             {
                 _capture = await WasapiCapture.CreateForProcessCaptureAsync(processId, includeProcessTree);
                 _totalBytesCaptured = 0;
+                _waveFileWriter = null;
+                if (wantSaveToFile && !string.IsNullOrEmpty(_savingFilePath))
+                {
+                    _waveFileWriter = new WaveFileWriter(_savingFilePath, _capture.WaveFormat);
+                    Log($"保存先: {_savingFilePath}");
+                }
                 _capture.DataAvailable += Capture_DataAvailable;
                 _capture.RecordingStopped += Capture_RecordingStopped;
                 _capture.StartRecording();
@@ -201,6 +243,8 @@ namespace NAudioTests.Wasapi
         private void Capture_DataAvailable(object sender, WaveInEventArgs e)
         {
             _totalBytesCaptured += e.BytesRecorded;
+            if (e.BytesRecorded > 0)
+                _waveFileWriter?.Write(e.Buffer, 0, e.BytesRecorded);
             if (InvokeRequired)
             {
                 BeginInvoke(() => UpdateCaptureStatus());
@@ -246,6 +290,20 @@ namespace NAudioTests.Wasapi
                 Log($"停止処理でエラー: {ex.Message}");
             }
             _capture = null;
+            if (_waveFileWriter != null)
+            {
+                try
+                {
+                    _waveFileWriter.Dispose();
+                    Log($"ファイルに保存しました: {_savingFilePath}");
+                }
+                catch (Exception ex)
+                {
+                    Log($"ファイル保存のクローズでエラー: {ex.Message}");
+                }
+                _waveFileWriter = null;
+                _savingFilePath = null;
+            }
             _startStopButton.Text = "キャプチャ開始";
             _statusLabel.Text = $"状態: 停止中 (合計 {_totalBytesCaptured:N0} bytes)";
             Log("キャプチャを停止しました。");
