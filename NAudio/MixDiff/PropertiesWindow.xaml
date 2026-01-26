@@ -1,0 +1,36 @@
+<Window x:Class="MarkHeath.AudioUtils.PropertiesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Properties" Height="280" Width="320"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Delay (milliseconds):" Margin="0,0,0,4" />
+        <TextBox x:Name="TextBoxDelay" Grid.Row="1" Margin="0,0,0,8" />
+        <TextBlock Grid.Row="2" Text="Offset (trim from start, milliseconds):" Margin="0,0,0,4" />
+        <TextBox x:Name="TextBoxOffset" Grid.Row="3" Margin="0,0,0,8" />
+        <TextBlock Grid.Row="4" Text="Volume:" Margin="0,0,0,4" />
+        <Grid Grid.Row="5" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Slider x:Name="SliderVolume" Minimum="-60" Maximum="6" TickFrequency="1" IsSnapToTickEnabled="True"
+                    ValueChanged="SliderVolume_ValueChanged" />
+            <TextBlock x:Name="TextVolume" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0" MinWidth="40" />
+        </Grid>
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="OK" IsDefault="True" Click="Ok_Click" Width="80" Margin="0,0,8,0" />
+            <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" Width="80" />
+        </StackPanel>
+    </Grid>
+</Window>

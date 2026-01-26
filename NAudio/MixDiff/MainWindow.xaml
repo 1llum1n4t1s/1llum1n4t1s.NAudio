@@ -1,0 +1,64 @@
+<Window x:Class="MarkHeath.AudioUtils.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MixDiff" Height="320" Width="660"
+        KeyDown="Window_KeyDown" Closing="Window_Closing">
+    <Window.Resources>
+        <ContextMenu x:Key="SlotContextMenu">
+            <MenuItem Header="_Select File..." Click="ContextSelectFile_Click" />
+            <MenuItem Header="_Clear" Click="ContextClear_Click" />
+            <MenuItem Header="_Properties..." Click="ContextProperties_Click" />
+        </ContextMenu>
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="Open Comparison..." Click="OpenComparison_Click" />
+                <MenuItem Header="Save Comparison..." Click="SaveComparison_Click" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="Exit_Click" />
+            </MenuItem>
+            <MenuItem Header="_Options">
+                <MenuItem Header="Compare _Mode">
+                    <MenuItem x:Name="MenuCurrentPosition" Header="_Current Position" IsCheckable="True" IsChecked="True" Click="CompareModeCurrent_Click" />
+                    <MenuItem x:Name="MenuSkipBack" Header="_Skip Back" IsCheckable="True" Click="CompareModeSkipBack_Click" />
+                    <MenuItem x:Name="MenuRestart" Header="_Restart" IsCheckable="True" Click="CompareModeRestart_Click" />
+                </MenuItem>
+                <MenuItem Header="_Settings..." Click="Settings_Click" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="&amp;Contents" Click="Contents_Click" />
+                <MenuItem Header="&amp;About" Click="About_Click" />
+            </MenuItem>
+        </Menu>
+        <ToolBarTray DockPanel.Dock="Top">
+            <ToolBar>
+                <Button Content="Play" Click="Play_Click" Padding="6,2" />
+                <Button Content="Pause" Click="Pause_Click" Padding="6,2" />
+                <Button Content="Stop" Click="Stop_Click" Padding="6,2" />
+                <Button Content="Back" Click="Back_Click" Padding="6,2" />
+                <Button Content="Fwd" Click="Forward_Click" Padding="6,2" />
+                <Button Content="Rewind" Click="Rewind_Click" Padding="6,2" />
+                <Separator />
+                <CheckBox x:Name="CheckLoop" Content="Loop" VerticalAlignment="Center" Margin="4,0" />
+                <CheckBox x:Name="CheckShuffle" Content="Shuffle" VerticalAlignment="Center" Margin="4,0" Click="Shuffle_Click" />
+                <Separator />
+                <TextBlock Text="Position:" VerticalAlignment="Center" Margin="4,0" />
+                <TextBlock x:Name="LabelPosition" Text="00:00:00.000" VerticalAlignment="Center" MinWidth="80" />
+                <Separator />
+                <TextBlock Text="Length:" VerticalAlignment="Center" Margin="4,0" />
+                <TextBlock x:Name="LabelLength" Text="00:00:00" VerticalAlignment="Center" MinWidth="60" />
+            </ToolBar>
+        </ToolBarTray>
+        <UniformGrid Rows="1" Columns="4" Margin="12">
+            <Button x:Name="ButtonA" Margin="4" FontSize="36" FontWeight="Bold" Content="&lt;Empty&gt;" Click="MixButton_Click"
+                    ContextMenu="{StaticResource SlotContextMenu}" ContextMenuOpening="SlotContextMenu_Opening" />
+            <Button x:Name="ButtonB" Margin="4" FontSize="36" FontWeight="Bold" Content="&lt;Empty&gt;" Click="MixButton_Click"
+                    ContextMenu="{StaticResource SlotContextMenu}" ContextMenuOpening="SlotContextMenu_Opening" />
+            <Button x:Name="ButtonC" Margin="4" FontSize="36" FontWeight="Bold" Content="&lt;Empty&gt;" Click="MixButton_Click"
+                    ContextMenu="{StaticResource SlotContextMenu}" ContextMenuOpening="SlotContextMenu_Opening" />
+            <Button x:Name="ButtonD" Margin="4" FontSize="36" FontWeight="Bold" Content="&lt;Empty&gt;" Click="MixButton_Click"
+                    ContextMenu="{StaticResource SlotContextMenu}" ContextMenuOpening="SlotContextMenu_Opening" />
+        </UniformGrid>
+    </DockPanel>
+</Window>

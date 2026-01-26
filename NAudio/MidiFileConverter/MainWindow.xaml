@@ -1,0 +1,89 @@
+<Window x:Class="MarkHeath.MidiUtils.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:naudio="clr-namespace:NAudio.Utils;assembly=NAudio"
+        Title="MIDI File Converter" Height="440" MinHeight="440" Width="560" MinWidth="560"
+        Closing="Window_Closing">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Menu Grid.Row="0" Margin="0,0,0,4">
+            <MenuItem Header="_File">
+                <MenuItem Header="E_xit" Click="Exit_Click" />
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem x:Name="OptionsMenuItem" Header="Advanced _Options..." Click="Options_Click" />
+                <MenuItem Header="_Clear Log" Click="ClearLog_Click" />
+                <MenuItem x:Name="SaveLogMenuItem" Header="_Save Log..." IsEnabled="False" Click="SaveLog_Click" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="&amp;Contents" Click="Contents_Click" />
+                <MenuItem Header="_About" Click="About_Click" />
+            </MenuItem>
+        </Menu>
+        <Grid Grid.Row="1" Margin="0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Input Folder:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBox x:Name="TextBoxInputFolder" Grid.Column="1" IsReadOnly="True" VerticalAlignment="Center" Padding="4,2" />
+            <Button Grid.Column="2" Content="Browse..." Width="80" Margin="8,0,0,0" Click="BrowseInputFolder_Click" />
+        </Grid>
+        <Grid Grid.Row="2" Margin="0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Output Folder:" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <TextBox x:Name="TextBoxOutputFolder" Grid.Column="1" IsReadOnly="True" VerticalAlignment="Center" Padding="4,2" />
+            <Button Grid.Column="2" Content="Browse..." Width="80" Margin="8,0,0,0" Click="BrowseOutputFolder_Click" />
+        </Grid>
+        <Grid Grid.Row="3" Margin="0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <GroupBox Grid.Column="0" Header="Clip Naming" Padding="8,4" Margin="0,0,4,0">
+                <StackPanel>
+                    <CheckBox x:Name="CheckBoxApplyNamingRules" Content="Apply XML naming rules to Toontrack EZD patterns" Margin="0,2" />
+                    <CheckBox x:Name="CheckBoxUseFilename" Content="Use filename for other MIDI patterns" Margin="0,2" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Column="1" Header="MIDI Note Channel" Padding="8,4" Margin="4,0">
+                <StackPanel>
+                    <RadioButton x:Name="RadioChannelUnchanged" Content="Leave Unchanged" GroupName="Channel" Margin="0,2" />
+                    <RadioButton x:Name="RadioChannel1" Content="Force all to Channel 1" GroupName="Channel" Margin="0,2" />
+                    <RadioButton x:Name="RadioChannel10" Content="Force all to Channel 10" GroupName="Channel" Margin="0,2" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Column="2" Header="Output File Type" Padding="8,4" Margin="4,0,0,0">
+                <StackPanel>
+                    <RadioButton x:Name="RadioTypeUnchanged" Content="Leave Unchanged" GroupName="Type" Margin="0,2" />
+                    <RadioButton x:Name="RadioType0" Content="MIDI Type 0" GroupName="Type" Margin="0,2" />
+                    <RadioButton x:Name="RadioType1" Content="MIDI Type 1" GroupName="Type" Margin="0,2" />
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+        <Grid Grid.Row="4" Margin="0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" x:Name="LabelHint" Text="When you have verified the above settings, click Convert to begin" VerticalAlignment="Center" />
+            <CheckBox Grid.Column="1" x:Name="CheckBoxVerbose" Content="Verbose Output" IsChecked="True" VerticalAlignment="Center" Margin="8,0" />
+            <Button Grid.Column="2" Content="Convert" Width="80" Margin="8,0,0,0" Click="Convert_Click" />
+        </Grid>
+        <naudio:ProgressLog x:Name="ProgressLog" Grid.Row="5" Margin="0,8,0,0" />
+    </Grid>
+</Window>

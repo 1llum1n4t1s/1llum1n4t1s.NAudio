@@ -3,6 +3,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>MarkHeath.MidiUtils</RootNamespace>
     <AssemblyName>MIDI File Converter</AssemblyName>
+    <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
