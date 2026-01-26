@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using NAudio.Midi;
 
@@ -35,7 +36,8 @@ namespace MarkHeath.MidiUtils
             errors = 0;
             startTime = DateTime.Now;
             LogInformation("{0} Beginning to Convert MIDI Files...", startTime);
-            LogInformation("Processing using EZdrummer MIDI Converter v{0}", System.Windows.Forms.Application.ProductVersion);
+            var productVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
+            LogInformation("Processing using EZdrummer MIDI Converter v{0}", productVersion);
             LogInformation("Output MIDI type {0}", settings.OutputMidiType);
             LogInformation("Output Channel Number {0}", settings.OutputChannelNumber == -1 ? "Unchanged" : settings.OutputChannelNumber.ToString());
 

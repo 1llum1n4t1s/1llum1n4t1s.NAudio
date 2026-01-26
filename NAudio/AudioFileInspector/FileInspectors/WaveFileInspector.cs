@@ -4,47 +4,43 @@ using NAudio.Wave;
 using NAudio.Utils;
 using System.ComponentModel.Composition;
 
-namespace AudioFileInspector
+namespace AudioFileInspector;
+
+/// <summary>
+/// WAV ファイル用インスペクター。
+/// </summary>
+[Export(typeof(IAudioFileInspector))]
+public class WaveFileInspector : IAudioFileInspector
 {
-    [Export(typeof(IAudioFileInspector))]
-    public class WaveFileInspector : IAudioFileInspector
+    /// <inheritdoc />
+    public string FileExtension => ".wav";
+
+    /// <inheritdoc />
+    public string FileTypeDescription => "Wave File";
+
+    /// <inheritdoc />
+    public string Describe(string fileName)
     {
-
-        public string FileExtension
+        var stringBuilder = new StringBuilder();
+        using (var wf = new WaveFileReader(fileName))
         {
-            get { return ".wav"; }
-        }
-
-        public string FileTypeDescription
-        {
-            get { return "Wave File"; }
-        }
-
-        public string Describe(string fileName)
-        {
-            var stringBuilder = new StringBuilder();
-            using (var wf = new WaveFileReader(fileName))
+            stringBuilder.AppendFormat("{0} {1}Hz {2} channels {3} bits per sample\r\n",
+                wf.WaveFormat.Encoding, wf.WaveFormat.SampleRate, wf.WaveFormat.Channels, wf.WaveFormat.BitsPerSample);
+            stringBuilder.AppendFormat("Extra Size: {0} Block Align: {1} Average Bytes Per Second: {2}\r\n",
+                wf.WaveFormat.ExtraSize, wf.WaveFormat.BlockAlign, wf.WaveFormat.AverageBytesPerSecond);
+            stringBuilder.AppendFormat("WaveFormat: {0}\r\n", wf.WaveFormat);
+            stringBuilder.AppendFormat("Length: {0} bytes: {1} \r\n", wf.Length, wf.TotalTime);
+            foreach (var chunk in wf.ExtraChunks)
             {
-                stringBuilder.AppendFormat("{0} {1}Hz {2} channels {3} bits per sample\r\n", 
-                    wf.WaveFormat.Encoding, wf.WaveFormat.SampleRate,
-                    wf.WaveFormat.Channels, wf.WaveFormat.BitsPerSample);
-                stringBuilder.AppendFormat("Extra Size: {0} Block Align: {1} Average Bytes Per Second: {2}\r\n",
-                    wf.WaveFormat.ExtraSize, wf.WaveFormat.BlockAlign,
-                    wf.WaveFormat.AverageBytesPerSecond);
-                stringBuilder.AppendFormat("WaveFormat: {0}\r\n",wf.WaveFormat);
-                
-                stringBuilder.AppendFormat("Length: {0} bytes: {1} \r\n", wf.Length, wf.TotalTime);
-                foreach (var chunk in wf.ExtraChunks)
-                {
-                    stringBuilder.AppendFormat("Chunk: {0}, length {1}\r\n", chunk.IdentifierAsString, chunk.Length);
-                    var data = wf.GetChunkData(chunk);
-                    DescribeChunk(chunk, stringBuilder, data);
-                }
+                stringBuilder.AppendFormat("Chunk: {0}, length {1}\r\n", chunk.IdentifierAsString, chunk.Length);
+                var data = wf.GetChunkData(chunk);
+                DescribeChunk(chunk, stringBuilder, data);
             }
-            return stringBuilder.ToString();
         }
+        return stringBuilder.ToString();
+    }
 
-        private static void DescribeChunk(RiffChunk chunk, StringBuilder stringBuilder, byte[] data)
+    private static void DescribeChunk(RiffChunk chunk, StringBuilder stringBuilder, byte[] data)
         {
             switch(chunk.IdentifierAsString)
             {
@@ -144,4 +140,3 @@ namespace AudioFileInspector
             }
         }
     }
-}
