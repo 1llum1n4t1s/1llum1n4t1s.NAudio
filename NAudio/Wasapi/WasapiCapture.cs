@@ -127,17 +127,16 @@ namespace NAudio.CoreAudioApi
                     }
                 };
                 WasapiCapture capture = null;
-                var icbh = new ActivateAudioInterfaceCompletionHandler1(ac2 => { 
-                    var audioClient = new AudioClient(ac2);
+                var icbh = new ActivateAudioInterfaceCompletionHandler1(ac => {
+                    var audioClient = new AudioClient(ac);
                     capture = new WasapiCapture(audioClient, true, 100);
-                    capture.audioClientStreamFlags |= AudioClientStreamFlags.Loopback;
-                    capture.WaveFormat = new WaveFormat(); // ask for capture at 44.1, stereo 16 bit
+                    capture.WaveFormat = new WaveFormat();
                 });
                 var hActivateParams = GCHandle.Alloc(activateParams, GCHandleType.Pinned);
                 try
                 {
                     NativeMethods.ActivateAudioInterfaceAsync(VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, typeof(IAudioClient).GUID, hActivateParams.AddrOfPinnedObject(), icbh, out var activationOperation);
-                    var audioClientInterface = await icbh;
+                    await icbh;
                     return capture;
                 }
                 finally

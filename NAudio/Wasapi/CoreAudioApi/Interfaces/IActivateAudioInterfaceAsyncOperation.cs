@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+using System;
+using System.Runtime.InteropServices;
 
 namespace NAudio.Wasapi.CoreAudioApi.Interfaces
 {
@@ -13,7 +14,9 @@ namespace NAudio.Wasapi.CoreAudioApi.Interfaces
         /// <summary>
         /// Gets the results of an asynchronous activation of a WASAPI interface initiated by an application calling the ActivateAudioInterfaceAsync function
         /// </summary>
+        /// <param name="activateResult">HRESULT of the activation.</param>
+        /// <param name="activatedInterface">IUnknown pointer of the activated interface. Caller must use Marshal.GetObjectForIUnknown and cast to the requested interface (e.g. IAudioClient); the resulting RCW owns the reference.</param>
         void GetActivateResult([Out] out int activateResult,
-                               [Out, MarshalAs(UnmanagedType.IUnknown)] out object activateInterface);
+                               [Out] out IntPtr activatedInterface);
     }
 }

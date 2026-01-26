@@ -96,17 +96,16 @@ namespace NAudio.CoreAudioApi
     /// </summary>
     public enum ProcessLoopbackMode
     {
-
         /// <summary>
-        /// PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE
-        /// Render streams from the specified process and its child processes are included in the activated process loopback stream.
-        /// </summary>
-        IncludeTargetProcessTree,
-        /// <summary>
-        /// PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE
+        /// PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE (0)
         /// Render streams from the specified process and its child processes are excluded from the activated process loopback stream.
         /// </summary>
-        ExcludeTargetProcessTree
+        ExcludeTargetProcessTree = 0,
+        /// <summary>
+        /// PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE (1)
+        /// Render streams from the specified process and its child processes are included in the activated process loopback stream.
+        /// </summary>
+        IncludeTargetProcessTree = 1
     }
 
     /// <summary>
