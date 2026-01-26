@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
     <PackageId>1llum1n4t1s.NAudio</PackageId>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>NAudio, an audio library for .NET</Description>
@@ -31,29 +31,13 @@
     <None Remove="MidiFileConverter\**" />
     <None Remove="MixDiff\**" />
     <None Remove="SampleData\**" />
+    <Page Remove="AudioFileInspector\**\*.xaml" />
+    <Page Remove="MidiFileConverter\**\*.xaml" />
+    <Page Remove="MixDiff\**\*.xaml" />
+    <ApplicationDefinition Remove="AudioFileInspector\**\App.xaml" />
+    <ApplicationDefinition Remove="MidiFileConverter\**\App.xaml" />
+    <ApplicationDefinition Remove="MixDiff\**\App.xaml" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="WinForms\Gui\Fader.Designer.cs">
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <Compile Update="WinForms\Gui\PanSlider.Designer.cs">
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <Compile Update="WinForms\Gui\Pot.Designer.cs">
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <Compile Update="WinForms\Gui\ProgressLog.Designer.cs">
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <Compile Update="WinForms\Gui\VolumeSlider.Designer.cs">
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <Compile Update="WinForms\Gui\WaveViewer.Designer.cs">
-      <DesignTime>True</DesignTime>
-    </Compile>
-  </ItemGroup>
-
 
   <ItemGroup>
     <None Include="..\license.txt">

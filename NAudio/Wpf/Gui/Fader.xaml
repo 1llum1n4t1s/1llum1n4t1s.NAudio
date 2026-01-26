@@ -1,0 +1,11 @@
+<UserControl x:Class="NAudio.Gui.Fader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             MouseLeftButtonDown="OnMouseLeftButtonDown"
+             MouseLeftButtonUp="OnMouseLeftButtonUp"
+             MouseMove="OnMouseMove">
+    <Canvas x:Name="FaderCanvas" Background="Transparent">
+        <Line x:Name="Groove" Stroke="Black" StrokeThickness="2" />
+        <Rectangle x:Name="SliderRect" Fill="White" Stroke="Black" StrokeThickness="1" />
+    </Canvas>
+</UserControl>
