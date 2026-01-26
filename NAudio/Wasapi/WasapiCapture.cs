@@ -31,6 +31,7 @@ namespace NAudio.CoreAudioApi
         private EventWaitHandle frameEventWaitHandle;
         private readonly int audioBufferMillisecondsLength;
         private AudioClientStreamFlags audioClientStreamFlags;
+        private readonly bool isProcessLoopback;
 
         /// <summary>
         /// Indicates recorded data is available 
@@ -84,14 +85,22 @@ namespace NAudio.CoreAudioApi
 
 
         private WasapiCapture(AudioClient audioClient, bool useEventSync, int audioBufferMillisecondsLength)
+            : this(audioClient, useEventSync, audioBufferMillisecondsLength, false)
+        {
+        }
+
+        private WasapiCapture(AudioClient audioClient, bool useEventSync, int audioBufferMillisecondsLength, bool isProcessLoopback)
         {
             syncContext = SynchronizationContext.Current;
             this.audioClient = audioClient;
             ShareMode = AudioClientShareMode.Shared;
             isUsingEventSync = useEventSync;
             this.audioBufferMillisecondsLength = audioBufferMillisecondsLength;
-            // enable auto-convert PCM
-            this.audioClientStreamFlags = AudioClientStreamFlags.AutoConvertPcm | AudioClientStreamFlags.SrcDefaultQuality;
+            this.isProcessLoopback = isProcessLoopback;
+            // Process Loopback: 一部環境では AUDCLNT_STREAMFLAGS_LOOPBACK が必要（0 だと 0x88890021 になる）。ドキュメントによっては 0 と書いてあるが実機では Loopback で成功する場合がある。
+            audioClientStreamFlags = isProcessLoopback
+                ? AudioClientStreamFlags.Loopback
+                : AudioClientStreamFlags.AutoConvertPcm | AudioClientStreamFlags.SrcDefaultQuality;
         }
 
         /// <summary>
@@ -103,12 +112,13 @@ namespace NAudio.CoreAudioApi
         public static async Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree)
         {
             // https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/ApplicationLoopback/cpp/LoopbackCapture.cpp
+            // 公式: GetActivateResult は IAudioClient のみを返す。IAudioClient2/3 へのキャストは E_NOINTERFACE の可能性あり。
             var activationParams = new AudioClientActivationParams
             {
                 ActivationType = AudioClientActivationType.ProcessLoopback,
                 ProcessLoopbackParams = new AudioClientProcessLoopbackParams
                 {
-                    ProcessLoopbackMode = includeProcessTree ? ProcessLoopbackMode.IncludeTargetProcessTree : 
+                    ProcessLoopbackMode = includeProcessTree ? ProcessLoopbackMode.IncludeTargetProcessTree :
                         ProcessLoopbackMode.ExcludeTargetProcessTree,
                     TargetProcessId = (uint)processId
                 }
@@ -127,9 +137,10 @@ namespace NAudio.CoreAudioApi
                     }
                 };
                 WasapiCapture capture = null;
-                var icbh = new ActivateAudioInterfaceCompletionHandler1(ac => {
-                    var audioClient = new AudioClient(ac);
-                    capture = new WasapiCapture(audioClient, true, 100);
+                var icbh = new ActivateAudioInterfaceCompletionHandler1(ac =>
+                {
+                    var client = new AudioClient(ac);
+                    capture = new WasapiCapture(client, true, 100, true);
                     capture.WaveFormat = new WaveFormat();
                 });
                 var hActivateParams = GCHandle.Alloc(activateParams, GCHandleType.Pinned);
@@ -265,12 +276,27 @@ namespace NAudio.CoreAudioApi
                 throw new InvalidOperationException("Previous recording still in progress");
             }
             captureState = CaptureState.Starting;
-            InitializeCaptureDevice();
-            captureThread = new Thread(() => CaptureThread(audioClient))
+            if (isProcessLoopback)
             {
-                IsBackground = true,
-            };
-            captureThread.Start();
+                Task.Run(() =>
+                {
+                    InitializeCaptureDevice();
+                    captureThread = new Thread(() => CaptureThread(audioClient))
+                    {
+                        IsBackground = true,
+                    };
+                    captureThread.Start();
+                }).GetAwaiter().GetResult();
+            }
+            else
+            {
+                InitializeCaptureDevice();
+                captureThread = new Thread(() => CaptureThread(audioClient))
+                {
+                    IsBackground = true,
+                };
+                captureThread.Start();
+            }
         }
 
         /// <summary>

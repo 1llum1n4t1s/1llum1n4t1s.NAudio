@@ -192,6 +192,7 @@ namespace NAudioTests.Wasapi
             catch (Exception ex)
             {
                 Log($"開始エラー: {ex.Message}");
+                LogExceptionDetail(ex);
                 _statusLabel.Text = "状態: エラー";
                 _startStopButton.Enabled = true;
             }
@@ -250,6 +251,9 @@ namespace NAudioTests.Wasapi
             Log("キャプチャを停止しました。");
         }
 
+        /// <summary>
+        /// ログテキストボックスに1行書き出す。
+        /// </summary>
         private void Log(string message)
         {
             var line = $"[{DateTime.Now:HH:mm:ss}] {message}\r\n";
@@ -260,6 +264,27 @@ namespace NAudioTests.Wasapi
             else
             {
                 AppendLog(line);
+            }
+        }
+
+        /// <summary>
+        /// 例外の型・スタックトレース・内部例外をログに追記する。
+        /// </summary>
+        private void LogExceptionDetail(Exception ex, int depth = 0)
+        {
+            var prefix = new string(' ', depth * 2);
+            Log($"{prefix}例外型: {ex.GetType().FullName}");
+            if (!string.IsNullOrEmpty(ex.StackTrace))
+            {
+                foreach (var line in ex.StackTrace.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    Log($"{prefix}  {line.Trim()}");
+                }
+            }
+            if (ex.InnerException != null && depth < 5)
+            {
+                Log($"{prefix}内部例外: {ex.InnerException.Message}");
+                LogExceptionDetail(ex.InnerException, depth + 1);
             }
         }
 
