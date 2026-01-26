@@ -36,7 +36,14 @@ public partial class AboutWindow : Window
         {
             Process.Start(new ProcessStartInfo(e.Uri.ToString()) { UseShellExecute = true });
         }
-        catch { }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                string.Format(System.Globalization.CultureInfo.CurrentUICulture, "Could not open link: {0}", ex.Message),
+                Title,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
         e.Handled = true;
     }
 
