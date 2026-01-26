@@ -5,7 +5,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <TargetFramework>net10.0-windows8.0</TargetFramework>
-    <Version>1.0.8</Version>
+    <Version>1.0.12</Version>
     <Authors>Mark Heath,Contributors,ゆろち</Authors>
     <Copyright>Copyright (c) 2001-2025 Mark Heath, 2026 ゆろち</Copyright>
     <RepositoryUrl>https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio</RepositoryUrl>
