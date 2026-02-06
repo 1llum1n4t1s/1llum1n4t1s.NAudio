@@ -67,9 +67,12 @@ namespace NAudio.Extras
             {
                 var required = count - read;
                 var readThisTime = sourceStream.Read(buffer, offset + read, required);
-                if (readThisTime < required)
+                if (readThisTime == 0)
                 {
                     sourceStream.Position = 0;
+                    readThisTime = sourceStream.Read(buffer, offset + read, required);
+                    if (readThisTime == 0)
+                        break; // source stream is empty, avoid infinite loop
                 }
 
                 if (sourceStream.Position >= sourceStream.Length)

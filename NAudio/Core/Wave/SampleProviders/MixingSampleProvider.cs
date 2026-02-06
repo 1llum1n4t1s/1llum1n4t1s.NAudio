@@ -75,6 +75,14 @@ namespace NAudio.Wave.SampleProviders
         /// <param name="mixerInput">Mixer input</param>
         public void AddMixerInput(ISampleProvider mixerInput)
         {
+            if (WaveFormat != null)
+            {
+                if (WaveFormat.SampleRate != mixerInput.WaveFormat.SampleRate ||
+                    WaveFormat.Channels != mixerInput.WaveFormat.Channels)
+                {
+                    throw new ArgumentException("All mixer inputs must have the same WaveFormat");
+                }
+            }
             // we'll just call the lock around add since we are protecting against an AddMixerInput at
             // the same time as a Read, rather than two AddMixerInput calls at the same time
             lock (sources)
@@ -88,14 +96,6 @@ namespace NAudio.Wave.SampleProviders
             if (WaveFormat == null)
             {
                 WaveFormat = mixerInput.WaveFormat;
-            }
-            else
-            {
-                if (WaveFormat.SampleRate != mixerInput.WaveFormat.SampleRate ||
-                    WaveFormat.Channels != mixerInput.WaveFormat.Channels)
-                {
-                    throw new ArgumentException("All mixer inputs must have the same WaveFormat");
-                }
             }
         }
 

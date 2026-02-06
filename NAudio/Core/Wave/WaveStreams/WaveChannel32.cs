@@ -159,9 +159,9 @@ namespace NAudio.Wave
                     var outIndex = (offset/4) + bytesWritten/4;
                     while (this.sampleProvider.GetNextSample(out left, out right) && bytesWritten < numBytes)
                     {
-                        // implement better panning laws. 
-                        left = (pan <= 0) ? left : (left*(1 - pan)/2.0f);
-                        right = (pan >= 0) ? right : (right*(pan + 1)/2.0f);
+                        // implement better panning laws.
+                        left = (pan <= 0) ? left : (left*(1 - pan));
+                        right = (pan >= 0) ? right : (right*(1 + pan));
                         left *= volume;
                         right *= volume;
                         destWaveBuffer.FloatBuffer[outIndex++] = left;

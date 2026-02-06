@@ -68,7 +68,7 @@ namespace NAudio.Wave
                 else
                     offset = 17 + 4;
             }
-            else if (frame.MpegVersion == MpegVersion.Version2)
+            else if (frame.MpegVersion == MpegVersion.Version2 || frame.MpegVersion == MpegVersion.Version25)
             {
                 if (frame.ChannelMode != ChannelMode.Mono)
                     offset = 17 + 4;

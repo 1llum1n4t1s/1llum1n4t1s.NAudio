@@ -62,7 +62,7 @@ namespace NAudio.Extras
 
         static bool IsPowerOfTwo(int x)
         {
-            return (x & (x - 1)) == 0;
+            return x > 0 && (x & (x - 1)) == 0;
         }
 
         /// <summary>

@@ -141,7 +141,7 @@ namespace NAudio.SoundFont
 				Copyright,
 				CreationDate,
 				Tools,
-				"TODO-fix comments",//Comments,
+				Comments,
 				WaveTableSoundEngine,
 				SoundFontVersion,
 				TargetProduct,

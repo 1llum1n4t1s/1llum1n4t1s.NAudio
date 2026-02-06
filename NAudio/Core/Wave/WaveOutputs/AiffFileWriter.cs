@@ -81,7 +81,7 @@ namespace NAudio.Wave
             dataSizePos = this.outStream.Position;
             this.writer.Write((int)0);  // placeholder
             this.writer.Write((int)0);  // zero offset
-            this.writer.Write(SwapEndian((int)format.BlockAlign));
+            this.writer.Write((int)0);  // zero blockSize
         }
 
         private byte[] SwapEndian(short n)
@@ -195,17 +195,19 @@ namespace NAudio.Wave
         /// <param name="count">the number of bytes to write</param>
         public override void Write(byte[] data, int offset, int count)
         {
-            var swappedData = new byte[data.Length];
+            var swappedData = new byte[count];
 
             var align = format.BitsPerSample / 8;
 
-            for (var i = 0; i < data.Length; i++)
+            for (var i = 0; i < count; i++)
             {
-                var pos = (int)Math.Floor((double)i / align) * align + (align - (i % align) - 1);
-                swappedData[i] = data[pos];
+                var sampleRelPos = i % align;
+                var sampleStart = (i / align) * align;
+                var pos = sampleStart + (align - sampleRelPos - 1);
+                swappedData[i] = data[offset + pos];
             }
 
-            outStream.Write(swappedData, offset, count);
+            outStream.Write(swappedData, 0, count);
             dataChunkSize += count;
         }
 
@@ -233,7 +235,7 @@ namespace NAudio.Wave
             }
             else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == NAudio.Wave.WaveFormatEncoding.Extensible)
             {
-                writer.Write(SwapEndian(UInt16.MaxValue * (Int32)sample));
+                writer.Write(SwapEndian((int)(Int32.MaxValue * (double)sample)));
                 dataChunkSize += 4;
             }
             else
@@ -293,7 +295,7 @@ namespace NAudio.Wave
             {
                 for (var sample = 0; sample < count; sample++)
                 {
-                    writer.Write(SwapEndian(UInt16.MaxValue * (Int32)samples[sample + offset]));
+                    writer.Write(SwapEndian((int)samples[sample + offset] << 16));
                 }
                 dataChunkSize += (count * 4);
             }
@@ -353,7 +355,7 @@ namespace NAudio.Wave
         private void UpdateCommChunk(BinaryWriter writer)
         {
             writer.Seek((int)commSampleCountPos, SeekOrigin.Begin);
-            writer.Write(SwapEndian((int)(dataChunkSize * 8 / format.BitsPerSample / format.Channels)));
+            writer.Write(SwapEndian((int)((dataChunkSize - 8) * 8 / format.BitsPerSample / format.Channels)));
         }
 
         private void UpdateSsndChunk(BinaryWriter writer)

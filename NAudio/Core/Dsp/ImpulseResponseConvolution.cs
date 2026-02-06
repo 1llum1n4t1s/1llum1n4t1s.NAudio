@@ -15,7 +15,7 @@ namespace NAudio.Dsp
         /// </remarks>
         public float[] Convolve(float[] input, float[] impulseResponse)
         {
-            var output = new float[input.Length + impulseResponse.Length];
+            var output = new float[input.Length + impulseResponse.Length - 1];
             for(var t = 0; t < output.Length; t++)
             {
                 for(var n = 0; n < impulseResponse.Length; n++)

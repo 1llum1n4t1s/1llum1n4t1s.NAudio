@@ -32,7 +32,7 @@ namespace NAudio.Wave.SampleProviders
         private const double TwoPi = 2*Math.PI;
 
         // Generator variable
-        private int nSample;
+        private long nSample;
 
         // Sweep Generator variable
         private double phi;
@@ -230,7 +230,7 @@ namespace NAudio.Wave.SampleProviders
                         buffer[outIndex++] = (float) sampleValue;
                 }
             }
-            return count;
+            return (count / waveFormat.Channels) * waveFormat.Channels;
         }
 
         /// <summary>

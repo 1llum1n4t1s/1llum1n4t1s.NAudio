@@ -258,7 +258,7 @@ namespace NAudio.Wave
             }
             else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == WaveFormatEncoding.Extensible)
             {
-                writer.Write(UInt16.MaxValue * (Int32)sample);
+                writer.Write((int)(Int32.MaxValue * (double)sample));
                 dataChunkSize += 4;
             }
             else if (WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
@@ -335,7 +335,7 @@ namespace NAudio.Wave
             {
                 for (var sample = 0; sample < count; sample++)
                 {
-                    writer.Write(UInt16.MaxValue * (Int32)samples[sample + offset]);
+                    writer.Write((int)samples[sample + offset] << 16);
                 }
                 dataChunkSize += (count * 4);
             }

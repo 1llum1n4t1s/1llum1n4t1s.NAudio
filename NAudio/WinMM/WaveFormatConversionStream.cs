@@ -100,7 +100,7 @@ namespace NAudio.Wave
         {
             var source = ((dest * sourceStream.WaveFormat.AverageBytesPerSecond) / targetFormat.AverageBytesPerSecond);
             source -= (source % sourceStream.WaveFormat.BlockAlign);
-            return (int)source;
+            return source;
         }
         /// <summary>
         /// Converts destination bytes to source bytes

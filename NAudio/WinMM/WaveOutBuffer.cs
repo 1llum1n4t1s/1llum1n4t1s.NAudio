@@ -77,12 +77,6 @@ namespace NAudio.Wave
                 // free managed resources
             }
             // free unmanaged resources
-            if (hHeader.IsAllocated)
-                hHeader.Free();
-            if (hBuffer.IsAllocated)
-                hBuffer.Free();
-            if (hThis.IsAllocated)
-                hThis.Free();
             if (hWaveOut != IntPtr.Zero)
             {
                 lock (waveOutLock)
@@ -91,6 +85,12 @@ namespace NAudio.Wave
                 }
                 hWaveOut = IntPtr.Zero;
             }
+            if (hHeader.IsAllocated)
+                hHeader.Free();
+            if (hBuffer.IsAllocated)
+                hBuffer.Free();
+            if (hThis.IsAllocated)
+                hThis.Free();
         }
 
         #endregion

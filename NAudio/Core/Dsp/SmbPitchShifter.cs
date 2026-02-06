@@ -229,6 +229,10 @@ namespace NAudio.Dsp
                     {
                         gOutputAccum[k] = gOutputAccum[k + stepSize];
                     }
+                    for (k = fftFrameSize; k < fftFrameSize + stepSize; k++)
+                    {
+                        gOutputAccum[k] = 0.0F;
+                    }
 
                     /* move input FIFO */
                     for (k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k + stepSize];

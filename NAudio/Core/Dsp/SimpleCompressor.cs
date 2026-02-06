@@ -72,7 +72,7 @@ namespace NAudio.Dsp
             // a minimum value of 0dB.
     
             // transfer function
-            var gr = overdB * (Ratio - 1.0);	// gain reduction (dB)
+            var gr = overdB * (1.0 / Ratio - 1.0);	// gain reduction (dB)
             gr = Decibels.DecibelsToLinear(gr) * Decibels.DecibelsToLinear(MakeUpGain); // convert dB -> linear
 
             // output gain

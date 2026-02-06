@@ -32,15 +32,21 @@ namespace NAudio.Dmo
         public DmoInPlaceProcessReturn Process(int size, int offset, byte[] data, long timeStart, DmoInPlaceProcessFlags inPlaceFlag)
         {
             var pointer = Marshal.AllocHGlobal(size);
-            Marshal.Copy(data, offset, pointer, size);
+            try
+            {
+                Marshal.Copy(data, offset, pointer, size);
 
-            var result = mediaObjectInPlace.Process(size, pointer, timeStart, inPlaceFlag);
-            Marshal.ThrowExceptionForHR(result);
+                var result = mediaObjectInPlace.Process(size, pointer, timeStart, inPlaceFlag);
+                Marshal.ThrowExceptionForHR(result);
 
-            Marshal.Copy(pointer, data, offset, size);
-            Marshal.FreeHGlobal(pointer);
+                Marshal.Copy(pointer, data, offset, size);
 
-            return (DmoInPlaceProcessReturn) result;
+                return (DmoInPlaceProcessReturn) result;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pointer);
+            }
         }
 
         /// <summary>

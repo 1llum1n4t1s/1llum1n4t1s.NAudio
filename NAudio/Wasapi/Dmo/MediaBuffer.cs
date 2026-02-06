@@ -110,7 +110,7 @@ namespace NAudio.Dmo
             get { return length; }
             set 
             {
-                if (length > maxLength)
+                if (value > maxLength)
                 {
                     throw new ArgumentException("Cannot be greater than maximum buffer size");
                 }

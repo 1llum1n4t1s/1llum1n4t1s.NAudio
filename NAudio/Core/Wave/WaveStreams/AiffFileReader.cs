@@ -228,32 +228,32 @@ namespace NAudio.Wave
 
                 // Need to fix the endianness since intel expect little endian, and apple is big endian.
                 var buffer = new byte[count];
-                var length = waveStream.Read(buffer, offset, count);
+                var length = waveStream.Read(buffer, 0, count);
 
                 var bytesPerSample = WaveFormat.BitsPerSample/8;
                 for (var i = 0; i < length; i += bytesPerSample)
                 {
                     if (WaveFormat.BitsPerSample == 8)
                     {
-                        array[i] = buffer[i];
+                        array[offset + i] = buffer[i];
                     }
                     else if (WaveFormat.BitsPerSample == 16)
                     {
-                        array[i + 0] = buffer[i + 1];
-                        array[i + 1] = buffer[i];
+                        array[offset + i + 0] = buffer[i + 1];
+                        array[offset + i + 1] = buffer[i];
                     }
                     else if (WaveFormat.BitsPerSample == 24)
                     {
-                        array[i + 0] = buffer[i + 2];
-                        array[i + 1] = buffer[i + 1];
-                        array[i + 2] = buffer[i + 0];
+                        array[offset + i + 0] = buffer[i + 2];
+                        array[offset + i + 1] = buffer[i + 1];
+                        array[offset + i + 2] = buffer[i + 0];
                     }
                     else if (WaveFormat.BitsPerSample == 32)
                     {
-                        array[i + 0] = buffer[i + 3];
-                        array[i + 1] = buffer[i + 2];
-                        array[i + 2] = buffer[i + 1];
-                        array[i + 3] = buffer[i + 0];
+                        array[offset + i + 0] = buffer[i + 3];
+                        array[offset + i + 1] = buffer[i + 2];
+                        array[offset + i + 2] = buffer[i + 1];
+                        array[offset + i + 3] = buffer[i + 0];
                     }
                     else throw new FormatException("Unsupported PCM format.");
                 }

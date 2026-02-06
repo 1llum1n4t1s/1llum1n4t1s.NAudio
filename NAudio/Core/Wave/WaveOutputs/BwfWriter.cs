@@ -25,7 +25,7 @@ namespace NAudio.Wave
         public BwfWriter(string filename, WaveFormat format, BextChunkInfo bextChunkInfo)
         {
             this.format = format;
-            writer = new BinaryWriter(File.OpenWrite(filename));
+            writer = new BinaryWriter(new FileStream(filename, FileMode.Create, FileAccess.Write));
             writer.Write(Encoding.UTF8.GetBytes("RIFF")); // will be updated to RF64 if large 
             writer.Write(0); // placeholder
             writer.Write(Encoding.UTF8.GetBytes("WAVE"));

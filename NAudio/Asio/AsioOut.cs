@@ -75,7 +75,7 @@ namespace NAudio.Wave
             {
                 throw new ArgumentException("There is no ASIO Driver installed on your system");
             }
-            if (driverIndex < 0 || driverIndex > names.Length)
+            if (driverIndex < 0 || driverIndex >= names.Length)
             {
                 throw new ArgumentException(String.Format("Invalid device number. Must be in the range [0,{0}]", names.Length));
             }

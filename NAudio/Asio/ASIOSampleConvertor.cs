@@ -259,10 +259,10 @@ namespace NAudio.Wave.Asio
             unsafe
             {
                 var inputSamples = (int*)inputInterleavedBuffer;
-                var samples = new int*[nbChannels];
+                var samples = new short*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
-                    samples[i] = (int*)asioOutputBuffers[i];
+                    samples[i] = (short*)asioOutputBuffers[i];
                 }
 
                 for (var i = 0; i < nbSamples; i++)
@@ -293,7 +293,7 @@ namespace NAudio.Wave.Asio
                 {
                     for (var j = 0; j < nbChannels; j++)
                     {
-                        *samples[j]++ = *inputSamples++ / (1 << (32 - 1));
+                        *samples[j]++ = *inputSamples++ / 2147483648.0f;
                     }
                 }
             }
