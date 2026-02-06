@@ -485,7 +485,7 @@ namespace NAudio.Wave
         /// <returns>channel name</returns>
         public string AsioInputChannelName(int channel)
         {
-            return channel > DriverInputChannelCount ? "" : driver.Capabilities.InputChannelInfos[channel].name;
+            return channel >= DriverInputChannelCount ? "" : driver.Capabilities.InputChannelInfos[channel].name;
         }
 
         /// <summary>
@@ -495,7 +495,7 @@ namespace NAudio.Wave
         /// <returns>channel name</returns>
         public string AsioOutputChannelName(int channel)
         {
-            return channel > DriverOutputChannelCount ? "" : driver.Capabilities.OutputChannelInfos[channel].name;
+            return channel >= DriverOutputChannelCount ? "" : driver.Capabilities.OutputChannelInfos[channel].name;
         }
     }
 }

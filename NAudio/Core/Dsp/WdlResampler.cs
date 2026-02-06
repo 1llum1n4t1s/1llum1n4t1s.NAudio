@@ -1,4 +1,4 @@
-﻿// This class based on the Resampler that is part of Cockos WDL
+// This class based on the Resampler that is part of Cockos WDL
 // originally written in C++ and ported to C# for NAudio by Mark Heath
 // Used in NAudio with permission from Justin Frankel
 // Original WDL License:
@@ -41,6 +41,18 @@ namespace NAudio.Dsp
         private const int WDL_RESAMPLE_MAX_FILTERS = 4;
         private const int WDL_RESAMPLE_MAX_NCH = 64;
         private const double PI = 3.1415926535897932384626433832795;
+
+        /// <summary>Blackman-Harrisウィンドウ関数の係数 a0</summary>
+        private const double BlackmanHarrisA0 = 0.35875;
+
+        /// <summary>Blackman-Harrisウィンドウ関数の係数 a1</summary>
+        private const double BlackmanHarrisA1 = 0.48829;
+
+        /// <summary>Blackman-Harrisウィンドウ関数の係数 a2</summary>
+        private const double BlackmanHarrisA2 = 0.14128;
+
+        /// <summary>Blackman-Harrisウィンドウ関数の係数 a3</summary>
+        private const double BlackmanHarrisA3 = 0.01168;
 
         /// <summary>
         /// Creates a new Resampler
@@ -514,7 +526,7 @@ namespace NAudio.Dsp
                     int x;
                     for (x = -hsz; x < hsz + m_lp_oversize; x++)
                     {
-                        var val = 0.35875 - 0.48829 * Math.Cos(windowpos) + 0.14128 * Math.Cos(2 * windowpos) - 0.01168 * Math.Cos(6 * windowpos); // blackman-harris
+                        var val = BlackmanHarrisA0 - BlackmanHarrisA1 * Math.Cos(windowpos) + BlackmanHarrisA2 * Math.Cos(2 * windowpos) - BlackmanHarrisA3 * Math.Cos(3 * windowpos); // blackman-harris
                         if (x != 0) val *= Math.Sin(sincpos) / sincpos;
 
                         windowpos += dwindowpos;

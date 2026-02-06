@@ -61,7 +61,7 @@ namespace NAudio.Wave
         ~WaveInBuffer()
         {
             Dispose(false);
-            System.Diagnostics.Debug.Assert(true, "WaveInBuffer was not disposed");
+            System.Diagnostics.Debug.Assert(false, "WaveInBuffer was not disposed");
         }
 
         /// <summary>

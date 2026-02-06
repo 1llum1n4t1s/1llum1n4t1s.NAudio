@@ -55,7 +55,7 @@ namespace NAudio.Wave
         ~WaveOutBuffer()
         {
             Dispose(false);
-            System.Diagnostics.Debug.Assert(true, "WaveBuffer was not disposed");
+            System.Diagnostics.Debug.Assert(false, "WaveBuffer was not disposed");
         }
 
         /// <summary>

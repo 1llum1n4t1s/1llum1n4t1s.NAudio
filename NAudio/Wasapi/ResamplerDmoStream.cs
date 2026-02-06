@@ -186,7 +186,7 @@ namespace NAudio.Wave
             outputBuffer.Dispose();
             if (dmoResampler != null)
             {
-                //resampler.Dispose(); s
+                dmoResampler.Dispose();
                 dmoResampler = null;
             }
             base.Dispose(disposing);

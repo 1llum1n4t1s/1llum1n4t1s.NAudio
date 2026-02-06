@@ -34,7 +34,7 @@
             var samplesRead = source.Read(buffer, offset, sampleCount);
             if (Volume != 1f)
             {
-                for (var n = 0; n < sampleCount; n++)
+                for (var n = 0; n < samplesRead; n++)
                 {
                     buffer[offset + n] *= Volume;
                 }
