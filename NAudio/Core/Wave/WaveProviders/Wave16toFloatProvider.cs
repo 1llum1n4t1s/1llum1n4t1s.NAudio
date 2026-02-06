@@ -41,7 +41,7 @@ namespace NAudio.Wave
         {
             var sourceBytesRequired = numBytes / 2;
             sourceBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
-            var sourceBytesRead = sourceProvider.Read(sourceBuffer, offset, sourceBytesRequired);
+            var sourceBytesRead = sourceProvider.Read(sourceBuffer, 0, sourceBytesRequired);
             var sourceWaveBuffer = new WaveBuffer(sourceBuffer);
             var destWaveBuffer = new WaveBuffer(destBuffer);
 

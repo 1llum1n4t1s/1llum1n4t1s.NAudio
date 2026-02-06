@@ -514,7 +514,7 @@ namespace NAudio.Dsp
                     int x;
                     for (x = -hsz; x < hsz + m_lp_oversize; x++)
                     {
-                        var val = 0.35875 - 0.48829 * Math.Cos(windowpos) + 0.14128 * Math.Cos(2 * windowpos) - 0.01168 * Math.Cos(6 * windowpos); // blackman-harris
+                        var val = 0.35875 - 0.48829 * Math.Cos(windowpos) + 0.14128 * Math.Cos(2 * windowpos) - 0.01168 * Math.Cos(3 * windowpos); // blackman-harris
                         if (x != 0) val *= Math.Sin(sincpos) / sincpos;
 
                         windowpos += dwindowpos;
