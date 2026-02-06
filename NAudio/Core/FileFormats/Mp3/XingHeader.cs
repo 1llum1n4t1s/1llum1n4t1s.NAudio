@@ -168,7 +168,7 @@ namespace NAudio.Wave
             }
             set
             {
-                if (framesOffset == -1)
+                if (bytesOffset == -1)
                     throw new InvalidOperationException("Bytes flag is not set");
                 WriteBigEndian(frame.RawData, bytesOffset, value);
             }

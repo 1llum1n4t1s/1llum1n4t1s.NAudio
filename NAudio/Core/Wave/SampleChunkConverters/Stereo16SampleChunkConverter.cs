@@ -27,7 +27,7 @@ namespace NAudio.Wave.SampleProviders
 
         public bool GetNextSample(out float sampleLeft, out float sampleRight)
         {
-            if (sourceSample < sourceSamples)
+            if (sourceSample + 1 < sourceSamples)
             {
                 sampleLeft = sourceWaveBuffer.ShortBuffer[sourceSample++] / 32768.0f;
                 sampleRight = sourceWaveBuffer.ShortBuffer[sourceSample++] / 32768.0f;

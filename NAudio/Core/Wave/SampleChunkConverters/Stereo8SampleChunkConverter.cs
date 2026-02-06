@@ -25,7 +25,7 @@ namespace NAudio.Wave.SampleProviders
 
         public bool GetNextSample(out float sampleLeft, out float sampleRight)
         {
-            if (offset < sourceBytes)
+            if (offset + 1 < sourceBytes)
             {
                 sampleLeft = sourceBuffer[offset++] / 256f;
                 sampleRight = sourceBuffer[offset++] / 256f;
