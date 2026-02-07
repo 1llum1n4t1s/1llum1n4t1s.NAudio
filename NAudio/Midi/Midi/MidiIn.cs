@@ -196,25 +196,20 @@ namespace NAudio.Midi
         /// <param name="disposing">True if called from Dispose</param>
         protected virtual void Dispose(bool disposing) 
         {
-            if(!this.disposed) 
+            if(!this.disposed)
             {
                 disposeIsRunning = true;
                 //if(disposing) Components.Dispose();
 
+                MmException.Try(MidiInterop.midiInReset(hMidiIn), "midiInReset");
+
                 if (SysexBufferHeaders.Length > 0)
                 {
-                    //// When SysexMessageReceived contains event handlers (!=null) , the 'midiInReset' call generate a infinit loop of CallBack call with LONGDATA message having a zero length. 
-                    //SysexMessageReceived = null; // removin all event handler to avoir the infinit loop.
-
-                    //  Reset in order to release any Sysex buffers
-                    //  We can't Unprepare and free them until they are flushed out. Neither can we close the handle.
-                    MmException.Try(MidiInterop.midiInReset(hMidiIn), "midiInReset");
-
                     //  Free up all created and allocated buffers for incoming Sysex messages
                     foreach (var lpHeader in SysexBufferHeaders)
                     {
                         var hdr = (MidiInterop.MIDIHDR)Marshal.PtrToStructure(lpHeader, typeof(MidiInterop.MIDIHDR));
-                        MmException.Try(MidiInterop.midiInUnprepareHeader(hMidiIn, lpHeader, Marshal.SizeOf(typeof(MidiInterop.MIDIHDR))), "midiInPrepareHeader");
+                        MmException.Try(MidiInterop.midiInUnprepareHeader(hMidiIn, lpHeader, Marshal.SizeOf(typeof(MidiInterop.MIDIHDR))), "midiInUnprepareHeader");
                         Marshal.FreeHGlobal(hdr.lpData);
                         Marshal.FreeHGlobal(lpHeader);
                     }

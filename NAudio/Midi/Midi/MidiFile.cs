@@ -84,7 +84,7 @@ namespace NAudio.Midi
                 
                 for(var track = 0; track < tracks; track++) 
                 {
-                    if(fileFormat == 1) 
+                    if(fileFormat != 0)
                     {
                         absoluteTime = 0;
                     }

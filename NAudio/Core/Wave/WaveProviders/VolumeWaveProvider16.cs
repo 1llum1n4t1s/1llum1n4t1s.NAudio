@@ -66,13 +66,10 @@ namespace NAudio.Wave
                 {
                     var sample = (short)((buffer[offset + 1] << 8) | buffer[offset]);
                     var newSample = sample * this.volume;
-                    sample = (short)newSample;
                     // clip if necessary
-                    if (this.Volume > 1.0f)
-                    {
-                        if (newSample > Int16.MaxValue) sample = Int16.MaxValue;
-                        else if (newSample < Int16.MinValue) sample = Int16.MinValue;
-                    }
+                    if (newSample > Int16.MaxValue) newSample = Int16.MaxValue;
+                    else if (newSample < Int16.MinValue) newSample = Int16.MinValue;
+                    sample = (short)newSample;
 
                     buffer[offset++] = (byte)(sample & 0xFF);
                     buffer[offset++] = (byte)(sample >> 8);

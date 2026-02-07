@@ -386,7 +386,7 @@ namespace NAudio.Wave
         /// <returns>number of byttes</returns>
         private int MsToBytes(int ms)
         {
-            var bytes = ms * (waveFormat.AverageBytesPerSecond / 1000);
+            var bytes = (int)((long)ms * waveFormat.AverageBytesPerSecond / 1000);
             bytes -= bytes % waveFormat.BlockAlign;
             return bytes;
         }

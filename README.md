@@ -3,7 +3,8 @@
 [![GitHub](https://img.shields.io/github/license/naudio/NAudio)](https://github.com/naudio/NAudio/blob/master/license.txt) [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio)](https://www.nuget.org/packages/1llum1n4t1s.NAudio/)
 
 > **これはNAudioのフォークです。**  
-> 1llum1n4t1s.NAudioは[NAudio](https://github.com/naudio/NAudio)をベースに、.NET 10対応とパッケージ名の変更を行ったフォーク版です。  
+> 1llum1n4t1s.NAudioは[NAudio](https://github.com/naudio/NAudio)をベースに、.NET 10対応、パッケージ名の変更、および本家でマージされていなかったプロセスループバックキャプチャの実装の追加を行ったフォーク版です。  
+> また、多数のバグ修正を含んでいるため、本家と動作が異なる場合があります。  
 > 本家NAudioは[Mark Heath](https://markheath.net)によって開発されたオープンソースの.NETオーディオライブラリです。
 
 1llum1n4t1s.NAudio is a fork of NAudio, an open source .NET audio library originally written by [Mark Heath](https://markheath.net)
@@ -16,6 +17,9 @@
 * .NET 10 support
   * Updated to target .NET 10.0 (net10.0 and net10.0-windows)
   * Windows x64 runtime support
+* Process Loopback Capture
+  * Added implementation for capturing audio from specific processes, which was not merged in the original NAudio.
+  * See [ProcessLoopbackCapture.md](Docs/ProcessLoopbackCapture.md) for details.
 
 ## Getting Started
 
@@ -35,7 +39,7 @@ dotnet add package 1llum1n4t1s.NAudio
 
 **PackageReference:**
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.24" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.30" />
 ```
 
 ## Documentation

@@ -55,7 +55,7 @@ namespace NAudio.SoundFont
         /// <returns>the new chunk</returns>
         public RiffChunk GetNextSubChunk()
         {
-            if (riffFile.BaseStream.Position + 8 < DataOffset + ChunkSize)
+            if (riffFile.BaseStream.Position + 8 <= DataOffset + ChunkSize)
             {
                 var chunk = new RiffChunk(riffFile);
                 chunk.ReadChunk();

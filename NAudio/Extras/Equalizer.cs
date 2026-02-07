@@ -52,7 +52,6 @@ namespace NAudio.Extras
         public void Update()
         {
             updated = true;
-            CreateFilters();
         }
 
         /// <summary>

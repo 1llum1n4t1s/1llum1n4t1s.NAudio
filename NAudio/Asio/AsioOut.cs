@@ -77,7 +77,7 @@ namespace NAudio.Wave
             }
             if (driverIndex < 0 || driverIndex >= names.Length)
             {
-                throw new ArgumentException(String.Format("Invalid device number. Must be in the range [0,{0}]", names.Length));
+                throw new ArgumentException(String.Format("Invalid device number. Must be in the range [0,{0}]", names.Length - 1));
             }
             InitFromName(names[driverIndex]);
         }

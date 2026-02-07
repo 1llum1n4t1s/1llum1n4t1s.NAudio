@@ -155,9 +155,9 @@ namespace NAudio.Wave
             var labelChunkId = ChunkIdentifier.ChunkIdentifierToInt32("labl");
             for (var p = 4; listChunkData.Length - p >= 16; p += labelLength + labelLength % 2 + 12)
             {
+                labelLength = BitConverter.ToInt32(listChunkData, p + 4) - 4;
                 if (BitConverter.ToInt32(listChunkData, p) == labelChunkId)
                 {
-                    labelLength = BitConverter.ToInt32(listChunkData, p + 4) - 4;
                     var cueId = BitConverter.ToInt32(listChunkData, p + 8);
                     cue = cueIndex[cueId];
                     labels[cue] = Encoding.UTF8.GetString(listChunkData, p + 12, labelLength - 1);

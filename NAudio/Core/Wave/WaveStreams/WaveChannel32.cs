@@ -263,7 +263,7 @@ namespace NAudio.Wave
         {
             sampleEventArgs.Left = left;
             sampleEventArgs.Right = right;
-            Sample(this, sampleEventArgs);
+            Sample?.Invoke(this, sampleEventArgs);
         }
     }
 }

@@ -11,7 +11,14 @@ namespace NAudio.SoundFont
             {
                 throw new InvalidDataException($"Not a sample data chunk ({header})");
             }
-            SampleData = chunk.GetData();
+            RiffChunk c;
+            while ((c = chunk.GetNextSubChunk()) != null)
+            {
+                if (c.ChunkID == "smpl")
+                {
+                    SampleData = c.GetData();
+                }
+            }
         }
 
         public byte[] SampleData { get; private set; }

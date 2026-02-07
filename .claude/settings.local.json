@@ -6,7 +6,9 @@
       "Bash(dotnet exec:*)",
       "Bash(\"Tests/bin/x64/Debug/net10.0-windows10.0.20348.0/win-x64/NAudioTests.exe\")",
       "Bash(\"Tests/bin/x64/Debug/net10.0-windows10.0.20348.0/win-x64/NAudioTests.exe\" --list-tests)",
-      "Bash(\"Tests/bin/x64/Debug/net10.0-windows10.0.20348.0/win-x64/NAudioTests.exe\" --help)"
+      "Bash(\"Tests/bin/x64/Debug/net10.0-windows10.0.20348.0/win-x64/NAudioTests.exe\" --help)",
+      "Bash(Select-String -Pattern \"\\(passed|failed|Passed|Failed|Total|test\\)\")",
+      "Bash(Select-Object:*)"
     ]
   }
 }

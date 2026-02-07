@@ -154,9 +154,9 @@ internal sealed class WaveCallbackWindow : IDisposable
             return;
         if (_handle != IntPtr.Zero)
         {
-            _selfHandle.Free();
             DestroyWindow(_handle);
             _handle = IntPtr.Zero;
+            _selfHandle.Free();
         }
         _disposed = true;
         GC.SuppressFinalize(this);

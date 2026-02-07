@@ -27,9 +27,11 @@ namespace NAudio.Mixer
         protected override void GetDetails(IntPtr pDetails)
         {
             unsignedDetails = new MixerInterop.MIXERCONTROLDETAILS_UNSIGNED[nChannels];
+            var structSize = Marshal.SizeOf<MixerInterop.MIXERCONTROLDETAILS_UNSIGNED>();
             for (var channel = 0; channel < nChannels; channel++)
             {
-                unsignedDetails[channel] = Marshal.PtrToStructure<MixerInterop.MIXERCONTROLDETAILS_UNSIGNED>(mixerControlDetails.paDetails);
+                var ptr = (IntPtr)(pDetails.ToInt64() + channel * structSize);
+                unsignedDetails[channel] = Marshal.PtrToStructure<MixerInterop.MIXERCONTROLDETAILS_UNSIGNED>(ptr);
             }
         }
 

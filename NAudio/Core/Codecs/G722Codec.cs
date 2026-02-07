@@ -356,7 +356,7 @@ namespace NAudio.Codecs
             {
                 if (state.ItuTestMode)
                 {
-                    xlow =
+                    xlow = inputBuffer[j++] >> 1;
                     xhigh = inputBuffer[j++] >> 1;
                 }
                 else

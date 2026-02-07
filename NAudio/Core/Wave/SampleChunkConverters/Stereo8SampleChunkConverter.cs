@@ -27,8 +27,8 @@ namespace NAudio.Wave.SampleProviders
         {
             if (offset + 1 < sourceBytes)
             {
-                sampleLeft = sourceBuffer[offset++] / 256f;
-                sampleRight = sourceBuffer[offset++] / 256f;
+                sampleLeft = sourceBuffer[offset++] / 128f - 1.0f;
+                sampleRight = sourceBuffer[offset++] / 128f - 1.0f;
                 return true;
             }
             else
