@@ -13,6 +13,7 @@ namespace NAudio.Wave
         private List<IWaveProvider> inputs;
         private WaveFormat waveFormat;
         private int bytesPerSample;
+        private byte[] readBuffer;
 
         /// <summary>
         /// Creates a new MixingWaveProvider32
@@ -107,7 +108,8 @@ namespace NAudio.Wave
             var bytesRead = 0;
 
             // sum the channels in
-            var readBuffer = new byte[count];
+            if (readBuffer == null || readBuffer.Length < count)
+                readBuffer = new byte[count];
             lock (inputs)
             {
                 foreach (var input in inputs)

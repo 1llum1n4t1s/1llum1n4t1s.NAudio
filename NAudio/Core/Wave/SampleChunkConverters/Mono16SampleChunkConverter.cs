@@ -20,8 +20,15 @@ namespace NAudio.Wave.SampleProviders
         {
             var sourceBytesRequired = samplePairsRequired * 2;
             sourceSample = 0;
-            sourceBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
-            sourceWaveBuffer = new WaveBuffer(sourceBuffer);
+            var newBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
+            if (newBuffer != sourceBuffer)
+            {
+                sourceBuffer = newBuffer;
+                if (sourceWaveBuffer == null)
+                    sourceWaveBuffer = new WaveBuffer(sourceBuffer);
+                else
+                    sourceWaveBuffer.BindTo(sourceBuffer);
+            }
             sourceSamples = source.Read(sourceBuffer, 0, sourceBytesRequired) / 2;
         }
 
@@ -29,7 +36,7 @@ namespace NAudio.Wave.SampleProviders
         {
             if (sourceSample < sourceSamples)
             {
-                sampleLeft = sourceWaveBuffer.ShortBuffer[sourceSample++] / 32768.0f;
+                sampleLeft = sourceWaveBuffer.ShortBuffer[sourceSample++] * (1.0f / 32768.0f);
                 sampleRight = sampleLeft;
                 return true;
             }

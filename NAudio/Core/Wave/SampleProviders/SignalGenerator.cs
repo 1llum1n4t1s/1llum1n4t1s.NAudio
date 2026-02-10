@@ -122,8 +122,18 @@ namespace NAudio.Wave.SampleProviders
             double sampleValue;
             double sampleSaw;
 
+            // Pre-compute loop-invariant values
+            var channels = waveFormat.Channels;
+            var sampleRate = (double)waveFormat.SampleRate;
+            var samplesPerChannel = count / channels;
+            var sinMultiple = TwoPi * Frequency / sampleRate;
+            var baseMultiple = 2 * Frequency / sampleRate;
+            var sweepLengthSamples = SweepLengthSecs * sampleRate;
+            var sweepFreqLogRange = FrequencyEndLog - FrequencyLog;
+            var gain = Gain;
+
             // Complete Buffer
-            for (var sampleCount = 0; sampleCount < count/waveFormat.Channels; sampleCount++)
+            for (var sampleCount = 0; sampleCount < samplesPerChannel; sampleCount++)
             {
                 switch (Type)
                 {
@@ -131,8 +141,7 @@ namespace NAudio.Wave.SampleProviders
 
                         // Sinus Generator
 
-                        multiple = TwoPi*Frequency/waveFormat.SampleRate;
-                        sampleValue = Gain*Math.Sin(nSample*multiple);
+                        sampleValue = gain * Math.Sin(nSample * sinMultiple);
 
                         nSample++;
 
@@ -143,9 +152,8 @@ namespace NAudio.Wave.SampleProviders
 
                         // Square Generator
 
-                        multiple = 2*Frequency/waveFormat.SampleRate;
-                        sampleSaw = ((nSample*multiple)%2) - 1;
-                        sampleValue = sampleSaw >= 0 ? Gain : -Gain;
+                        sampleSaw = ((nSample * baseMultiple) % 2) - 1;
+                        sampleValue = sampleSaw >= 0 ? gain : -gain;
 
                         nSample++;
                         break;
@@ -154,15 +162,14 @@ namespace NAudio.Wave.SampleProviders
 
                         // Triangle Generator
 
-                        multiple = 2*Frequency/waveFormat.SampleRate;
-                        sampleSaw = ((nSample*multiple)%2);
-                        sampleValue = 2*sampleSaw;
+                        sampleSaw = ((nSample * baseMultiple) % 2);
+                        sampleValue = 2 * sampleSaw;
                         if (sampleValue > 1)
                             sampleValue = 2 - sampleValue;
                         if (sampleValue < -1)
                             sampleValue = -2 - sampleValue;
 
-                        sampleValue *= Gain;
+                        sampleValue *= gain;
 
                         nSample++;
                         break;
@@ -171,9 +178,8 @@ namespace NAudio.Wave.SampleProviders
 
                         // SawTooth Generator
 
-                        multiple = 2*Frequency/waveFormat.SampleRate;
-                        sampleSaw = ((nSample*multiple)%2) - 1;
-                        sampleValue = Gain*sampleSaw;
+                        sampleSaw = ((nSample * baseMultiple) % 2) - 1;
+                        sampleValue = gain * sampleSaw;
 
                         nSample++;
                         break;
@@ -181,7 +187,7 @@ namespace NAudio.Wave.SampleProviders
                     case SignalGeneratorType.White:
 
                         // White Noise Generator
-                        sampleValue = (Gain*NextRandomTwo());
+                        sampleValue = (gain * NextRandomTwo());
                         break;
 
                     case SignalGeneratorType.Pink:
@@ -197,19 +203,19 @@ namespace NAudio.Wave.SampleProviders
                         pinkNoiseBuffer[5] = -0.7616*pinkNoiseBuffer[5] - white*0.0168980;
                         var pink = pinkNoiseBuffer[0] + pinkNoiseBuffer[1] + pinkNoiseBuffer[2] + pinkNoiseBuffer[3] + pinkNoiseBuffer[4] + pinkNoiseBuffer[5] + pinkNoiseBuffer[6] + white*0.5362;
                         pinkNoiseBuffer[6] = white*0.115926;
-                        sampleValue = (Gain*(pink/5));
+                        sampleValue = (gain * (pink * 0.2));
                         break;
 
                     case SignalGeneratorType.Sweep:
 
                         // Sweep Generator
-                        var f = Math.Exp(FrequencyLog + (nSample*(FrequencyEndLog - FrequencyLog))/(SweepLengthSecs*waveFormat.SampleRate));
+                        var f = Math.Exp(FrequencyLog + (nSample * sweepFreqLogRange) / sweepLengthSamples);
 
-                        multiple = TwoPi*f/waveFormat.SampleRate;
+                        multiple = TwoPi * f / sampleRate;
                         phi += multiple;
-                        sampleValue = Gain*(Math.Sin(phi));
+                        sampleValue = gain * (Math.Sin(phi));
                         nSample++;
-                        if (nSample > SweepLengthSecs*waveFormat.SampleRate)
+                        if (nSample > sweepLengthSamples)
                         {
                             nSample = 0;
                             phi = 0;
@@ -222,7 +228,7 @@ namespace NAudio.Wave.SampleProviders
                 }
 
                 // Phase Reverse Per Channel
-                for (var i = 0; i < waveFormat.Channels; i++)
+                for (var i = 0; i < channels; i++)
                 {
                     if (PhaseReverse[i])
                         buffer[outIndex++] = (float) -sampleValue;
@@ -230,7 +236,7 @@ namespace NAudio.Wave.SampleProviders
                         buffer[outIndex++] = (float) sampleValue;
                 }
             }
-            return (count / waveFormat.Channels) * waveFormat.Channels;
+            return samplesPerChannel * channels;
         }
 
         /// <summary>

@@ -97,10 +97,12 @@
         private void FadeOut(float[] buffer, int offset, int sourceSamplesRead)
         {
             var sample = 0;
+            var channels = source.WaveFormat.Channels;
+            var invFadeCount = 1.0f / fadeSampleCount;
             while (sample < sourceSamplesRead)
             {
-                var multiplier = 1.0f - (fadeSamplePosition / (float)fadeSampleCount);
-                for (var ch = 0; ch < source.WaveFormat.Channels; ch++)
+                var multiplier = 1.0f - (fadeSamplePosition * invFadeCount);
+                for (var ch = 0; ch < channels; ch++)
                 {
                     buffer[offset + sample++] *= multiplier;
                 }
@@ -118,10 +120,12 @@
         private void FadeIn(float[] buffer, int offset, int sourceSamplesRead)
         {
             var sample = 0;
+            var channels = source.WaveFormat.Channels;
+            var invFadeCount = 1.0f / fadeSampleCount;
             while (sample < sourceSamplesRead)
             {
-                var multiplier = (fadeSamplePosition / (float)fadeSampleCount);
-                for (var ch = 0; ch < source.WaveFormat.Channels; ch++)
+                var multiplier = fadeSamplePosition * invFadeCount;
+                for (var ch = 0; ch < channels; ch++)
                 {
                     buffer[offset + sample++] *= multiplier;
                 }

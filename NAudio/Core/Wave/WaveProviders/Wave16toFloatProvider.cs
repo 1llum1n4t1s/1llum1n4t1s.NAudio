@@ -12,6 +12,7 @@ namespace NAudio.Wave
         private readonly WaveFormat waveFormat;
         private volatile float volume;
         private byte[] sourceBuffer;
+        private WaveBuffer cachedSourceWaveBuffer;
 
         /// <summary>
         /// Creates a new Wave16toFloatProvider
@@ -40,16 +41,25 @@ namespace NAudio.Wave
         public int Read(byte[] destBuffer, int offset, int numBytes)
         {
             var sourceBytesRequired = numBytes / 2;
-            sourceBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
+            var newBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
+            if (newBuffer != sourceBuffer)
+            {
+                sourceBuffer = newBuffer;
+                if (cachedSourceWaveBuffer == null)
+                    cachedSourceWaveBuffer = new WaveBuffer(sourceBuffer);
+                else
+                    cachedSourceWaveBuffer.BindTo(sourceBuffer);
+            }
             var sourceBytesRead = sourceProvider.Read(sourceBuffer, 0, sourceBytesRequired);
-            var sourceWaveBuffer = new WaveBuffer(sourceBuffer);
+            var sourceWaveBuffer = cachedSourceWaveBuffer;
             var destWaveBuffer = new WaveBuffer(destBuffer);
 
             var sourceSamples = sourceBytesRead / 2;
             var destOffset = offset / 4;
+            var scale = (1.0f / 32768f) * volume;
             for (var sample = 0; sample < sourceSamples; sample++)
             {
-                destWaveBuffer.FloatBuffer[destOffset++] = (sourceWaveBuffer.ShortBuffer[sample] / 32768f) * volume;
+                destWaveBuffer.FloatBuffer[destOffset++] = sourceWaveBuffer.ShortBuffer[sample] * scale;
             }
 
             return sourceSamples * 4;

@@ -47,7 +47,12 @@ namespace NAudio.Midi
         /// <summary>
         /// Creates a deep clone of this MIDI event.
         /// </summary>
-        public override MidiEvent Clone() => new SysexEvent { data = (byte[])data?.Clone() };
+        public override MidiEvent Clone()
+        {
+            var clone = (SysexEvent)MemberwiseClone();
+            clone.data = (byte[])data?.Clone();
+            return clone;
+        }
 
         /// <summary>
         /// Describes this sysex message

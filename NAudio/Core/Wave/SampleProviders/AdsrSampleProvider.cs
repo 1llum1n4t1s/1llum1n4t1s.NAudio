@@ -23,7 +23,7 @@ namespace NAudio.Wave.SampleProviders
             adsr = new EnvelopeGenerator();
             AttackSeconds = 0.01f;
             adsr.SustainLevel = 1.0f;
-            adsr.DecayRate = 0.0f * WaveFormat.SampleRate;
+            adsr.DecayRate = 0.0001f * WaveFormat.SampleRate;
             ReleaseSeconds = 0.3f;
             adsr.Gate(true);
         }

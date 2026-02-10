@@ -18,8 +18,15 @@ namespace NAudio.Wave.SampleProviders
         public void LoadNextChunk(IWaveProvider source, int samplePairsRequired)
         {
             var sourceBytesRequired = samplePairsRequired * 4;
-            sourceBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
-            sourceWaveBuffer = new WaveBuffer(sourceBuffer);
+            var newBuffer = BufferHelpers.Ensure(sourceBuffer, sourceBytesRequired);
+            if (newBuffer != sourceBuffer)
+            {
+                sourceBuffer = newBuffer;
+                if (sourceWaveBuffer == null)
+                    sourceWaveBuffer = new WaveBuffer(sourceBuffer);
+                else
+                    sourceWaveBuffer.BindTo(sourceBuffer);
+            }
             sourceSamples = source.Read(sourceBuffer, 0, sourceBytesRequired) / 4;
             sourceSample = 0;
         }
