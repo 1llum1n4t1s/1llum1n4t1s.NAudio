@@ -16,25 +16,32 @@ namespace MarkHeath.MidiUtils
             var namingRules = new NamingRules();
             namingRules.rules = new List<NamingRule>();
 
-            using (XmlReader reader = XmlReader.Create(xmlPath))
+            var settings = new XmlReaderSettings
+            {
+                IgnoreComments = true,
+                IgnoreWhitespace = true,
+                DtdProcessing = DtdProcessing.Prohibit,
+            };
+
+            using (var reader = XmlReader.Create(xmlPath, settings))
             {
                 reader.ReadStartElement("Rules");
                 reader.ReadStartElement("GeneralSettings");
-                
+
                 reader.ReadStartElement("FilenameRegex");
                 namingRules.filenameRegex = reader.ReadString();
                 reader.ReadEndElement();
-                
+
                 reader.ReadStartElement("ContextDepth");
                 namingRules.contextDepth = reader.ReadContentAsInt();
                 if (namingRules.ContextDepth < 1 || namingRules.ContextDepth > 4)
                     throw new FormatException("Context Depth must be between 1 and 4");
                 reader.ReadEndElement();
-                
+
                 reader.ReadStartElement("ContextSeparator");
                 namingRules.contextSeparator = reader.ReadString();
                 reader.ReadEndElement();
-                
+
                 reader.ReadEndElement();
                 while (reader.Read())
                 {
@@ -43,10 +50,7 @@ namespace MarkHeath.MidiUtils
                         System.Diagnostics.Debug.Assert(reader.Name == "Rules");
                         break;
                     }
-                    //if (reader.IsStartElement())
-                    //    System.Diagnostics.Debug.Assert(reader.Name == "Rule");
                     reader.ReadStartElement("Rule");
-                    //reader.Read();
 
                     reader.ReadStartElement("SearchString");
                     var regex = reader.ReadString();
@@ -61,53 +65,29 @@ namespace MarkHeath.MidiUtils
             }
             if (string.IsNullOrEmpty(namingRules.filenameRegex))
                 throw new FormatException("FilenameRegex must not be empty");
-            if (namingRules.contextSeparator == null)
-                namingRules.contextSeparator = string.Empty;
+            namingRules.contextSeparator ??= string.Empty;
             return namingRules;
         }
 
-        public string ContextSeparator
-        {
-            get { return contextSeparator; }
-        }
+        public string ContextSeparator => contextSeparator;
 
-        public int ContextDepth
-        {
-            get { return contextDepth; }
-        }
+        public int ContextDepth => contextDepth;
 
-        public string FilenameRegex
-        {
-            get { return filenameRegex; }
-        }
+        public string FilenameRegex => filenameRegex;
 
-        public List<NamingRule> Rules
-        {
-            get { return rules; }
-        }
+        public List<NamingRule> Rules => rules;
     }
 
     class NamingRule
     {
-        string regex;
-        string replacement;
-
         public NamingRule(string regex, string replacement)
         {
-            this.regex = regex ?? throw new ArgumentNullException(nameof(regex));
-            this.replacement = replacement ?? string.Empty;
+            Regex = regex ?? throw new ArgumentNullException(nameof(regex));
+            Replacement = replacement ?? string.Empty;
         }
 
-        public string Regex
-        {
-            get { return regex; }
-        }
+        public string Regex { get; }
 
-        public string Replacement
-        {
-            get { return replacement; }
-        }
-
-
+        public string Replacement { get; }
     }
 }

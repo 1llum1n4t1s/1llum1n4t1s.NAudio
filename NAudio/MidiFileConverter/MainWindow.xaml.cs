@@ -42,7 +42,17 @@ public partial class MainWindow : Window
         {
             _namingRules = NamingRules.LoadRules(Path.Combine(executableFolder, "NamingRules.xml"));
         }
-        catch (Exception ex)
+        catch (System.Xml.XmlException ex)
+        {
+            System.Windows.MessageBox.Show($"Error reading NamingRules.xml\r\n{ex}", ProductName, MessageBoxButton.OK, MessageBoxImage.Warning);
+            Close();
+        }
+        catch (FormatException ex)
+        {
+            System.Windows.MessageBox.Show($"Error reading NamingRules.xml\r\n{ex}", ProductName, MessageBoxButton.OK, MessageBoxImage.Warning);
+            Close();
+        }
+        catch (IOException ex)
         {
             System.Windows.MessageBox.Show($"Error reading NamingRules.xml\r\n{ex}", ProductName, MessageBoxButton.OK, MessageBoxImage.Warning);
             Close();
@@ -170,25 +180,27 @@ public partial class MainWindow : Window
         }
         finally
         {
+            if (_midiConverter != null)
+                _midiConverter.Progress -= MidiConverter_Progress;
             _workQueued = false;
             Dispatcher.BeginInvoke(() =>
             {
                 Cursor = null;
                 SaveLogMenuItem.IsEnabled = true;
-                System.Windows.MessageBox.Show($"Finished:\r\n{_midiConverter.Summary}", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show($"Finished:\r\n{_midiConverter?.Summary}", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
             });
         }
     }
 
     private void MidiConverter_Progress(object sender, ProgressEventArgs e)
     {
-        var color = System.Drawing.Color.Black;
-        if (e.MessageType == ProgressMessageType.Warning)
-            color = System.Drawing.Color.Blue;
-        else if (e.MessageType == ProgressMessageType.Error)
-            color = System.Drawing.Color.Red;
-        else if (e.MessageType == ProgressMessageType.Trace)
-            color = System.Drawing.Color.Purple;
+        var color = e.MessageType switch
+        {
+            ProgressMessageType.Warning => System.Drawing.Color.Blue,
+            ProgressMessageType.Error => System.Drawing.Color.Red,
+            ProgressMessageType.Trace => System.Drawing.Color.Purple,
+            _ => System.Drawing.Color.Black,
+        };
         Dispatcher.BeginInvoke(() => ProgressLog.LogMessage(color, e.Message));
     }
 
@@ -308,7 +320,11 @@ public partial class MainWindow : Window
                 text = text.Replace("\n", "\r\n");
             File.WriteAllText(dlg.FileName, text);
         }
-        catch (Exception ex)
+        catch (IOException ex)
+        {
+            System.Windows.MessageBox.Show($"Error saving conversion log\r\n{ex.Message}", ProductName, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (UnauthorizedAccessException ex)
         {
             System.Windows.MessageBox.Show($"Error saving conversion log\r\n{ex.Message}", ProductName, MessageBoxButton.OK, MessageBoxImage.Error);
         }

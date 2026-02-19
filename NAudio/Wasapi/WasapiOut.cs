@@ -555,6 +555,7 @@ namespace NAudio.Wave
                 audioClient = null;
                 renderClient = null;
             }
+            GC.SuppressFinalize(this);
         }
 
 #endregion

@@ -29,7 +29,7 @@ namespace NAudio.Wave.SampleProviders
         private readonly double[] pinkNoiseBuffer = new double[7];
 
         // Const Math
-        private const double TwoPi = 2*Math.PI;
+        private const double TwoPi = 2 * Math.PI;
 
         // Generator variable
         private long nSample;

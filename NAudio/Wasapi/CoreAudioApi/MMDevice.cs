@@ -301,12 +301,24 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        /// <param name="disposing">True if disposing from Dispose(), false if from finalizer</param>
+        private void Dispose(bool disposing)
+        {
             if (disposed) return;
             disposed = true;
             this.audioEndpointVolume?.Dispose();
             this.audioSessionManager?.Dispose();
+            this.audioMeterInformation = null;
+            this.deviceTopology = null;
+            this.propertyStore = null;
             Marshal.ReleaseComObject(deviceInterface);
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -314,7 +326,7 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         ~MMDevice()
         {
-            Dispose();
+            Dispose(false);
         }
     }
 }

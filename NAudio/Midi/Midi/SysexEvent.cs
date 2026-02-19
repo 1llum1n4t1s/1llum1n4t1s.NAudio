@@ -58,14 +58,14 @@ namespace NAudio.Midi
         /// Describes this sysex message
         /// </summary>
         /// <returns>A string describing the sysex message</returns>
-        public override string ToString() 
+        public override string ToString()
         {
             var sb = new StringBuilder();
             foreach (var b in data)
             {
-                sb.AppendFormat("{0:X2} ", b);
+                sb.Append(b.ToString("X2")).Append(' ');
             }
-            return String.Format("{0} Sysex: {1} bytes\r\n{2}",this.AbsoluteTime,data.Length,sb.ToString());
+            return $"{this.AbsoluteTime} Sysex: {data.Length} bytes\r\n{sb}";
         }
         
         /// <summary>

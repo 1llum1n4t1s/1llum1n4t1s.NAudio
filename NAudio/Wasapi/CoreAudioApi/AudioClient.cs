@@ -100,6 +100,10 @@ namespace NAudio.CoreAudioApi
             WaveFormat waveFormat,
             Guid audioSessionGuid)
         {
+            // Release any previously obtained sub-client interfaces before re-initializing,
+            // because they become invalid after a new Initialize call.
+            DisposeSubClients();
+
             this.shareMode = shareMode;
             var hresult = audioClientInterface.Initialize(shareMode, streamFlags, bufferDuration, periodicity, waveFormat, ref audioSessionGuid);
             Marshal.ThrowExceptionForHR(hresult);
@@ -354,6 +358,30 @@ namespace NAudio.CoreAudioApi
             audioClientInterface.Reset();
         }
 
+        private void DisposeSubClients()
+        {
+            if (audioClockClient != null)
+            {
+                audioClockClient.Dispose();
+                audioClockClient = null;
+            }
+            if (audioRenderClient != null)
+            {
+                audioRenderClient.Dispose();
+                audioRenderClient = null;
+            }
+            if (audioCaptureClient != null)
+            {
+                audioCaptureClient.Dispose();
+                audioCaptureClient = null;
+            }
+            if (audioStreamVolume != null)
+            {
+                audioStreamVolume.Dispose();
+                audioStreamVolume = null;
+            }
+        }
+
         #region IDisposable Members
 
         /// <summary>
@@ -363,29 +391,23 @@ namespace NAudio.CoreAudioApi
         {
             if (audioClientInterface != null)
             {
-                if (audioClockClient != null)
-                {
-                    audioClockClient.Dispose();
-                    audioClockClient = null;
-                }
-                if (audioRenderClient != null)
-                {
-                    audioRenderClient.Dispose();
-                    audioRenderClient = null;
-                }
-                if (audioCaptureClient != null)
-                {
-                    audioCaptureClient.Dispose();
-                    audioCaptureClient = null;
-                }
-                if (audioStreamVolume != null)
-                {
-                    audioStreamVolume.Dispose();
-                    audioStreamVolume = null;
-                }
+                DisposeSubClients();
                 Marshal.ReleaseComObject(audioClientInterface);
                 audioClientInterface = null;
-                GC.SuppressFinalize(this);
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Finalizer
+        /// </summary>
+        ~AudioClient()
+        {
+            if (audioClientInterface != null)
+            {
+                DisposeSubClients();
+                Marshal.ReleaseComObject(audioClientInterface);
+                audioClientInterface = null;
             }
         }
 

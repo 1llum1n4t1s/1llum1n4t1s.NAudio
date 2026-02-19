@@ -156,34 +156,40 @@ namespace NAudio.Wave
             // Create a partial media type indicating that we want uncompressed PCM audio
 
             var partialMediaType = new MediaType();
-            partialMediaType.MajorType = MediaTypes.MFMediaType_Audio;
-            partialMediaType.SubType = settings.RequestFloatOutput ? AudioSubtypes.MFAudioFormat_Float : AudioSubtypes.MFAudioFormat_PCM;
-
             var currentMediaType = GetCurrentMediaType(reader);
-
-            // mono, low sample rate files can go wrong on Windows 10 unless we specify here
-            partialMediaType.ChannelCount = currentMediaType.ChannelCount;
-            partialMediaType.SampleRate = currentMediaType.SampleRate;
 
             try
             {
-                // set the media type
-                // can return MF_E_INVALIDMEDIATYPE if not supported
-                reader.SetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, IntPtr.Zero, partialMediaType.MediaFoundationObject);
-            }
-            catch (COMException ex) when (ex.GetHResult() == MediaFoundationErrors.MF_E_INVALIDMEDIATYPE)
-            {               
-                // HE-AAC (and v2) seems to halve the samplerate
-                if (currentMediaType.SubType == AudioSubtypes.MFAudioFormat_AAC && currentMediaType.ChannelCount == 1)
+                partialMediaType.MajorType = MediaTypes.MFMediaType_Audio;
+                partialMediaType.SubType = settings.RequestFloatOutput ? AudioSubtypes.MFAudioFormat_Float : AudioSubtypes.MFAudioFormat_PCM;
+
+                // mono, low sample rate files can go wrong on Windows 10 unless we specify here
+                partialMediaType.ChannelCount = currentMediaType.ChannelCount;
+                partialMediaType.SampleRate = currentMediaType.SampleRate;
+
+                try
                 {
-                    partialMediaType.SampleRate = currentMediaType.SampleRate *= 2;
-                    partialMediaType.ChannelCount = currentMediaType.ChannelCount *= 2;
+                    // set the media type
+                    // can return MF_E_INVALIDMEDIATYPE if not supported
                     reader.SetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, IntPtr.Zero, partialMediaType.MediaFoundationObject);
                 }
-                else { throw; }
+                catch (COMException ex) when (ex.GetHResult() == MediaFoundationErrors.MF_E_INVALIDMEDIATYPE)
+                {
+                    // HE-AAC (and v2) seems to halve the samplerate
+                    if (currentMediaType.SubType == AudioSubtypes.MFAudioFormat_AAC && currentMediaType.ChannelCount == 1)
+                    {
+                        partialMediaType.SampleRate = currentMediaType.SampleRate *= 2;
+                        partialMediaType.ChannelCount = currentMediaType.ChannelCount *= 2;
+                        reader.SetCurrentMediaType(MediaFoundationInterop.MF_SOURCE_READER_FIRST_AUDIO_STREAM, IntPtr.Zero, partialMediaType.MediaFoundationObject);
+                    }
+                    else { throw; }
+                }
             }
-
-            Marshal.ReleaseComObject(currentMediaType.MediaFoundationObject);
+            finally
+            {
+                Marshal.ReleaseComObject(currentMediaType.MediaFoundationObject);
+                Marshal.ReleaseComObject(partialMediaType.MediaFoundationObject);
+            }
             return reader;
         }
 
@@ -379,6 +385,7 @@ namespace NAudio.Wave
             }
             finally
             {
+                PropVariant.Clear(ptr);
                 Marshal.FreeHGlobal(ptr);
             }
             decoderOutputCount = 0;

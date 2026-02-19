@@ -17,15 +17,15 @@ namespace MarkHeath.MidiUtils
         int directoriesCreated;
         int errors;
         DateTime startTime;
-        Properties.Settings settings;
-        Regex ezdFileName;
-        NamingRules namingRules;
+        readonly Properties.Settings settings;
+        readonly Regex ezdFileName;
+        readonly NamingRules namingRules;
 
         public MidiConverter(NamingRules namingRules)
         {
+            this.namingRules = namingRules ?? throw new ArgumentNullException(nameof(namingRules));
             settings = Properties.Settings.Default;
-            this.namingRules = namingRules;
-            ezdFileName = new Regex(namingRules.FilenameRegex);                
+            ezdFileName = new Regex(namingRules.FilenameRegex);
         }
 
         public void Start()
@@ -71,20 +71,17 @@ namespace MarkHeath.MidiUtils
                 LogWarning("Extra markers will be removed");
             }
 
-            ProcessFolder(settings.InputFolder, settings.OutputFolder, new string[0]);
+            ProcessFolder(settings.InputFolder, settings.OutputFolder, Array.Empty<string>());
             var timeTaken = DateTime.Now - startTime;
             LogInformation("Finished in {0}", timeTaken);
             LogInformation(Summary);
 
         }
 
-        private string[] CreateNewContext(string[] oldContext, string newContextItem)
+        private static string[] CreateNewContext(string[] oldContext, string newContextItem)
         {
             var newContext = new string[oldContext.Length + 1];
-            for (var n = 0; n < oldContext.Length; n++)
-            {
-                newContext[n] = oldContext[n];
-            }
+            Array.Copy(oldContext, newContext, oldContext.Length);
             newContext[oldContext.Length] = newContextItem;
             return newContext;
         }
@@ -98,7 +95,19 @@ namespace MarkHeath.MidiUtils
                 {
                     ProcessFile(midiFile, outputFolder, context);
                 }
-                catch (Exception e)
+                catch (IOException e)
+                {
+                    LogError("I/O error processing file {0}", midiFile);
+                    LogError(e.ToString());
+                    errors++;
+                }
+                catch (FormatException e)
+                {
+                    LogError("Format error processing file {0}", midiFile);
+                    LogError(e.ToString());
+                    errors++;
+                }
+                catch (InvalidOperationException e)
                 {
                     LogError("Unexpected error processing file {0}", midiFile);
                     LogError(e.ToString());
@@ -114,7 +123,7 @@ namespace MarkHeath.MidiUtils
                 var newContext = CreateNewContext(context, folderName);
 
                 if (!Directory.Exists(newOutputFolder))
-                {                    
+                {
                     if (settings.VerboseOutput)
                     {
                         LogTrace("Creating folder {0}", newOutputFolder);
@@ -133,7 +142,7 @@ namespace MarkHeath.MidiUtils
             var fileName = Path.GetFileName(file);
             var target = Path.Combine(outputFolder, fileName);
 
-            if (Path.GetExtension(file).ToLower() == ".mid")
+            if (string.Equals(Path.GetExtension(file), ".mid", StringComparison.OrdinalIgnoreCase))
             {
                 var midiFile = new MidiFile(file);
                 ConvertMidi(midiFile, target, CreateNewContext(context, Path.GetFileNameWithoutExtension(file)));
@@ -158,7 +167,7 @@ namespace MarkHeath.MidiUtils
 
         private void ConvertMidi(MidiFile midiFile, string target, string[] context)
         {
-            var fileNameWithoutExtension = context[context.Length - 1];
+            var fileNameWithoutExtension = context[^1];
             string name = null;
             long endTrackTime = -1;
             if (settings.UseFileName)
@@ -216,7 +225,7 @@ namespace MarkHeath.MidiUtils
 
             foreach (var midiEvent in midiFile.Events[0])
             {
-                if (settings.OutputChannelNumber != -1 && !(midiEvent is MetaEvent))
+                if (settings.OutputChannelNumber != -1 && midiEvent is not MetaEvent)
                     midiEvent.Channel = settings.OutputChannelNumber;
                 if (midiEvent is MetaEvent metaEvent)
                 {
@@ -261,7 +270,7 @@ namespace MarkHeath.MidiUtils
                             }
                             if (settings.RemoveExtraMarkers && midiEvent.AbsoluteTime > 0)
                             {
-                                LogWarning("Removing a marker ({0}) at {1} from {2}", ((TextEvent)metaEvent).Text, metaEvent.AbsoluteTime, target);                                
+                                LogWarning("Removing a marker ({0}) at {1} from {2}", ((TextEvent)metaEvent).Text, metaEvent.AbsoluteTime, target);
                                 exclude = true;
                             }
                             break;
@@ -291,7 +300,7 @@ namespace MarkHeath.MidiUtils
 
                 foreach (var midiEvent in midiFile.Events[inputTrack])
                 {
-                    if (settings.OutputChannelNumber != -1 && !(midiEvent is MetaEvent))
+                    if (settings.OutputChannelNumber != -1 && midiEvent is not MetaEvent)
                         midiEvent.Channel = settings.OutputChannelNumber;
                     var exclude = false;
                     if (midiEvent is MetaEvent metaEvent)
@@ -355,7 +364,7 @@ namespace MarkHeath.MidiUtils
             if (settings.RemoveEmptyTracks)
             {
                 var newList = new MidiEventCollection(events.MidiFileType, events.DeltaTicksPerQuarterNote);
-                
+
                 var removed = 0;
                 for (var track = 0; track < events.Tracks; track++)
                 {
@@ -386,24 +395,23 @@ namespace MarkHeath.MidiUtils
             MidiFile.Export(target, events);
         }
 
-        private bool HasNotes(IList<MidiEvent> midiEvents)
+        private static bool HasNotes(IList<MidiEvent> midiEvents)
         {
             return midiEvents.Any(midiEvent => midiEvent.CommandCode == MidiCommandCode.NoteOn);
         }
 
-        private bool IsEndTrack(MidiEvent midiEvent)
+        private static bool IsEndTrack(MidiEvent midiEvent)
         {
-            var meta = midiEvent as MetaEvent;
-            return meta?.MetaEventType == MetaEventType.EndTrack;
+            return (midiEvent as MetaEvent)?.MetaEventType == MetaEventType.EndTrack;
         }
 
-        private void AppendEndMarker(IList<MidiEvent> eventList)
+        private static void AppendEndMarker(IList<MidiEvent> eventList)
         {
             long absoluteTime = 0;
-            
+
             if (eventList.Count > 0)
-                absoluteTime = eventList[eventList.Count - 1].AbsoluteTime;
-            
+                absoluteTime = eventList[^1].AbsoluteTime;
+
             if (!IsEndTrack(eventList.LastOrDefault()))
                 eventList.Add(new MetaEvent(MetaEventType.EndTrack, 0, absoluteTime));
         }
@@ -464,12 +472,7 @@ namespace MarkHeath.MidiUtils
             Progress?.Invoke(sender, args);
         }
 
-        public string Summary
-        {
-            get
-            {
-                return String.Format("Files Converted {0}\r\nFiles Copied {1}\r\nFolders Created {2}\r\nErrors {3}", filesConverted, filesCopied, directoriesCreated, errors);
-            }
-        }
+        public string Summary =>
+            $"Files Converted {filesConverted}\r\nFiles Copied {filesCopied}\r\nFolders Created {directoriesCreated}\r\nErrors {errors}";
     }
 }

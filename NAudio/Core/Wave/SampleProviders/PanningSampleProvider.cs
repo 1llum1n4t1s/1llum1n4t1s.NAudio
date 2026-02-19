@@ -165,9 +165,8 @@ namespace NAudio.Wave.SampleProviders
         {
             // -1..+1  -> 1..0
             var normPan = (-pan + 1) / 2;
-            var leftChannel = (float)Math.Sqrt(normPan);
-            var rightChannel = (float)Math.Sqrt(1 - normPan);
-            // Console.WriteLine(pan + ": " + leftChannel + "," + rightChannel);
+            var leftChannel = MathF.Sqrt(normPan);
+            var rightChannel = MathF.Sqrt(1 - normPan);
             return new StereoSamplePair() { Left = leftChannel, Right = rightChannel };
         }
     }
@@ -177,7 +176,7 @@ namespace NAudio.Wave.SampleProviders
     /// </summary>
     public class SinPanStrategy : IPanStrategy
     {
-        private const float HalfPi = (float)Math.PI / 2;
+        private const float HalfPi = MathF.PI / 2;
 
         /// <summary>
         /// Gets the left and right channel multipliers for this pan value
@@ -188,9 +187,8 @@ namespace NAudio.Wave.SampleProviders
         {
             // -1..+1  -> 1..0
             var normPan = (-pan + 1) / 2;
-            var leftChannel = (float)Math.Sin(normPan * HalfPi);
-            var rightChannel = (float)Math.Cos(normPan * HalfPi);
-            // Console.WriteLine(pan + ": " + leftChannel + "," + rightChannel);
+            var leftChannel = MathF.Sin(normPan * HalfPi);
+            var rightChannel = MathF.Cos(normPan * HalfPi);
             return new StereoSamplePair() { Left = leftChannel, Right = rightChannel };
         }
     }

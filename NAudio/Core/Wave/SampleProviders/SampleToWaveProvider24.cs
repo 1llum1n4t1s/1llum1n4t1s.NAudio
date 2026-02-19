@@ -21,9 +21,9 @@ namespace NAudio.Wave.SampleProviders
         public SampleToWaveProvider24(ISampleProvider sourceProvider)
         {
             if (sourceProvider.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
-                throw new ArgumentException("Input source provider must be IEEE float", "sourceProvider");
+                throw new ArgumentException("Input source provider must be IEEE float", nameof(sourceProvider));
             if (sourceProvider.WaveFormat.BitsPerSample != 32)
-                throw new ArgumentException("Input source provider must be 32 bit", "sourceProvider");
+                throw new ArgumentException("Input source provider must be 32 bit", nameof(sourceProvider));
 
             waveFormat = new WaveFormat(sourceProvider.WaveFormat.SampleRate, 24, sourceProvider.WaveFormat.Channels);
 
@@ -47,15 +47,9 @@ namespace NAudio.Wave.SampleProviders
             var destOffset = offset;
             for (var sample = 0; sample < sourceSamples; sample++)
             {
-                // adjust volume
-                var sample32 = sourceBuffer[sample] * volume;
-                // clip
-                if (sample32 > 1.0f)
-                    sample32 = 1.0f;
-                if (sample32 < -1.0f)
-                    sample32 = -1.0f;
-
-                var sample24 = (int)Math.Clamp(sample32 * (1 << 23), -(1 << 23), (1 << 23) - 1f);
+                // adjust volume and clip
+                var sample32 = Math.Clamp(sourceBuffer[sample] * volume, -1.0f, 1.0f);
+                var sample24 = (int)(sample32 * (1 << 23));
                 destBuffer[destOffset++] = (byte)(sample24);
                 destBuffer[destOffset++] = (byte)(sample24 >> 8);
                 destBuffer[destOffset++] = (byte)(sample24 >> 16);

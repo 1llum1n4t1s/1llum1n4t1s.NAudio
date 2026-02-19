@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
@@ -218,17 +219,18 @@ namespace NAudio.Midi
         private void FindNoteOn(NoteEvent offEvent, List<NoteOnEvent> outstandingNoteOns)
         {
             var found = false;
-            foreach(var noteOnEvent in outstandingNoteOns)
+            for (var i = 0; i < outstandingNoteOns.Count; i++)
             {
-                if ((noteOnEvent.Channel == offEvent.Channel) && (noteOnEvent.NoteNumber == offEvent.NoteNumber)) 
+                var noteOnEvent = outstandingNoteOns[i];
+                if ((noteOnEvent.Channel == offEvent.Channel) && (noteOnEvent.NoteNumber == offEvent.NoteNumber))
                 {
                     noteOnEvent.OffEvent = offEvent;
-                    outstandingNoteOns.Remove(noteOnEvent);
+                    outstandingNoteOns.RemoveAt(i);
                     found = true;
                     break;
                 }
             }
-            if(!found) 
+            if (!found)
             {
                 if (strictChecking)
                 {
@@ -237,30 +239,29 @@ namespace NAudio.Midi
             }
         }
         
-        private static uint SwapUInt32(uint i) 
+        private static uint SwapUInt32(uint i)
         {
-            return ((i & 0xFF000000) >> 24) | ((i & 0x00FF0000) >> 8) | ((i & 0x0000FF00) << 8) | ((i & 0x000000FF) << 24);
+            return BinaryPrimitives.ReverseEndianness(i);
         }
 
-        private static ushort SwapUInt16(ushort i) 
+        private static ushort SwapUInt16(ushort i)
         {
-            return (ushort) (((i & 0xFF00) >> 8) | ((i & 0x00FF) << 8));
+            return BinaryPrimitives.ReverseEndianness(i);
         }
         
         /// <summary>
         /// Describes the MIDI file
         /// </summary>
         /// <returns>A string describing the MIDI file and its events</returns>
-        public override string ToString() 
+        public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("Format {0}, Tracks {1}, Delta Ticks Per Quarter Note {2}\r\n",
-                fileFormat,Tracks,deltaTicksPerQuarterNote);
+            sb.Append($"Format {fileFormat}, Tracks {Tracks}, Delta Ticks Per Quarter Note {deltaTicksPerQuarterNote}\r\n");
             for (var n = 0; n < Tracks; n++)
             {
                 foreach (var midiEvent in events[n])
                 {
-                    sb.AppendFormat("{0}\r\n", midiEvent);
+                    sb.Append(midiEvent).Append("\r\n");
                 }
             }
             return sb.ToString();

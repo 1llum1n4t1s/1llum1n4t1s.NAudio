@@ -1,6 +1,9 @@
 using System;
+using System.Buffers;
+using System.Buffers.Binary;
 using System.IO;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using NAudio.Utils;
 
 // ReSharper disable once CheckNamespace
@@ -15,7 +18,7 @@ namespace NAudio.Wave
         private readonly WaveFormat waveFormat;
         private readonly bool ownInput;
         private readonly long dataPosition;
-        private readonly int dataChunkLength;
+        private readonly long dataChunkLength;
         private readonly List<AiffChunk> chunks = new List<AiffChunk>();
         private Stream waveStream;
         private readonly object lockObject = new object();
@@ -26,19 +29,35 @@ namespace NAudio.Wave
         /// with 8, 16, 24 and 32 bit PCM data.
         /// </remarks>
         public AiffFileReader(String aiffFile) :
-            this(File.OpenRead(aiffFile))
+            this(File.OpenRead(aiffFile), true)
         {
-            ownInput = true;
         }
 
         /// <summary>
         /// Creates an Aiff File Reader based on an input stream
         /// </summary>
         /// <param name="inputStream">The input stream containing a AIF file including header</param>
-        public AiffFileReader(Stream inputStream)
+        public AiffFileReader(Stream inputStream) :
+            this(inputStream ?? throw new ArgumentNullException(nameof(inputStream)), false)
         {
-            waveStream = inputStream ?? throw new ArgumentNullException(nameof(inputStream));
-            ReadAiffHeader(waveStream, out waveFormat, out dataPosition, out dataChunkLength, chunks);
+        }
+
+        private AiffFileReader(Stream inputStream, bool ownInput)
+        {
+            this.waveStream = inputStream;
+            this.ownInput = ownInput;
+            try
+            {
+                ReadAiffHeader(waveStream, out waveFormat, out dataPosition, out dataChunkLength, chunks);
+            }
+            catch
+            {
+                if (ownInput)
+                {
+                    inputStream.Dispose();
+                }
+                throw;
+            }
             Position = 0;
         }
 
@@ -50,7 +69,7 @@ namespace NAudio.Wave
         /// <param name="dataChunkPosition">The position of the data chunk</param>
         /// <param name="dataChunkLength">The length of the data chunk</param>
         /// <param name="chunks">Additional chunks found</param>
-        public static void ReadAiffHeader(Stream stream, out WaveFormat format, out long dataChunkPosition, out int dataChunkLength, List<AiffChunk> chunks)
+        public static void ReadAiffHeader(Stream stream, out WaveFormat format, out long dataChunkPosition, out long dataChunkLength, List<AiffChunk> chunks)
         {
             dataChunkPosition = -1;
             format = null;
@@ -223,55 +242,64 @@ namespace NAudio.Wave
                 // sometimes there is more junk at the end of the file past the data chunk
                 if (Position + count > dataChunkLength)
                 {
-                    count = dataChunkLength - (int) Position;
+                    count = (int)(dataChunkLength - Position);
                 }
+                if (count <= 0) return 0;
 
                 // Need to fix the endianness since intel expect little endian, and apple is big endian.
-                var buffer = new byte[count];
-                var length = waveStream.Read(buffer, 0, count);
-
-                var bytesPerSample = WaveFormat.BitsPerSample/8;
-                for (var i = 0; i < length; i += bytesPerSample)
+                // Use ArrayPool to avoid per-Read allocation
+                var buffer = ArrayPool<byte>.Shared.Rent(count);
+                try
                 {
-                    if (WaveFormat.BitsPerSample == 8)
-                    {
-                        array[offset + i] = buffer[i];
-                    }
-                    else if (WaveFormat.BitsPerSample == 16)
-                    {
-                        array[offset + i + 0] = buffer[i + 1];
-                        array[offset + i + 1] = buffer[i];
-                    }
-                    else if (WaveFormat.BitsPerSample == 24)
-                    {
-                        array[offset + i + 0] = buffer[i + 2];
-                        array[offset + i + 1] = buffer[i + 1];
-                        array[offset + i + 2] = buffer[i + 0];
-                    }
-                    else if (WaveFormat.BitsPerSample == 32)
-                    {
-                        array[offset + i + 0] = buffer[i + 3];
-                        array[offset + i + 1] = buffer[i + 2];
-                        array[offset + i + 2] = buffer[i + 1];
-                        array[offset + i + 3] = buffer[i + 0];
-                    }
-                    else throw new FormatException("Unsupported PCM format.");
-                }
+                    var length = waveStream.Read(buffer, 0, count);
 
-                return length;
+                    var bytesPerSample = WaveFormat.BitsPerSample / 8;
+                    for (var i = 0; i < length; i += bytesPerSample)
+                    {
+                        if (WaveFormat.BitsPerSample == 8)
+                        {
+                            array[offset + i] = buffer[i];
+                        }
+                        else if (WaveFormat.BitsPerSample == 16)
+                        {
+                            array[offset + i + 0] = buffer[i + 1];
+                            array[offset + i + 1] = buffer[i];
+                        }
+                        else if (WaveFormat.BitsPerSample == 24)
+                        {
+                            array[offset + i + 0] = buffer[i + 2];
+                            array[offset + i + 1] = buffer[i + 1];
+                            array[offset + i + 2] = buffer[i + 0];
+                        }
+                        else if (WaveFormat.BitsPerSample == 32)
+                        {
+                            array[offset + i + 0] = buffer[i + 3];
+                            array[offset + i + 1] = buffer[i + 2];
+                            array[offset + i + 2] = buffer[i + 1];
+                            array[offset + i + 3] = buffer[i + 0];
+                        }
+                        else throw new FormatException("Unsupported PCM format.");
+                    }
+
+                    return length;
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ConvertInt(byte[] buffer)
         {
-            if (buffer.Length != 4) throw new ArgumentException("Incorrect length for long.", nameof(buffer));
-            return (uint)((buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3]);
+            return BinaryPrimitives.ReadUInt32BigEndian(buffer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static short ConvertShort(byte[] buffer)
         {
-            if (buffer.Length != 2) throw new ArgumentException("Incorrect length for int.", nameof(buffer));
-            return (short)((buffer[0] << 8) | buffer[1]);
+            return BinaryPrimitives.ReadInt16BigEndian(buffer);
         }
 
 

@@ -494,6 +494,9 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
+            if (captureState == CaptureState.Stopped && audioClient == null)
+                return; // already disposed
+
             StopRecording();
             if (captureThread != null)
             {
@@ -510,6 +513,7 @@ namespace NAudio.CoreAudioApi
                 frameEventWaitHandle.Dispose();
                 frameEventWaitHandle = null;
             }
+            GC.SuppressFinalize(this);
         }
     }
 }

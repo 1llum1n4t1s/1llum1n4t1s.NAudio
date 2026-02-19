@@ -1,4 +1,6 @@
-﻿namespace NAudio.Codecs
+﻿using System.Runtime.CompilerServices;
+
+namespace NAudio.Codecs
 {
     /// <summary>
     /// A-law encoder
@@ -32,6 +34,7 @@
         /// </summary>
         /// <param name="sample">16 bit PCM sample</param>
         /// <returns>a-law encoded byte</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte LinearToALawSample(short sample)
         {
             int sign;

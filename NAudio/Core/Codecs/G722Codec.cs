@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace NAudio.Codecs
 {
@@ -27,6 +28,7 @@ namespace NAudio.Codecs
         /// <summary>
         /// hard limits to 16 bit samples
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static short Saturate(int amp)
         {
             short amp16;
@@ -568,6 +570,23 @@ namespace NAudio.Codecs
                 this.Packed = false;
             this.Band[0].det = 32;
             this.Band[1].det = 8;
+        }
+
+        /// <summary>
+        /// Resets the codec state to initial values for reuse.
+        /// Call this when starting a new encode/decode session with the same parameters.
+        /// </summary>
+        public void Reset()
+        {
+            this.Band[0] = new Band();
+            this.Band[1] = new Band();
+            this.Band[0].det = 32;
+            this.Band[1].det = 8;
+            Array.Clear(this.QmfSignalHistory, 0, this.QmfSignalHistory.Length);
+            this.InBuffer = 0;
+            this.InBits = 0;
+            this.OutBuffer = 0;
+            this.OutBits = 0;
         }
     }
 

@@ -8,6 +8,7 @@ namespace NAudio.Wave
     /// </summary>
     public class WaveOutBuffer : IDisposable
     {
+        private static readonly int WaveHeaderSize = Marshal.SizeOf<WaveHeader>();
         private readonly WaveHeader header;
         private readonly Int32 bufferSize; // allocated bytes, may not be the same as bytes read
         private readonly byte[] buffer;
@@ -43,7 +44,7 @@ namespace NAudio.Wave
             header.userData = (IntPtr)hThis;
             lock (waveOutLock)
             {
-                MmException.Try(WaveInterop.waveOutPrepareHeader(hWaveOut, header, Marshal.SizeOf(header)), "waveOutPrepareHeader");
+                MmException.Try(WaveInterop.waveOutPrepareHeader(hWaveOut, header, WaveHeaderSize), "waveOutPrepareHeader");
             }
         }
 
@@ -79,9 +80,18 @@ namespace NAudio.Wave
             // free unmanaged resources
             if (hWaveOut != IntPtr.Zero)
             {
-                lock (waveOutLock)
+                if (disposing)
                 {
-                    WaveInterop.waveOutUnprepareHeader(hWaveOut, header, Marshal.SizeOf(header));
+                    // Only lock when called from Dispose (not from finalizer to avoid deadlock)
+                    lock (waveOutLock)
+                    {
+                        WaveInterop.waveOutUnprepareHeader(hWaveOut, header, WaveHeaderSize);
+                    }
+                }
+                else
+                {
+                    // Finalizer path: call without lock to avoid potential deadlock
+                    WaveInterop.waveOutUnprepareHeader(hWaveOut, header, WaveHeaderSize);
                 }
                 hWaveOut = IntPtr.Zero;
             }
@@ -107,9 +117,9 @@ namespace NAudio.Wave
             {
                 return false;
             }
-            for (var n = bytes; n < buffer.Length; n++)
+            if (bytes < buffer.Length)
             {
-                buffer[n] = 0;
+                Array.Clear(buffer, bytes, buffer.Length - bytes);
             }
             WriteToWaveOut();
             return true;
@@ -137,7 +147,7 @@ namespace NAudio.Wave
 
             lock (waveOutLock)
             {
-                result = WaveInterop.waveOutWrite(hWaveOut, header, Marshal.SizeOf(header));
+                result = WaveInterop.waveOutWrite(hWaveOut, header, WaveHeaderSize);
             }
             if (result != MmResult.NoError)
             {

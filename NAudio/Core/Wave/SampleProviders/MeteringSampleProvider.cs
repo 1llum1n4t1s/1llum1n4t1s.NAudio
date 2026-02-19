@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace NAudio.Wave.SampleProviders
 {
@@ -82,8 +83,8 @@ namespace NAudio.Wave.SampleProviders
             {
                 for (var channel = 0; channel < channels; channel++)
                 {
-                    var sampleValue = Math.Abs(buffer[offset + index + channel]);
-                    maxSamples[channel] = Math.Max(maxSamples[channel], sampleValue);
+                    var sampleValue = MathF.Abs(buffer[offset + index + channel]);
+                    maxSamples[channel] = MathF.Max(maxSamples[channel], sampleValue);
                 }
                 sampleCount++;
                 if (sampleCount >= SamplesPerNotification)

@@ -84,9 +84,10 @@ namespace NAudio.Midi
         /// <summary>
         /// Resets the MIDI out device
         /// </summary>
-        public void Reset() 
+        public void Reset()
         {
-            MmException.Try(MidiInterop.midiOutReset(hMidiOut),"midiOutReset");
+            if (disposed) throw new ObjectDisposedException(nameof(MidiOut));
+            MmException.Try(MidiInterop.midiOutReset(hMidiOut), "midiOutReset");
         }
 
         /// <summary>
@@ -95,29 +96,32 @@ namespace NAudio.Midi
         /// <param name="message">Message</param>
         /// <param name="param1">Parameter 1</param>
         /// <param name="param2">Parameter 2</param>
-        public void SendDriverMessage(int message, int param1, int param2) 
+        public void SendDriverMessage(int message, int param1, int param2)
         {
-            MmException.Try(MidiInterop.midiOutMessage(hMidiOut,message,(IntPtr)param1,(IntPtr)param2),"midiOutMessage");
+            if (disposed) throw new ObjectDisposedException(nameof(MidiOut));
+            MmException.Try(MidiInterop.midiOutMessage(hMidiOut, message, (IntPtr)param1, (IntPtr)param2), "midiOutMessage");
         }
 
         /// <summary>
         /// Sends a MIDI message to the MIDI out device
         /// </summary>
         /// <param name="message">The message to send</param>
-        public void Send(int message) 
+        public void Send(int message)
         {
-            MmException.Try(MidiInterop.midiOutShortMsg(hMidiOut,message),"midiOutShortMsg");
+            if (disposed) throw new ObjectDisposedException(nameof(MidiOut));
+            MmException.Try(MidiInterop.midiOutShortMsg(hMidiOut, message), "midiOutShortMsg");
         }
         
         /// <summary>
         /// Closes the MIDI out device
         /// </summary>
         /// <param name="disposing">True if called from Dispose</param>
-        protected virtual void Dispose(bool disposing) 
+        protected virtual void Dispose(bool disposing)
         {
-            if(!this.disposed) 
+            if (!this.disposed)
             {
                 //if(disposing) Components.Dispose();
+                MidiInterop.midiOutReset(hMidiOut);
                 MidiInterop.midiOutClose(hMidiOut);
             }
             disposed = true;

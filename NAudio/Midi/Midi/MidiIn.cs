@@ -75,6 +75,7 @@ namespace NAudio.Midi
         /// </summary>
         public void Start()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             MmException.Try(MidiInterop.midiInStart(hMidiIn), "midiInStart");
         }
 
@@ -83,6 +84,7 @@ namespace NAudio.Midi
         /// </summary>
         public void Stop()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             MmException.Try(MidiInterop.midiInStop(hMidiIn), "midiInStop");
         }
 
@@ -91,6 +93,7 @@ namespace NAudio.Midi
         /// </summary>
         public void Reset()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             MmException.Try(MidiInterop.midiInReset(hMidiIn), "midiInReset");
         }
 
@@ -101,6 +104,7 @@ namespace NAudio.Midi
         /// <param name="numberOfBuffers">The number of buffers needed to handle incoming Midi while busy</param>
         public void CreateSysexBuffers(int bufferSize, int numberOfBuffers)
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             SysexBufferHeaders = new IntPtr[numberOfBuffers];
 
             var hdrSize = Marshal.SizeOf(typeof(MidiInterop.MIDIHDR));

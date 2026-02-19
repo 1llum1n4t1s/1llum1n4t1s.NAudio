@@ -1,4 +1,6 @@
-﻿namespace NAudio.Codecs
+﻿using System.Runtime.CompilerServices;
+
+namespace NAudio.Codecs
 {
     /// <summary>
     /// mu-law decoder
@@ -51,6 +53,7 @@
         /// </summary>
         /// <param name="muLaw">mu-law encoded byte</param>
         /// <returns>Linear sample</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static short MuLawToLinearSample(byte muLaw)
         {
             return MuLawDecompressTable[muLaw];
