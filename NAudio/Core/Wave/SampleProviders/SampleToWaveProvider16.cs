@@ -50,7 +50,7 @@ namespace NAudio.Wave.SampleProviders
             {
                 // adjust volume and clip
                 var sample32 = Math.Clamp(sourceBuffer[sample] * volume, -1.0f, 1.0f);
-                destWaveBuffer.ShortBuffer[destOffset++] = (short)(sample32 * (short.MaxValue + 1f));
+                destWaveBuffer.ShortBuffer[destOffset++] = (short)(sample32 * short.MaxValue);
             }
 
             return sourceSamples * 2;

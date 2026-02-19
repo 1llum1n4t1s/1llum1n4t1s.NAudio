@@ -49,7 +49,7 @@ namespace NAudio.Wave.SampleProviders
             {
                 // adjust volume and clip
                 var sample32 = Math.Clamp(sourceBuffer[sample] * volume, -1.0f, 1.0f);
-                var sample24 = (int)(sample32 * (1 << 23));
+                var sample24 = (int)(sample32 * 8388607.0);
                 destBuffer[destOffset++] = (byte)(sample24);
                 destBuffer[destOffset++] = (byte)(sample24 >> 8);
                 destBuffer[destOffset++] = (byte)(sample24 >> 16);

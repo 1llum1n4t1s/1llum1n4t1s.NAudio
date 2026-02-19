@@ -336,13 +336,13 @@ namespace NAudio.Wave
                 Span<byte> value = stackalloc byte[4];
                 for (var sample = 0; sample < count; sample++)
                 {
-                    // Shift 16-bit sample up by 8 bits to fill the upper 24 bits of a 32-bit value,
-                    // then extract bytes [1],[2],[3] as the 24-bit PCM output.
-                    // Using << 8 gives exact bit-accurate 16→24 conversion (vs UInt16.MaxValue multiply which loses LSB precision).
+                    // Shift 16-bit sample left by 8 bits for 16→24 bit conversion.
+                    // WriteInt32LittleEndian stores as [byte0=LSB, byte1, byte2, byte3=MSB].
+                    // The lower 3 bytes [0],[1],[2] are the 24-bit little-endian value.
                     BinaryPrimitives.WriteInt32LittleEndian(value, (int)samples[sample + offset] << 8);
-                    value24[0] = value[1];
-                    value24[1] = value[2];
-                    value24[2] = value[3];
+                    value24[0] = value[0];
+                    value24[1] = value[1];
+                    value24[2] = value[2];
                     writer.Write(value24);
                 }
                 dataChunkSize += (count * 3);

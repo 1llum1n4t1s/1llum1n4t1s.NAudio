@@ -310,12 +310,13 @@ namespace NAudio.Wave
                 Span<byte> value = stackalloc byte[4];
                 for (var sample = 0; sample < count; sample++)
                 {
-                    // Shift 16-bit sample up by 8 bits to fill the upper 24 bits of a 32-bit value
+                    // Shift 16-bit sample left by 8 bits for 16→24 bit conversion.
+                    // WriteInt32LittleEndian stores as [byte0=LSB, byte1, byte2, byte3=MSB].
+                    // For big-endian 24-bit output, write lower 3 bytes in reverse order.
                     BinaryPrimitives.WriteInt32LittleEndian(value, (int)samples[sample + offset] << 8);
-                    // Big-endian 24-bit: write the top 3 bytes in big-endian order
-                    value24[0] = value[3];
-                    value24[1] = value[2];
-                    value24[2] = value[1];
+                    value24[0] = value[2];
+                    value24[1] = value[1];
+                    value24[2] = value[0];
                     writer.Write(value24);
                 }
                 dataChunkSize += (count * 3);

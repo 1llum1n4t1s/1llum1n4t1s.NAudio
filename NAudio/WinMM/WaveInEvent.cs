@@ -112,7 +112,8 @@ namespace NAudio.Wave
             if (captureState != CaptureState.Stopped)
                 throw new InvalidOperationException("Already recording");
             // Wait for any previous recording thread to fully exit before starting a new one
-            recordingThreadExited.WaitOne();
+            if (!recordingThreadExited.WaitOne(5000))
+                throw new InvalidOperationException("Previous recording thread did not exit in time");
             // Reset before starting the device and thread: avoids race where the new thread
             // exits immediately and calls Set() before we call Reset().
             recordingThreadExited.Reset();

@@ -116,7 +116,8 @@ namespace NAudio.Wave
             if (playbackState == PlaybackState.Stopped)
             {
                 // Wait for any previous playback thread to fully exit before starting a new one
-                playbackThreadExited.WaitOne();
+                if (!playbackThreadExited.WaitOne(5000))
+                    throw new InvalidOperationException("Previous playback thread did not exit in time");
                 // Reset before changing state: avoids race where the new thread exits immediately
                 // and calls Set() before we call Reset(), which would erase that signal.
                 playbackThreadExited.Reset();
