@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using NAudio.Utils;
 
 // ReSharper disable once CheckNamespace
@@ -31,8 +32,7 @@ namespace NAudio.Wave
         {
             if (sourceBuffer == null || sourceBuffer.Length < size)
             {
-                // let's give ourselves some leeway
-                sourceBuffer = new byte[size * 2];
+                sourceBuffer = BufferHelpers.EnsurePooled(sourceBuffer, size);
             }
             return sourceBuffer;
         }
@@ -78,6 +78,7 @@ namespace NAudio.Wave
             {
                 lock (lockObject)
                 {
+                    value = Math.Max(0, Math.Min(value, Length));
                     if (position != value)
                     {
                         if (value % BlockAlign != 0)
@@ -116,6 +117,8 @@ namespace NAudio.Wave
                     sourceStream.Dispose();
                     sourceStream = null;
                 }
+                BufferHelpers.ReturnPooled(sourceBuffer);
+                sourceBuffer = null;
             }
             else
             {

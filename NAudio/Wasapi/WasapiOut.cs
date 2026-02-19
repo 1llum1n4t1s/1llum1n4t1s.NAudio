@@ -76,6 +76,8 @@ namespace NAudio.Wave
         /// <param name="latency">Desired latency in milliseconds</param>
         public WasapiOut(MMDevice device, AudioClientShareMode shareMode, bool useEventSync, int latency)
         {
+            if (device == null) throw new ArgumentNullException(nameof(device));
+            if (latency <= 0) throw new ArgumentOutOfRangeException(nameof(latency), "Latency must be greater than zero");
             audioClient = device.AudioClient;
             mmDevice = device;
             this.shareMode = shareMode;
@@ -91,8 +93,10 @@ namespace NAudio.Wave
             {
                 throw new NotSupportedException("WASAPI supported only on Windows Vista and above");
             }
-            var enumerator = new MMDeviceEnumerator();
-            return enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            using (var enumerator = new MMDeviceEnumerator())
+            {
+                return enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+            }
         }
 
         private void PlayThread()
@@ -370,6 +374,7 @@ namespace NAudio.Wave
         /// <param name="waveProvider">IWaveProvider to play</param>
         public void Init(IWaveProvider waveProvider)
         {
+            if (waveProvider == null) throw new ArgumentNullException(nameof(waveProvider));
             var latencyRefTimes = latencyMilliseconds * 10000L;
             OutputWaveFormat = waveProvider.WaveFormat;
 
@@ -466,7 +471,8 @@ namespace NAudio.Wave
                     }
                 }
 
-                // Create the Wait Event Handle
+                // Create the Wait Event Handle (dispose any previous handle to avoid leak on re-init)
+                frameEventWaitHandle?.Dispose();
                 frameEventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
                 audioClient.SetEventHandle(frameEventWaitHandle.SafeWaitHandle.DangerousGetHandle());
             }

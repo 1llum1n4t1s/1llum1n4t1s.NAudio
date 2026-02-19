@@ -34,7 +34,7 @@
                 buffer[outIndex++] = (((sbyte) sourceBuffer[n + 3] << 24 |
                                        sourceBuffer[n + 2] << 16) |
                                       (sourceBuffer[n + 1] << 8) |
-                                      sourceBuffer[n]) * (1.0f / 2147483648f);
+                                      sourceBuffer[n]) * (1.0f / (int.MaxValue + 1f));
             }
             return bytesRead/4;
         }

@@ -19,11 +19,22 @@ public class MixDiffStream : WaveStream
     /// <param name="fileName">WAV ファイルパス。</param>
     public MixDiffStream(string fileName)
     {
-        var reader = new WaveFileReader(fileName);
-        offsetStream = new WaveOffsetStream(reader);
-        channelSteam = new WaveChannel32(offsetStream);
-        muted = false;
-        volume = 1.0f;
+        WaveFileReader reader = null;
+        try
+        {
+            reader = new WaveFileReader(fileName);
+            offsetStream = new WaveOffsetStream(reader);
+            channelSteam = new WaveChannel32(offsetStream);
+            muted = false;
+            volume = 1.0f;
+        }
+        catch
+        {
+            channelSteam?.Dispose();
+            offsetStream?.Dispose();
+            reader?.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -114,9 +125,10 @@ public class MixDiffStream : WaveStream
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
-        if (channelSteam != null)
+        if (disposing)
         {
-            channelSteam.Dispose();
+            // channelSteam.Dispose() chains to offsetStream and WaveFileReader
+            channelSteam?.Dispose();
         }
         base.Dispose(disposing);
     }

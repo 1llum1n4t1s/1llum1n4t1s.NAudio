@@ -150,7 +150,7 @@ namespace MarkHeath.MidiUtils
                 {
                     LogTrace("Copying File {0} to {1}", fileName, target);
                 }
-                File.Copy(file, target);
+                File.Copy(file, target, true);
                 filesCopied++;
             }
         }
@@ -216,7 +216,7 @@ namespace MarkHeath.MidiUtils
 
             foreach (var midiEvent in midiFile.Events[0])
             {
-                if (settings.OutputChannelNumber != -1)
+                if (settings.OutputChannelNumber != -1 && !(midiEvent is MetaEvent))
                     midiEvent.Channel = settings.OutputChannelNumber;
                 if (midiEvent is MetaEvent metaEvent)
                 {
@@ -280,18 +280,18 @@ namespace MarkHeath.MidiUtils
                 }
             }
 
-            // now do track 1 (Groove Monkee)                
+            // now do track 1 (Groove Monkee)
             for (var inputTrack = 1; inputTrack < midiFile.Tracks; inputTrack++)
             {
                 int outputTrack;
                 if(outputFileType == 1)
-                    outputTrack = inputTrack;
+                    outputTrack = Math.Min(inputTrack, outputTrackCount - 1);
                 else
                     outputTrack = 0;
 
                 foreach (var midiEvent in midiFile.Events[inputTrack])
-                {                    
-                    if (settings.OutputChannelNumber != -1)
+                {
+                    if (settings.OutputChannelNumber != -1 && !(midiEvent is MetaEvent))
                         midiEvent.Channel = settings.OutputChannelNumber;
                     var exclude = false;
                     if (midiEvent is MetaEvent metaEvent)
@@ -317,27 +317,21 @@ namespace MarkHeath.MidiUtils
                         events[outputTrack].Add(midiEvent);
                     }
                 }
-                if(outputFileType == 1 && settings.RecreateEndTrackMarkers)
-                {
-                    AppendEndMarker(events[outputTrack]);
-                }
             }
 
             if (settings.RecreateEndTrackMarkers)
             {
-                if (outputFileType == 1)
+                // make sure all tracks have end track markers
+                for (var track = 0; track < outputTrackCount; track++)
                 {
-                    // make sure track 1 has an end track marker
-                    AppendEndMarker(events[1]);
+                    AppendEndMarker(events[track]);
                 }
-                // make sure that track zero has an end track marker
-                AppendEndMarker(events[0]);
             }
             else
             {
                 // if we are converting type 0 to type 1 without recreating end markers,
                 // then we still need to add an end marker to track 1
-                if (midiFile.FileFormat == 0)
+                if (midiFile.FileFormat == 0 && outputFileType == 1)
                 {
                     // use the time we got from track 0 as the end track time for track 1
                     if (endTrackTime == -1)
@@ -467,10 +461,7 @@ namespace MarkHeath.MidiUtils
 
         protected void OnProgress(object sender, ProgressEventArgs args)
         {
-            if (Progress != null)
-            {
-                Progress(sender, args);
-            }
+            Progress?.Invoke(sender, args);
         }
 
         public string Summary

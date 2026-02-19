@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using NAudio.Dmo;
 using System.Diagnostics;
 
@@ -129,17 +130,24 @@ namespace NAudio.Wave
             {
                 if (dmoResampler.MediaObject.IsAcceptingData(0))
                 {
-                    // 1. Read from the input stream 
+                    // 1. Read from the input stream
                     var inputBytesRequired = (int)OutputToInputPosition(count - outputBytesProvided);
-                    var inputByteArray = new byte[inputBytesRequired];
-                    var inputBytesRead = inputProvider.Read(inputByteArray, 0, inputBytesRequired);
-                    if (inputBytesRead == 0)
+                    var inputByteArray = ArrayPool<byte>.Shared.Rent(inputBytesRequired);
+                    try
                     {
-                        //Debug.WriteLine("ResamplerDmoStream.Read: No input data available");
-                        break;
+                        var inputBytesRead = inputProvider.Read(inputByteArray, 0, inputBytesRequired);
+                        if (inputBytesRead == 0)
+                        {
+                            //Debug.WriteLine("ResamplerDmoStream.Read: No input data available");
+                            break;
+                        }
+                        // 2. copy into our DMO's input buffer
+                        inputMediaBuffer.LoadData(inputByteArray, inputBytesRead);
                     }
-                    // 2. copy into our DMO's input buffer
-                    inputMediaBuffer.LoadData(inputByteArray, inputBytesRead);
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(inputByteArray);
+                    }
 
                     // 3. Give the input buffer to the DMO to process
                     dmoResampler.MediaObject.ProcessInput(0, inputMediaBuffer, DmoInputDataBufferFlags.None, 0, 0);

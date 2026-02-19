@@ -41,7 +41,7 @@
 
             sign = ((~sample) >> 8) & 0x80;
             if (sign == 0)
-                sample = (short)-sample;
+                sample = sample == short.MinValue ? short.MaxValue : (short)-sample;
             if (sample > cClip)
                 sample = cClip;
             if (sample >= 256)

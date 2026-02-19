@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 // ReSharper disable once CheckNamespace
 namespace NAudio.Wave
@@ -19,8 +20,8 @@ namespace NAudio.Wave
         /// <param name="waveFormat">The waveformat of the audio in the source stream</param>
         public RawSourceWaveStream(Stream sourceStream, WaveFormat waveFormat)
         {
-            this.sourceStream = sourceStream;
-            this.waveFormat = waveFormat;
+            this.sourceStream = sourceStream ?? throw new ArgumentNullException(nameof(sourceStream));
+            this.waveFormat = waveFormat ?? throw new ArgumentNullException(nameof(waveFormat));
         }
         
         /// <summary>
@@ -32,8 +33,9 @@ namespace NAudio.Wave
         /// <param name="waveFormat">The waveformat of the audio in the source stream</param>
         public RawSourceWaveStream(byte[] byteStream, int offset, int count, WaveFormat waveFormat)
         {
+            if (byteStream == null) throw new ArgumentNullException(nameof(byteStream));
             sourceStream = new MemoryStream(byteStream, offset, count);
-            this.waveFormat = waveFormat;
+            this.waveFormat = waveFormat ?? throw new ArgumentNullException(nameof(waveFormat));
         }
 
         /// <summary>
@@ -57,6 +59,7 @@ namespace NAudio.Wave
             }
             set
             {
+                value = Math.Max(0, value);
                 sourceStream.Position = value - (value % waveFormat.BlockAlign);
             }
         }
@@ -68,6 +71,9 @@ namespace NAudio.Wave
         {
             try
             {
+                count = (int)Math.Min(count, Math.Max(0, Length - Position));
+                if (count <= 0)
+                    return 0;
                 return sourceStream.Read(buffer, offset, count);
             }
             catch (EndOfStreamException)

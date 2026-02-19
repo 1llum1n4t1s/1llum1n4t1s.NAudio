@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace NAudio.Utils
@@ -6,53 +7,54 @@ namespace NAudio.Utils
     class MergeSort
     {
         /// <summary>
-        /// In-place and stable implementation of MergeSort
+        /// Stable MergeSort using a temporary buffer for O(n log n) performance.
         /// </summary>
-        static void Sort<T>(IList<T> list, int lowIndex, int highIndex, IComparer<T> comparer)
+        static void Sort<T>(IList<T> list, int lowIndex, int highIndex, IComparer<T> comparer, T[] buffer)
         {
             if (lowIndex >= highIndex)
             {
                 return;
             }
 
-
             var midIndex = (lowIndex + highIndex) / 2;
 
+            Sort(list, lowIndex, midIndex, comparer, buffer);
+            Sort(list, midIndex + 1, highIndex, comparer, buffer);
 
-            // Partition the list into two lists and Sort them recursively
-            Sort(list, lowIndex, midIndex, comparer);
-            Sort(list, midIndex + 1, highIndex, comparer);
-
-            // Merge the two sorted lists
-            var endLow = midIndex;
-            var startHigh = midIndex + 1;
-
-
-            while ((lowIndex <= endLow) && (startHigh <= highIndex))
+            // If already merged (left max <= right min), skip merge
+            if (comparer.Compare(list[midIndex], list[midIndex + 1]) <= 0)
             {
-                // MRH, if use < 0 sort is not stable
-                if (comparer.Compare(list[lowIndex], list[startHigh]) <= 0)
+                return;
+            }
+
+            // Merge using temporary buffer for O(n) merge instead of O(n^2) shifting
+            var leftLen = midIndex - lowIndex + 1;
+            for (var i = 0; i < leftLen; i++)
+            {
+                buffer[i] = list[lowIndex + i];
+            }
+
+            var leftIdx = 0;
+            var rightIdx = midIndex + 1;
+            var writeIdx = lowIndex;
+
+            while (leftIdx < leftLen && rightIdx <= highIndex)
+            {
+                // Use <= for stability: equal elements from left half come first
+                if (comparer.Compare(buffer[leftIdx], list[rightIdx]) <= 0)
                 {
-                    lowIndex++;
+                    list[writeIdx++] = buffer[leftIdx++];
                 }
                 else
                 {
-                    // list[lowIndex] > list[startHigh]
-                    // The next element comes from the second list, 
-                    // move the list[start_hi] element into the next 
-                    //  position and shuffle all the other elements up.
-                    var t = list[startHigh];
-
-                    for (var k = startHigh - 1; k >= lowIndex; k--)
-                    {
-                        list[k + 1] = list[k];
-                    }
-
-                    list[lowIndex] = t;
-                    lowIndex++;
-                    endLow++;
-                    startHigh++;
+                    list[writeIdx++] = list[rightIdx++];
                 }
+            }
+
+            // Copy remaining left elements (right elements are already in place)
+            while (leftIdx < leftLen)
+            {
+                list[writeIdx++] = buffer[leftIdx++];
             }
         }
 
@@ -61,15 +63,29 @@ namespace NAudio.Utils
         /// </summary>
         public static void Sort<T>(IList<T> list) where T : IComparable<T>
         {
-            Sort(list, 0, list.Count - 1, Comparer<T>.Default);
+            if (list == null) throw new ArgumentNullException(nameof(list));
+            Sort(list, Comparer<T>.Default);
         }
 
         /// <summary>
-        /// MergeSort a list 
+        /// MergeSort a list
         /// </summary>
         public static void Sort<T>(IList<T> list, IComparer<T> comparer)
         {
-            Sort(list, 0, list.Count - 1, comparer);
+            if (list == null) throw new ArgumentNullException(nameof(list));
+            if (comparer == null) throw new ArgumentNullException(nameof(comparer));
+            var count = list.Count;
+            if (count <= 1) return;
+
+            var buffer = ArrayPool<T>.Shared.Rent(count);
+            try
+            {
+                Sort(list, 0, count - 1, comparer, buffer);
+            }
+            finally
+            {
+                ArrayPool<T>.Shared.Return(buffer, clearArray: true);
+            }
         }
     }
 }

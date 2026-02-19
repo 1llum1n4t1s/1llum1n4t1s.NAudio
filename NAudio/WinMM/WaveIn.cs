@@ -240,7 +240,7 @@ namespace NAudio.Wave
             MmException.Try(WaveInterop.waveInGetPosition(waveInHandle, out mmTime, Marshal.SizeOf(mmTime)), "waveInGetPosition");
 
             if (mmTime.wType != MmTime.TIME_BYTES)
-                throw new Exception(string.Format("waveInGetPosition: wType -> Expected {0}, Received {1}", MmTime.TIME_BYTES, mmTime.wType));
+                throw new InvalidOperationException($"waveInGetPosition: wType -> Expected {MmTime.TIME_BYTES}, Received {mmTime.wType}");
 
             return mmTime.cb;
         }

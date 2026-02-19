@@ -31,7 +31,7 @@ namespace NAudio.FileFormats.Mp3
             pcmFormat = new WaveFormat(sourceFormat.SampleRate, sourceFormat.Channels); // 16 bit
             if (!mp3Decoder.MediaObject.SupportsOutputWaveFormat(0, pcmFormat))
             {
-                throw new ArgumentException(String.Format("Unsupported output format {0}", pcmFormat));
+                throw new ArgumentException($"Unsupported output format {pcmFormat}");
             }
             mp3Decoder.MediaObject.SetOutputWaveFormat(0, pcmFormat);
 

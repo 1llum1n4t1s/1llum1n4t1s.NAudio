@@ -131,6 +131,8 @@ namespace NAudio.Dsp
             m_filtlatency = 0;
             m_fracpos = fracpos;
             m_samples_in_rsinbuf = 0;
+            m_nch = 0;
+            if (m_rsinbuf != null) Array.Clear(m_rsinbuf, 0, m_rsinbuf.Length);
             if (m_iirfilter != null) m_iirfilter.Reset();
         }
 
@@ -178,6 +180,14 @@ namespace NAudio.Dsp
                 inbufferOffset = 0;
                 return 0;
             }
+
+            // channel count changed - invalidate existing buffer data
+            if (m_nch != 0 && m_nch != nch)
+            {
+                m_samples_in_rsinbuf = 0;
+                if (m_rsinbuf != null) Array.Clear(m_rsinbuf, 0, m_rsinbuf.Length);
+            }
+            m_nch = nch;
 
             var fsize = 0;
             if (m_sincsize > 1)
@@ -235,6 +245,12 @@ namespace NAudio.Dsp
         public int ResampleOut(WDL_ResampleSample[] outBuffer, int outBufferIndex, int nsamples_in, int nsamples_out, int nch)
         {
             if (nch > WDL_RESAMPLE_MAX_NCH || nch < 1)
+            {
+                return 0;
+            }
+
+            // early return when no input and no buffered data to process
+            if (nsamples_in == 0 && m_samples_in_rsinbuf == 0)
             {
                 return 0;
             }
@@ -650,6 +666,7 @@ namespace NAudio.Dsp
         private int m_sincoversize;
         private bool m_interp;
         private bool m_feedmode;
+        private int m_nch; // last used channel count, for detecting inconsistency
 
 
 
@@ -704,15 +721,11 @@ namespace NAudio.Dsp
                 }
             }
 
-            double denormal_filter(float x)
-            {
-                // TODO: implement denormalisation
-                return x;
-            }
             double denormal_filter(double x)
             {
-                // TODO: implement denormalisation
-                return x;
+                // flush denormals to zero to prevent severe CPU performance degradation
+                const double DenormalThreshold = 1e-24;
+                return (x > DenormalThreshold || x < -DenormalThreshold) ? x : 0.0;
             }
 
             private double m_fpos;

@@ -48,6 +48,7 @@ namespace NAudio.Extras
         /// <param name="fftLength">FFT length, must be a power of 2</param>
         public SampleAggregator(ISampleProvider source, int fftLength = 1024)
         {
+            if (source == null) throw new ArgumentNullException(nameof(source));
             channels = source.WaveFormat.Channels;
             if (!IsPowerOfTwo(fftLength))
             {
@@ -86,7 +87,7 @@ namespace NAudio.Extras
                     fftPos = 0;
                     // 1024 = 2^10
                     FastFourierTransform.FFT(true, m, fftBuffer);
-                    FftCalculated(this, fftArgs);
+                    FftCalculated?.Invoke(this, fftArgs);
                 }
             }
 
@@ -112,9 +113,12 @@ namespace NAudio.Extras
         {
             var samplesRead = source.Read(buffer, offset, count);
 
-            for (var n = 0; n < samplesRead; n+=channels)
+            if (channels > 0)
             {
-                Add(buffer[n+offset]);
+                for (var n = 0; n < samplesRead; n += channels)
+                {
+                    Add(buffer[n + offset]);
+                }
             }
             return samplesRead;
         }

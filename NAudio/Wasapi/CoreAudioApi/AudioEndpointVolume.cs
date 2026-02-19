@@ -33,6 +33,7 @@ namespace NAudio.CoreAudioApi
     {
         private readonly IAudioEndpointVolume audioEndPointVolume;
         private AudioEndpointVolumeCallback callBack;
+        private bool disposed;
 
         private Guid notificationGuid = Guid.Empty;
 
@@ -160,21 +161,15 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
+            if (disposed) return;
+            disposed = true;
             if (callBack != null)
             {
-                Marshal.ThrowExceptionForHR(audioEndPointVolume.UnregisterControlChangeNotify(callBack));
+                audioEndPointVolume.UnregisterControlChangeNotify(callBack);
                 callBack = null;
             }
             Marshal.ReleaseComObject(audioEndPointVolume);
             GC.SuppressFinalize(this);
-        }
-        
-        /// <summary>
-        /// Finalizer
-        /// </summary>
-        ~AudioEndpointVolume()
-        {
-            Dispose();
         }
 
         #endregion

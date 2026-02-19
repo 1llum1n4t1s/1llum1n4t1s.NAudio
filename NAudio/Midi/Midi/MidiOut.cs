@@ -135,18 +135,21 @@ namespace NAudio.Midi
         {
             var header = new MidiInterop.MIDIHDR();
             header.lpData = Marshal.AllocHGlobal(byteBuffer.Length);
-            Marshal.Copy(byteBuffer, 0, header.lpData, byteBuffer.Length);
-
-            header.dwBufferLength = byteBuffer.Length;
-            header.dwBytesRecorded = byteBuffer.Length;
-            var size = Marshal.SizeOf(header);
-            MidiInterop.midiOutPrepareHeader(this.hMidiOut, ref header, size);
-            var errcode = MidiInterop.midiOutLongMsg(this.hMidiOut, ref header, size);
-            if (errcode != MmResult.NoError)
+            try
             {
+                Marshal.Copy(byteBuffer, 0, header.lpData, byteBuffer.Length);
+                header.dwBufferLength = byteBuffer.Length;
+                header.dwBytesRecorded = byteBuffer.Length;
+                var size = Marshal.SizeOf(header);
+                MmException.Try(MidiInterop.midiOutPrepareHeader(this.hMidiOut, ref header, size), "midiOutPrepareHeader");
+                var errcode = MidiInterop.midiOutLongMsg(this.hMidiOut, ref header, size);
                 MidiInterop.midiOutUnprepareHeader(this.hMidiOut, ref header, size);
+                MmException.Try(errcode, "midiOutLongMsg");
             }
-            Marshal.FreeHGlobal(header.lpData);
+            finally
+            {
+                Marshal.FreeHGlobal(header.lpData);
+            }
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
@@ -49,8 +50,8 @@ namespace NAudio.Wave
         /// <returns></returns>
         static byte[] FrameSizeToBytes(int n)
         {
-            var result = BitConverter.GetBytes(n);
-            Array.Reverse(result);
+            var result = new byte[4];
+            BinaryPrimitives.WriteInt32BigEndian(result, n);
             return result;
         }
 

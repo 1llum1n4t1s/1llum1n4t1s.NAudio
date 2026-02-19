@@ -9,7 +9,7 @@ namespace NAudio.Wave.SampleProviders
     /// Uses could include swapping left and right channels, turning mono into stereo,
     /// feeding different input sources to different soundcard outputs etc
     /// </summary>
-    public class MultiplexingSampleProvider : ISampleProvider
+    public class MultiplexingSampleProvider : ISampleProvider, IDisposable
     {
         private readonly IList<ISampleProvider> inputs;
         private readonly WaveFormat waveFormat;
@@ -84,11 +84,15 @@ namespace NAudio.Wave.SampleProviders
             var sampleFramesRequested = count / outputChannelCount;
             var inputOffset = 0;
             var sampleFramesRead = 0;
+
+            // Pre-zero the output region to avoid per-channel tail clearing
+            Array.Fill(buffer, 0f, offset, count);
+
             // now we must read from all inputs, even if we don't need their data, so they stay in sync
             foreach (var input in inputs)
             {
                 var samplesRequired = sampleFramesRequested * input.WaveFormat.Channels;
-                inputBuffer = BufferHelpers.Ensure(inputBuffer, samplesRequired);
+                inputBuffer = BufferHelpers.EnsurePooled(inputBuffer, samplesRequired);
                 var samplesRead = input.Read(inputBuffer, 0, samplesRequired);
                 sampleFramesRead = Math.Max(sampleFramesRead, samplesRead / input.WaveFormat.Channels);
 
@@ -101,20 +105,12 @@ namespace NAudio.Wave.SampleProviders
                         {
                             var inputBufferOffset = n;
                             var outputBufferOffset = offset + outputIndex;
-                            var sample = 0;
-                            while (sample < sampleFramesRequested && inputBufferOffset < samplesRead)
+                            var inputChannels = input.WaveFormat.Channels;
+                            while (inputBufferOffset < samplesRead)
                             {
                                 buffer[outputBufferOffset] = inputBuffer[inputBufferOffset];
                                 outputBufferOffset += outputChannelCount;
-                                inputBufferOffset += input.WaveFormat.Channels;
-                                sample++;
-                            }
-                            // clear the end
-                            while (sample < sampleFramesRequested)
-                            {
-                                buffer[outputBufferOffset] = 0;
-                                outputBufferOffset += outputChannelCount;
-                                sample++;
+                                inputBufferOffset += inputChannels;
                             }
                         }
                     }
@@ -158,5 +154,14 @@ namespace NAudio.Wave.SampleProviders
         /// The number of output channels, as specified in the constructor.
         /// </summary>
         public int OutputChannelCount => outputChannelCount;
+
+        /// <summary>
+        /// Disposes this sample provider, returning pooled buffers
+        /// </summary>
+        public void Dispose()
+        {
+            BufferHelpers.ReturnPooled(inputBuffer);
+            inputBuffer = null;
+        }
     }
 }

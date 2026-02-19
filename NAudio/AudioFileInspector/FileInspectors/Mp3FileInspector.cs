@@ -16,6 +16,8 @@ public class Mp3FileInspector : IAudioFileInspector
     /// <inheritdoc />
     public string FileTypeDescription => "MP3 File";
 
+    private const int MaxFramesToDescribe = 5000;
+
     /// <inheritdoc />
     public string Describe(string fileName)
     {
@@ -33,11 +35,21 @@ public class Mp3FileInspector : IAudioFileInspector
             stringBuilder.AppendFormat("ID3v1 Tag: {0}\r\n", reader.Id3v1Tag == null ? "None" : reader.Id3v1Tag.ToString());
             stringBuilder.AppendFormat("ID3v2 Tag: {0}\r\n", reader.Id3v2Tag == null ? "None" : reader.Id3v2Tag.ToString());
             Mp3Frame frame;
+            var frameCount = 0;
             while ((frame = reader.ReadNextFrame()) != null)
             {
-                stringBuilder.AppendFormat("{0},{1},{2}Hz,{3},{4}bps, length {5}\r\n",
-                    frame.MpegVersion, frame.MpegLayer, frame.SampleRate, frame.ChannelMode,
-                    frame.BitRate, frame.FrameLength);
+                if (frameCount < MaxFramesToDescribe)
+                {
+                    stringBuilder.AppendFormat("{0},{1},{2}Hz,{3},{4}bps, length {5}\r\n",
+                        frame.MpegVersion, frame.MpegLayer, frame.SampleRate, frame.ChannelMode,
+                        frame.BitRate, frame.FrameLength);
+                }
+                frameCount++;
+            }
+            if (frameCount > MaxFramesToDescribe)
+            {
+                stringBuilder.AppendFormat("... ({0} more frames not shown, {1} total)\r\n",
+                    frameCount - MaxFramesToDescribe, frameCount);
             }
         }
         return stringBuilder.ToString();

@@ -22,11 +22,8 @@ namespace AudioFileInspector
         /// <returns>True if it is registered</returns>
         public static bool IsFileTypeRegistered(string extension)
         {
-            var key = Registry.ClassesRoot.OpenSubKey(extension);
-            if(key == null)
-                return false;
-            key.Close();
-            return true;
+            using var key = Registry.ClassesRoot.OpenSubKey(extension);
+            return key != null;
         }
 
         /// <summary>
@@ -36,14 +33,8 @@ namespace AudioFileInspector
         /// <returns>The HKCR key name or null if not registered</returns>
         public static string GetFileTypeKey(string extension)
         {
-            var key = Registry.ClassesRoot.OpenSubKey(extension);
-            string fileTypeKey = null;
-            if (key != null)
-            {
-                 fileTypeKey = (string) key.GetValue(null);
-                 key.Close();
-            }            
-            return fileTypeKey;
+            using var key = Registry.ClassesRoot.OpenSubKey(extension);
+            return key != null ? (string)key.GetValue(null) : null;
         }
 
         /// <summary>
@@ -55,20 +46,21 @@ namespace AudioFileInspector
         public static void RegisterFileType(string extension, string description, string iconPath)
         {
             if (IsFileTypeRegistered(extension))
-                throw new ArgumentException(extension + "is already registered");
-            
-            var key = Registry.ClassesRoot.CreateSubKey(extension);
+                throw new ArgumentException(extension + " is already registered");
+
             var fileKey = extension.Substring(1) + "File";
-            key.SetValue(null, fileKey);            
-            key.Close();
-            key = Registry.ClassesRoot.CreateSubKey(fileKey);
-            key.SetValue(null, description);
-            key.Close();
+            using (var key = Registry.ClassesRoot.CreateSubKey(extension))
+            {
+                key.SetValue(null, fileKey);
+            }
+            using (var key = Registry.ClassesRoot.CreateSubKey(fileKey))
+            {
+                key.SetValue(null, description);
+            }
             if (iconPath != null)
             {
-                key = Registry.ClassesRoot.CreateSubKey(fileKey + "\\DefaultIcon");
+                using var key = Registry.ClassesRoot.CreateSubKey(fileKey + "\\DefaultIcon");
                 key.SetValue(null, iconPath);
-                key.Close();
             }
             SHChangeNotify(HChangeNotifyEventID.SHCNE_ASSOCCHANGED, HChangeNotifyFlags.SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
         }
@@ -86,15 +78,16 @@ namespace AudioFileInspector
             // command e.g. notepad.exe "%1"
             var fileTypeKey = GetFileTypeKey(extension);
             if (fileTypeKey == null)
-                throw new ArgumentException(extension + "is not a registered file type");
-            var key = Registry.ClassesRoot.CreateSubKey(fileTypeKey + "\\shell\\" + actionKey);
-            key.SetValue(null, actionDescription);
-            key.Close();
-            
-            key = Registry.ClassesRoot.CreateSubKey(fileTypeKey + "\\shell\\" + actionKey + "\\command");
-            key.SetValue(null, command);
-            key.Close();
-            SHChangeNotify(HChangeNotifyEventID.SHCNE_ASSOCCHANGED, HChangeNotifyFlags.SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);            
+                throw new ArgumentException(extension + " is not a registered file type");
+            using (var key = Registry.ClassesRoot.CreateSubKey(fileTypeKey + "\\shell\\" + actionKey))
+            {
+                key.SetValue(null, actionDescription);
+            }
+            using (var key = Registry.ClassesRoot.CreateSubKey(fileTypeKey + "\\shell\\" + actionKey + "\\command"))
+            {
+                key.SetValue(null, command);
+            }
+            SHChangeNotify(HChangeNotifyEventID.SHCNE_ASSOCCHANGED, HChangeNotifyFlags.SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
         }
 
         /// <summary>
@@ -108,10 +101,9 @@ namespace AudioFileInspector
             if (fileTypeKey == null)
             {
                 return;
-                //throw new ArgumentException(extension + "is not a registered file type");
             }
-            Registry.ClassesRoot.DeleteSubKey(fileTypeKey + "\\shell\\" + actionKey + "\\command");
-            Registry.ClassesRoot.DeleteSubKey(fileTypeKey + "\\shell\\" + actionKey);
+            Registry.ClassesRoot.DeleteSubKey(fileTypeKey + "\\shell\\" + actionKey + "\\command", false);
+            Registry.ClassesRoot.DeleteSubKey(fileTypeKey + "\\shell\\" + actionKey, false);
         }
 
         // TODO: add ourselves as an "Open With" application

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 
 namespace NAudio.Wave.SampleProviders
 {
@@ -21,7 +22,7 @@ namespace NAudio.Wave.SampleProviders
 
         private int TimeSpanToSamples(TimeSpan time)
         {
-            var samples = (int)(time.TotalSeconds * WaveFormat.SampleRate) * WaveFormat.Channels;
+            var samples = (int)(time.TotalSeconds * WaveFormat.SampleRate * WaveFormat.Channels);
             return samples;
         }
 
@@ -153,7 +154,7 @@ namespace NAudio.Wave.SampleProviders
         /// <param name="sourceProvider">The Source Sample Provider to read from</param>
         public OffsetSampleProvider(ISampleProvider sourceProvider)
         {
-            this.sourceProvider = sourceProvider;
+            this.sourceProvider = sourceProvider ?? throw new ArgumentNullException(nameof(sourceProvider));
         }
 
         /// <summary>
@@ -183,10 +184,7 @@ namespace NAudio.Wave.SampleProviders
             if (phase == 1) // delay
             {
                 var delaySamples = Math.Min(count, DelayBySamples - phasePos);
-                for (var n = 0; n < delaySamples; n++)
-                {
-                    buffer[offset + n] = 0;
-                }
+                Array.Fill(buffer, 0f, offset, delaySamples);
                 phasePos += delaySamples;
                 samplesRead += delaySamples;
                 if (phasePos >= DelayBySamples)
@@ -200,18 +198,22 @@ namespace NAudio.Wave.SampleProviders
             {
                 if (SkipOverSamples > 0)
                 {
-                    var skipBuffer = new float[WaveFormat.SampleRate * WaveFormat.Channels];
-                    // skip everything
-                    var samplesSkipped = 0;
-                    while (samplesSkipped < SkipOverSamples)
+                    var skipBufferSize = WaveFormat.SampleRate * WaveFormat.Channels;
+                    var skipBuffer = ArrayPool<float>.Shared.Rent(skipBufferSize);
+                    try
                     {
-                        var samplesRequired = Math.Min(SkipOverSamples - samplesSkipped, skipBuffer.Length);
-                        var read = sourceProvider.Read(skipBuffer, 0, samplesRequired);
-                        if (read == 0) // source has ended while still in skip
+                        var samplesSkipped = 0;
+                        while (samplesSkipped < SkipOverSamples)
                         {
-                            break;
+                            var samplesRequired = Math.Min(SkipOverSamples - samplesSkipped, skipBufferSize);
+                            var read = sourceProvider.Read(skipBuffer, 0, samplesRequired);
+                            if (read == 0) break;
+                            samplesSkipped += read;
                         }
-                        samplesSkipped += read;
+                    }
+                    finally
+                    {
+                        ArrayPool<float>.Shared.Return(skipBuffer);
                     }
                 }
                 phase++;
@@ -236,10 +238,7 @@ namespace NAudio.Wave.SampleProviders
             if (phase == 4) // lead out
             {
                 var samplesRequired = Math.Min(count - samplesRead, LeadOutSamples - phasePos);
-                for (var n = 0; n < samplesRequired; n++)
-                {
-                    buffer[offset + samplesRead + n] = 0;
-                }
+                Array.Fill(buffer, 0f, offset + samplesRead, samplesRequired);
                 phasePos += samplesRequired;
                 samplesRead += samplesRequired;
                 if (phasePos >= LeadOutSamples)

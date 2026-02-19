@@ -21,6 +21,7 @@
 // fixed f0/Fs and dBgain.
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace NAudio.Dsp
 {
@@ -47,20 +48,47 @@ namespace NAudio.Dsp
         /// </summary>
         /// <param name="inSample">Input sample</param>
         /// <returns>Output sample</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float Transform(float inSample)
         {
             // compute result
             var result = a0 * inSample + a1 * x1 + a2 * x2 - a3 * y1 - a4 * y2;
 
-            // shift x1 to x2, sample to x1 
+            // shift x1 to x2, sample to x1
             x2 = x1;
             x1 = inSample;
 
-            // shift y1 to y2, result to y1 
+            // shift y1 to y2, result to y1
             y2 = y1;
             y1 = (float)result;
 
             return y1;
+        }
+
+        /// <summary>
+        /// Transforms a block of samples in-place
+        /// </summary>
+        /// <param name="samples">Buffer of samples to process</param>
+        public void Transform(Span<float> samples)
+        {
+            // local copies of coefficients for cache-friendly access
+            double la0 = a0, la1 = a1, la2 = a2, la3 = a3, la4 = a4;
+            float lx1 = x1, lx2 = x2, ly1 = y1, ly2 = y2;
+
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var inSample = samples[i];
+                var result = la0 * inSample + la1 * lx1 + la2 * lx2 - la3 * ly1 - la4 * ly2;
+
+                lx2 = lx1;
+                lx1 = inSample;
+                ly2 = ly1;
+                ly1 = (float)result;
+                samples[i] = ly1;
+            }
+
+            // write back state
+            x1 = lx1; x2 = lx2; y1 = ly1; y2 = ly2;
         }
 
         private void SetCoefficients(double aa0, double aa1, double aa2, double b0, double b1, double b2)
@@ -81,6 +109,8 @@ namespace NAudio.Dsp
         /// <param name="q">Bandwidth</param>
         public void SetLowPassFilter(float sampleRate, float cutoffFrequency, float q)
         {
+            if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "Must be greater than zero");
+            if (q <= 0) throw new ArgumentOutOfRangeException(nameof(q), "Must be greater than zero");
             // H(s) = 1 / (s^2 + s/Q + 1)
             var w0 = 2 * Math.PI * cutoffFrequency / sampleRate;
             var cosw0 = Math.Cos(w0);
@@ -104,6 +134,8 @@ namespace NAudio.Dsp
         /// <param name="dbGain">Gain in decibels</param>
         public void SetPeakingEq(float sampleRate, float centreFrequency, float q, float dbGain)
         {
+            if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "Must be greater than zero");
+            if (q <= 0) throw new ArgumentOutOfRangeException(nameof(q), "Must be greater than zero");
             // H(s) = (s^2 + s*(A/Q) + 1) / (s^2 + s/(A*Q) + 1)
             var w0 = 2 * Math.PI * centreFrequency / sampleRate;
             var cosw0 = Math.Cos(w0);
@@ -125,6 +157,8 @@ namespace NAudio.Dsp
         /// </summary>
         public void SetHighPassFilter(float sampleRate, float cutoffFrequency, float q)
         {
+            if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "Must be greater than zero");
+            if (q <= 0) throw new ArgumentOutOfRangeException(nameof(q), "Must be greater than zero");
             // H(s) = s^2 / (s^2 + s/Q + 1)
             var w0 = 2 * Math.PI * cutoffFrequency / sampleRate;
             var cosw0 = Math.Cos(w0);

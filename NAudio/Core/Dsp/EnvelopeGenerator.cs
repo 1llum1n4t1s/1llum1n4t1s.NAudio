@@ -118,6 +118,8 @@ namespace NAudio.Dsp
 
         private static float CalcCoef(float rate, float targetRatio)
         {
+            if (rate <= 0)
+                return 0;
             return (float)Math.Exp(-Math.Log((1.0f + targetRatio) / targetRatio) / rate);
         }
 

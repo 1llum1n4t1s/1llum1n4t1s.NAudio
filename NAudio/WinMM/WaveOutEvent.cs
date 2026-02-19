@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -17,6 +17,7 @@ namespace NAudio.Wave
         private IWaveProvider waveStream;
         private volatile PlaybackState playbackState;
         private AutoResetEvent callbackEvent;
+        private readonly ManualResetEvent playbackThreadExited = new ManualResetEvent(true);
 
         /// <summary>
         /// Indicates playback has stopped automatically
@@ -69,6 +70,7 @@ namespace NAudio.Wave
         /// <param name="waveProvider">WaveProvider to play</param>
         public void Init(IWaveProvider waveProvider)
         {
+            if (waveProvider == null) throw new ArgumentNullException(nameof(waveProvider));
             if (playbackState != PlaybackState.Stopped)
             {
                 throw new InvalidOperationException("Can't re-initialize during playback");
@@ -113,9 +115,25 @@ namespace NAudio.Wave
             }
             if (playbackState == PlaybackState.Stopped)
             {
-                playbackState = PlaybackState.Playing;
-                callbackEvent.Set(); // give the thread a kick
-                ThreadPool.QueueUserWorkItem(state => PlaybackThread(), null);
+                // Wait for any previous playback thread to fully exit before starting a new one
+                playbackThreadExited.WaitOne();
+                // Reset before changing state: avoids race where the new thread exits immediately
+                // and calls Set() before we call Reset(), which would erase that signal.
+                playbackThreadExited.Reset();
+                try
+                {
+                    playbackState = PlaybackState.Playing;
+                    callbackEvent.Set(); // give the thread a kick
+                    ThreadPool.QueueUserWorkItem(state => PlaybackThread(), null);
+                }
+                catch
+                {
+                    // If startup fails, restore the signalled state to prevent deadlock
+                    // in subsequent calls to Play or Dispose.
+                    playbackState = PlaybackState.Stopped;
+                    playbackThreadExited.Set();
+                    throw;
+                }
             }
             else if (playbackState == PlaybackState.Paused)
             {
@@ -138,6 +156,7 @@ namespace NAudio.Wave
             finally
             {
                 playbackState = PlaybackState.Stopped;
+                playbackThreadExited.Set();
                 // we're exiting our background thread
                 RaisePlaybackStoppedEvent(exception);
             }
@@ -154,8 +173,8 @@ namespace NAudio.Wave
                         Debug.WriteLine("WARNING: WaveOutEvent callback event timeout");
                     }
                 }
-                    
-                
+
+
                 // requeue any buffers returned to us
                 if (playbackState == PlaybackState.Playing)
                 {
@@ -227,7 +246,7 @@ namespace NAudio.Wave
                 // in the call to waveOutReset with function callbacks
                 // some drivers will block here until OnDone is called
                 // for every buffer
-                playbackState = PlaybackState.Stopped; // set this here to avoid a problem with some drivers whereby 
+                playbackState = PlaybackState.Stopped; // set this here to avoid a problem with some drivers whereby
                 MmResult result;
                 lock (waveOutLock)
                 {
@@ -289,25 +308,36 @@ namespace NAudio.Wave
 
             if (disposing)
             {
+                // Wait for the playback thread to fully exit before disposing buffers
+                // This prevents ObjectDisposedException in the playback thread
+                if (!playbackThreadExited.WaitOne(5000))
+                {
+                    Debug.WriteLine("WARNING: WaveOutEvent playback thread did not exit in time");
+                }
                 DisposeBuffers();
             }
 
             CloseWaveOut();
+
+            if (disposing)
+            {
+                if (callbackEvent != null)
+                {
+                    callbackEvent.Close();
+                    callbackEvent = null;
+                }
+                playbackThreadExited.Dispose();
+            }
         }
 
         private void CloseWaveOut()
         {
-            if (callbackEvent != null)
-            {
-                callbackEvent.Close();
-                callbackEvent = null;
-            }
             lock (waveOutLock)
             {
                 if (hWaveOut != IntPtr.Zero)
                 {
                     WaveInterop.waveOutClose(hWaveOut);
-                    hWaveOut= IntPtr.Zero;
+                    hWaveOut = IntPtr.Zero;
                 }
             }
         }

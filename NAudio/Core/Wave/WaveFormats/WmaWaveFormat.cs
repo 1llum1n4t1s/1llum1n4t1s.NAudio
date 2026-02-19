@@ -25,6 +25,7 @@ namespace NAudio.Wave.WaveFormats
             else if (channels == 2)
                 dwChannelMask = 3;
 
+            this.extraSize = 18; // 2+4+4+4+2+2 bytes for WMA extra fields
             // WMAUDIO3 is Pro
             this.waveFormatTag = WaveFormatEncoding.WindowsMediaAudio;
         }

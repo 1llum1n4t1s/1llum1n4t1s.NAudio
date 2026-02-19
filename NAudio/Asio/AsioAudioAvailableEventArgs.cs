@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using NAudio.Wave.Asio;
 
 namespace NAudio.Wave
@@ -9,6 +10,10 @@ namespace NAudio.Wave
     /// </summary>
     public class AsioAudioAvailableEventArgs : EventArgs
     {
+        // Pre-computed reciprocals to replace divisions with multiplications in hot path
+        private const float Int32ToFloatScale = 1.0f / (int.MaxValue + 1f);
+        private const float Int16ToFloatScale = 1.0f / (short.MaxValue + 1f);
+        private const float Int24ToFloatScale = 1.0f / (1 << 23);
         /// <summary>
         /// Initialises a new instance of AsioAudioAvailableEventArgs
         /// </summary>
@@ -55,47 +60,47 @@ namespace NAudio.Wave
         public int GetAsInterleavedSamples(float[] samples)
         {
             var channels = InputBuffers.Length;
-            if (samples.Length < SamplesPerBuffer*channels) throw new ArgumentException("Buffer not big enough");
+            var samplesPerBuffer = SamplesPerBuffer;
+            var totalSamples = samplesPerBuffer * channels;
+            if (samples.Length < totalSamples) throw new ArgumentException("Buffer not big enough");
             var index = 0;
             unsafe
             {
                 if (AsioSampleType == AsioSampleType.Int32LSB)
                 {
-                    for (var n = 0; n < SamplesPerBuffer; n++)
+                    for (var n = 0; n < samplesPerBuffer; n++)
                     {
                         for (var ch = 0; ch < channels; ch++)
                         {
-                            samples[index++] = *((int*)InputBuffers[ch] + n) / (float)Int32.MaxValue;
+                            samples[index++] = *((int*)InputBuffers[ch] + n) * Int32ToFloatScale;
                         }
                     }
                 }
                 else if (AsioSampleType == AsioSampleType.Int16LSB)
                 {
-                    for (var n = 0; n < SamplesPerBuffer; n++)
+                    for (var n = 0; n < samplesPerBuffer; n++)
                     {
                         for (var ch = 0; ch < channels; ch++)
                         {
-                            samples[index++] = *((short*)InputBuffers[ch] + n) / (float)Int16.MaxValue;
+                            samples[index++] = *((short*)InputBuffers[ch] + n) * Int16ToFloatScale;
                         }
                     }
                 }
                 else if (AsioSampleType == AsioSampleType.Int24LSB)
                 {
-                    for (var n = 0; n < SamplesPerBuffer; n++)
+                    for (var n = 0; n < samplesPerBuffer; n++)
                     {
                         for (var ch = 0; ch < channels; ch++)
                         {
                             var pSample = ((byte*)InputBuffers[ch] + n * 3);
-
-                            //int sample = *pSample + *(pSample+1) << 8 + (sbyte)*(pSample+2) << 16;
                             var sample = pSample[0] | (pSample[1] << 8) | ((sbyte)pSample[2] << 16);
-                            samples[index++] = sample / 8388608.0f;
+                            samples[index++] = sample * Int24ToFloatScale;
                         }
                     }
                 }
                 else if (AsioSampleType == AsioSampleType.Float32LSB)
                 {
-                    for (var n = 0; n < SamplesPerBuffer; n++)
+                    for (var n = 0; n < samplesPerBuffer; n++)
                     {
                         for (var ch = 0; ch < channels; ch++)
                         {
@@ -105,10 +110,10 @@ namespace NAudio.Wave
                 }
                 else
                 {
-                    throw new NotImplementedException(String.Format("ASIO Sample Type {0} not supported", AsioSampleType));
+                    throw new NotImplementedException($"ASIO Sample Type {AsioSampleType} not supported");
                 }
             }
-            return SamplesPerBuffer*channels;
+            return totalSamples;
         }
 
         /// <summary>

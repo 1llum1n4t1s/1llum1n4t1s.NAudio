@@ -146,6 +146,11 @@ public partial class MainWindow : Window
             return;
         }
         UpdateSettings();
+        if (_namingRules == null)
+        {
+            System.Windows.MessageBox.Show("Naming rules have not been loaded. Please restart the application.", ProductName, MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
         if (!CheckInputFolderExists()) return;
         if (!CheckOutputFolderExists()) return;
         if (!CheckOutputFolderIsEmpty()) return;
@@ -158,7 +163,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            ProgressLog.ClearLog();
+            Dispatcher.Invoke(() => ProgressLog.ClearLog());
             _midiConverter = new MidiConverter(_namingRules);
             _midiConverter.Progress += MidiConverter_Progress;
             _midiConverter.Start();
@@ -184,7 +189,7 @@ public partial class MainWindow : Window
             color = System.Drawing.Color.Red;
         else if (e.MessageType == ProgressMessageType.Trace)
             color = System.Drawing.Color.Purple;
-        ProgressLog.LogMessage(color, e.Message);
+        Dispatcher.BeginInvoke(() => ProgressLog.LogMessage(color, e.Message));
     }
 
     private bool CheckInputFolderExists()

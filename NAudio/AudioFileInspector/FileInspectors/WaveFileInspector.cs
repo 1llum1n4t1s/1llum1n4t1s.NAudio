@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Text;
 using NAudio.Wave;
 using NAudio.Utils;
@@ -70,6 +71,12 @@ public class WaveFileInspector : IAudioFileInspector
 
         private static void DescribeBext(StringBuilder sb, byte[] data)
         {
+            // bext minimum fixed size is 602 bytes before the variable-length Coding History
+            if (data.Length < 602)
+            {
+                sb.AppendFormat("bext chunk too short ({0} bytes, expected at least 602)\r\n", data.Length);
+                return;
+            }
             var offset = 0;
             sb.AppendFormat("Description: {0}\r\n", ByteArrayExtensions.DecodeAsString(data, 0, 256, ASCIIEncoding.ASCII));
             offset += 256;
@@ -81,29 +88,28 @@ public class WaveFileInspector : IAudioFileInspector
             offset += 10;
             sb.AppendFormat("Origination Time: {0}\r\n", ByteArrayExtensions.DecodeAsString(data, offset, 8, ASCIIEncoding.ASCII));
             offset += 8;
-            sb.AppendFormat("Time Reference Low: {0}\r\n", BitConverter.ToUInt32(data, offset));
+            sb.AppendFormat("Time Reference Low: {0}\r\n", BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(offset)));
             offset += 4;
-            sb.AppendFormat("Time Reference High: {0}\r\n", BitConverter.ToUInt32(data, offset));
+            sb.AppendFormat("Time Reference High: {0}\r\n", BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(offset)));
             offset += 4;
-            sb.AppendFormat("Version: {0}\r\n", BitConverter.ToUInt16(data, offset));
+            sb.AppendFormat("Version: {0}\r\n", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset)));
             offset += 2;
             sb.AppendFormat("SMPTE UMID: {0}\r\n", ByteArrayExtensions.DecodeAsString(data, offset, 64, Encoding.ASCII));
-            //byte[] smpteumid = 64 bytes;
             offset += 64;
-            sb.AppendFormat("Loudness Value: {0}\r\n", BitConverter.ToUInt16(data, offset));
+            sb.AppendFormat("Loudness Value: {0}\r\n", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset)));
             offset += 2;
-            sb.AppendFormat("Loudness Range: {0}\r\n", BitConverter.ToUInt16(data, offset));
+            sb.AppendFormat("Loudness Range: {0}\r\n", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset)));
             offset += 2;
-            sb.AppendFormat("Max True Peak Level: {0}\r\n", BitConverter.ToUInt16(data, offset));
+            sb.AppendFormat("Max True Peak Level: {0}\r\n", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset)));
             offset += 2;
-            sb.AppendFormat("Max Momentary Loudness: {0}\r\n", BitConverter.ToUInt16(data, offset));
+            sb.AppendFormat("Max Momentary Loudness: {0}\r\n", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset)));
             offset += 2;
-            sb.AppendFormat("Max short term loudness: {0}\r\n", BitConverter.ToUInt16(data, offset));
+            sb.AppendFormat("Max short term loudness: {0}\r\n", BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(offset)));
             offset += 2;
             //byte[] reserved = 180 bytes;
             offset += 180;
-            sb.AppendFormat("Coding History: {0}\r\n", ByteArrayExtensions.DecodeAsString(data, offset, data.Length-offset, Encoding.ASCII));
-            
+            if (offset < data.Length)
+                sb.AppendFormat("Coding History: {0}\r\n", ByteArrayExtensions.DecodeAsString(data, offset, data.Length - offset, Encoding.ASCII));
         }
 
 
@@ -112,13 +118,21 @@ public class WaveFileInspector : IAudioFileInspector
         private static void DescribeStrc(StringBuilder stringBuilder, byte[] data)
         {
             // First 28 bytes are header
-            var header1 = BitConverter.ToInt32(data, 0); // always 0x1C?
-            var sliceCount = BitConverter.ToInt32(data, 4);
-            var header2 = BitConverter.ToInt32(data, 8); // 0x19 or 0x41?
-            var header3 = BitConverter.ToInt32(data, 12); // 0x05 or 0x0A? (linked with header 2 - 0x41 0x05 go together and 0x19 0x0A go together)
-            var header4 = BitConverter.ToInt32(data, 16); // always 1?
-            var header5 = BitConverter.ToInt32(data, 20); // 0x00, 0x01 or 0x0A?
-            var header6 = BitConverter.ToInt32(data, 24); // 0x02, 0x04. 0x05
+            if (data.Length < 28)
+            {
+                stringBuilder.AppendFormat("strc chunk too short ({0} bytes, expected at least 28)\r\n", data.Length);
+                return;
+            }
+            var header1 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(0)); // always 0x1C?
+            var sliceCount = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(4));
+            var header2 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(8)); // 0x19 or 0x41?
+            var header3 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(12)); // 0x05 or 0x0A? (linked with header 2 - 0x41 0x05 go together and 0x19 0x0A go together)
+            var header4 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(16)); // always 1?
+            var header5 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(20)); // 0x00, 0x01 or 0x0A?
+            var header6 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(24)); // 0x02, 0x04. 0x05
+
+            if (sliceCount < 0)
+                sliceCount = 0;
 
             stringBuilder.AppendFormat("{0} slices. unknown: {1},{2},{3},{4},{5},{6}\r\n",
                 sliceCount,header1,header2,header3,header4,header5,header6);
@@ -127,13 +141,18 @@ public class WaveFileInspector : IAudioFileInspector
 
             for (var slice = 0; slice < sliceCount; slice++)
             {
-                var unknown1 = BitConverter.ToInt32(data, offset); // 0 or 2
-                var uniqueId1 = BitConverter.ToInt32(data, offset + 4); // another unique ID - doesn't change?
+                if (offset + 32 > data.Length)
+                {
+                    stringBuilder.AppendFormat("strc chunk truncated at slice {0} (offset {1}, data length {2})\r\n", slice, offset, data.Length);
+                    break;
+                }
+                var unknown1 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(offset)); // 0 or 2
+                var uniqueId1 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(offset + 4)); // another unique ID - doesn't change?
 
-                var samplePosition = BitConverter.ToInt64(data, offset + 8);
-                var samplePos2 = BitConverter.ToInt64(data, offset + 16); // is zero the first time through, equal to sample position next time round
-                var unknown5 = BitConverter.ToInt32(data, offset + 24); // large number first time through, zero second time through, not flags, not a float
-                var uniqueId2 = BitConverter.ToInt32(data, offset + 28); // always the same
+                var samplePosition = BinaryPrimitives.ReadInt64LittleEndian(data.AsSpan(offset + 8));
+                var samplePos2 = BinaryPrimitives.ReadInt64LittleEndian(data.AsSpan(offset + 16)); // is zero the first time through, equal to sample position next time round
+                var unknown5 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(offset + 24)); // large number first time through, zero second time through, not flags, not a float
+                var uniqueId2 = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(offset + 28)); // always the same
                 offset += 32;
                 stringBuilder.AppendFormat("Pos: {2},{3} unknown: {0},{4}\r\n",
                     unknown1, uniqueId1, samplePosition, samplePos2, unknown5, uniqueId2);

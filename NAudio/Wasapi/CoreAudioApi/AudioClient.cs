@@ -283,6 +283,7 @@ namespace NAudio.CoreAudioApi
             // the pointer is uninitialized memory and dereferencing it throws an AV exception
             if (hresult == -0x7FFFBFFF)
             {
+                Marshal.FreeHGlobal(pointerToPtr);
                 return false;
             }
 

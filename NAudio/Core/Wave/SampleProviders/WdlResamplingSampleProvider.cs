@@ -35,6 +35,12 @@ namespace NAudio.Wave.SampleProviders
         /// </summary>
         public int Read(float[] buffer, int offset, int count)
         {
+            // 1:1 ratio bypass - no resampling needed when rates match
+            if (source.WaveFormat.SampleRate == outFormat.SampleRate)
+            {
+                return source.Read(buffer, offset, count);
+            }
+
             float[] inBuffer;
             int inBufferOffset;
             var framesRequested = count / channels;

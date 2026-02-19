@@ -22,7 +22,7 @@ namespace NAudio.Midi
         {
             if(length != 4) 
             {
-                throw new FormatException(String.Format("Invalid time signature length: Got {0}, expected 4", length));
+                throw new FormatException($"Invalid time signature length: Got {length}, expected 4");
             }
             numerator = br.ReadByte();
             denominator = br.ReadByte(); //2=quarter, 3=eigth etc
@@ -93,7 +93,7 @@ namespace NAudio.Midi
         {
             get 
             {
-                var den = String.Format("Unknown ({0})",denominator);
+                var den = $"Unknown ({denominator})";
                 switch(denominator) 
                 {
                 case 1:
@@ -112,7 +112,7 @@ namespace NAudio.Midi
                     den = "32";
                     break;
                 }
-                return String.Format("{0}/{1}",numerator,den);
+                return $"{numerator}/{den}";
             }
         }
         
@@ -122,8 +122,7 @@ namespace NAudio.Midi
         /// <returns>A string describing this event</returns>
         public override string ToString() 
         {
-            return String.Format("{0} {1} TicksInClick:{2} 32ndsInQuarterNote:{3}",
-                base.ToString(),TimeSignature,ticksInMetronomeClick,no32ndNotesInQuarterNote);
+            return $"{base.ToString()} {TimeSignature} TicksInClick:{ticksInMetronomeClick} 32ndsInQuarterNote:{no32ndNotesInQuarterNote}";
         }
 
         /// <summary>

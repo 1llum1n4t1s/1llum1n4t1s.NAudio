@@ -16,6 +16,7 @@ namespace NAudio.Wave
     {
         private readonly AutoResetEvent callbackEvent;
         private readonly SynchronizationContext syncContext;
+        private readonly ManualResetEvent recordingThreadExited = new ManualResetEvent(true);
         private IntPtr waveInHandle;
         private volatile CaptureState captureState;
         private WaveInBuffer[] buffers;
@@ -110,10 +111,25 @@ namespace NAudio.Wave
         {
             if (captureState != CaptureState.Stopped)
                 throw new InvalidOperationException("Already recording");
-            OpenWaveInDevice();
-            MmException.Try(WaveInterop.waveInStart(waveInHandle), "waveInStart");
-            captureState = CaptureState.Starting;
-            ThreadPool.QueueUserWorkItem((state) => RecordThread(), null);
+            // Wait for any previous recording thread to fully exit before starting a new one
+            recordingThreadExited.WaitOne();
+            // Reset before starting the device and thread: avoids race where the new thread
+            // exits immediately and calls Set() before we call Reset().
+            recordingThreadExited.Reset();
+            try
+            {
+                OpenWaveInDevice();
+                MmException.Try(WaveInterop.waveInStart(waveInHandle), "waveInStart");
+                captureState = CaptureState.Starting;
+                ThreadPool.QueueUserWorkItem((state) => RecordThread(), null);
+            }
+            catch
+            {
+                // If startup fails, restore the signalled state to prevent deadlock
+                // in subsequent calls to StartRecording or Dispose.
+                recordingThreadExited.Set();
+                throw;
+            }
         }
 
         private void RecordThread()
@@ -130,6 +146,7 @@ namespace NAudio.Wave
             finally
             {
                 captureState = CaptureState.Stopped;
+                recordingThreadExited.Set();
                 RaiseRecordingStoppedEvent(exception);
             }
         }
@@ -212,7 +229,7 @@ namespace NAudio.Wave
             MmException.Try(WaveInterop.waveInGetPosition(waveInHandle, out mmTime, Marshal.SizeOf(mmTime)), "waveInGetPosition");
 
             if (mmTime.wType != MmTime.TIME_BYTES)
-                throw new Exception(string.Format("waveInGetPosition: wType -> Expected {0}, Received {1}", MmTime.TIME_BYTES, mmTime.wType));
+                throw new InvalidOperationException(string.Format("waveInGetPosition: wType -> Expected {0}, Received {1}", MmTime.TIME_BYTES, mmTime.wType));
 
             return mmTime.cb;
         }
@@ -232,12 +249,22 @@ namespace NAudio.Wave
                 if (captureState != CaptureState.Stopped)
                     StopRecording();
 
+                // Wait for the recording thread to fully exit before disposing buffers
+                // This prevents access violations in the recording thread
+                if (!recordingThreadExited.WaitOne(5000))
+                {
+                    System.Diagnostics.Debug.WriteLine("WARNING: WaveInEvent recording thread did not exit in time");
+                }
+
                 CloseWaveInDevice();
+                callbackEvent?.Close();
+                recordingThreadExited?.Dispose();
             }
         }
 
         private void CloseWaveInDevice()
         {
+            if (waveInHandle == IntPtr.Zero) return;
             // Some drivers need the reset to properly release buffers
             WaveInterop.waveInReset(waveInHandle);
             if (buffers != null)

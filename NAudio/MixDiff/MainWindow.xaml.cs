@@ -183,7 +183,7 @@ public partial class MainWindow : Window
     private void Timer_Tick(object sender, EventArgs e)
     {
         if (_playbackStatus != PlaybackStatus.Playing) return;
-        if (_mixer.Position > _mixer.Length)
+        if (_mixer.Position >= _mixer.Length)
         {
             if (CheckLoop.IsChecked == true)
                 Rewind();
@@ -233,7 +233,8 @@ public partial class MainWindow : Window
     {
         if (_mixer != null)
         {
-            _mixer.CurrentTime += TimeSpan.FromSeconds(-_skipSeconds);
+            var newTime = _mixer.CurrentTime - TimeSpan.FromSeconds(_skipSeconds);
+            _mixer.CurrentTime = newTime < TimeSpan.Zero ? TimeSpan.Zero : newTime;
             SetPositionLabel();
         }
     }
@@ -337,24 +338,40 @@ public partial class MainWindow : Window
         var doc = new XmlDocument();
         doc.Load(fileName);
         var compareModeNode = doc.SelectSingleNode("MixDiff/Settings/@CompareMode");
-        _compareMode = (CompareMode)Enum.Parse(typeof(CompareMode), compareModeNode.Value);
-        CompareMode_UpdateMenu();
+        if (compareModeNode != null)
+        {
+            _compareMode = (CompareMode)Enum.Parse(typeof(CompareMode), compareModeNode.Value);
+            CompareMode_UpdateMenu();
+        }
         var mixes = doc.SelectNodes("MixDiff/Mix");
         var buttonIndex = 0;
         foreach (XmlNode mixNode in mixes)
         {
             if (buttonIndex >= _fileButtons.Count) break;
             var button = _fileButtons[buttonIndex++];
-            var path = mixNode.Attributes["FileName"].Value;
-            var info = new MixdownInfo(path);
-            info.DelayMilliseconds = int.Parse(mixNode.Attributes["DelayMilliseconds"].Value);
-            info.OffsetMilliseconds = int.Parse(mixNode.Attributes["OffsetMilliseconds"].Value);
-            info.VolumeDecibels = int.Parse(mixNode.Attributes["VolumeDecibels"].Value);
+            var path = mixNode.Attributes["FileName"]?.Value;
+            if (string.IsNullOrEmpty(path)) continue;
+            MixdownInfo info;
+            try
+            {
+                info = new MixdownInfo(path);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not load file: {path}\n{ex.Message}", "MixDiff", MessageBoxButton.OK, MessageBoxImage.Warning);
+                continue;
+            }
+            if (!int.TryParse(mixNode.Attributes["DelayMilliseconds"]?.Value, out var delay)) delay = 0;
+            if (!int.TryParse(mixNode.Attributes["OffsetMilliseconds"]?.Value, out var offset)) offset = 0;
+            if (!int.TryParse(mixNode.Attributes["VolumeDecibels"]?.Value, out var volume)) volume = 0;
+            info.DelayMilliseconds = delay;
+            info.OffsetMilliseconds = offset;
+            info.VolumeDecibels = volume;
             info.Letter = button.Name.Substring(button.Name.Length - 1);
             info.Stream.Mute = true;
             SetButtonInfo(button, info);
         }
-        if (_fileButtons.Count > 0)
+        if (_fileButtons.Count > 0 && _fileButtons[0].Tag != null)
             SelectButton(_fileButtons[0]);
     }
 
@@ -364,7 +381,7 @@ public partial class MainWindow : Window
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://www.codeplex.com/naudio/Wiki/View.aspx?title=MixDiff") { UseShellExecute = true });
         }
-        catch (Exception)
+        catch (System.ComponentModel.Win32Exception)
         {
             MessageBox.Show("Failed to launch browser to show help file");
         }
@@ -412,13 +429,13 @@ public partial class MainWindow : Window
             foreach (var btn in _fileButtons)
             {
                 if (btn.Tag == null)
-                    btn.Tag = mixdowns[rand.Next() % mixdowns.Count];
+                    btn.Tag = mixdowns[rand.Next(mixdowns.Count)];
             }
         }
         for (var n = 0; n < 12; n++)
         {
-            var swap1 = rand.Next() % _fileButtons.Count;
-            var swap2 = rand.Next() % _fileButtons.Count;
+            var swap1 = rand.Next(_fileButtons.Count);
+            var swap2 = rand.Next(_fileButtons.Count);
             if (swap1 != swap2)
             {
                 var tag1 = _fileButtons[swap1].Tag;

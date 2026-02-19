@@ -159,8 +159,8 @@ namespace NAudio.Wave
                 isDisposed = true;
                 if (disposing)
                 {
-                    sourceStream.Dispose();
                     conversionProvider.Dispose();
+                    sourceStream.Dispose();
                 }
                 else
                 {

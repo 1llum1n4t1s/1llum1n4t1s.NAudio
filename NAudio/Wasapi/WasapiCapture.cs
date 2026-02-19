@@ -230,8 +230,10 @@ namespace NAudio.CoreAudioApi
         /// <returns>The default audio capture device</returns>
         public static MMDevice GetDefaultCaptureDevice()
         {
-            var devices = new MMDeviceEnumerator();
-            return devices.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
+            using (var devices = new MMDeviceEnumerator())
+            {
+                return devices.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Console);
+            }
         }
 
         private void InitializeCaptureDevice()
@@ -502,6 +504,11 @@ namespace NAudio.CoreAudioApi
             {
                 audioClient.Dispose();
                 audioClient = null;
+            }
+            if (frameEventWaitHandle != null)
+            {
+                frameEventWaitHandle.Dispose();
+                frameEventWaitHandle = null;
             }
         }
     }

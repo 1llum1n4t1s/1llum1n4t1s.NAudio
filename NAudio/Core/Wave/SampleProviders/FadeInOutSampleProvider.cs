@@ -1,4 +1,6 @@
-﻿namespace NAudio.Wave.SampleProviders
+﻿using System;
+
+namespace NAudio.Wave.SampleProviders
 {
     /// <summary>
     /// Sample Provider to allow fading in and out
@@ -26,7 +28,7 @@
         /// <param name="initiallySilent">If true, we start faded out</param>
         public FadeInOutSampleProvider(ISampleProvider source, bool initiallySilent = false)
         {
-            this.source = source;
+            this.source = source ?? throw new ArgumentNullException(nameof(source));
             fadeState = initiallySilent ? FadeState.Silence : FadeState.FullVolume;
         }
 
@@ -36,11 +38,19 @@
         /// <param name="fadeDurationInMilliseconds">Duration of fade in milliseconds</param>
         public void BeginFadeIn(double fadeDurationInMilliseconds)
         {
+            if (fadeDurationInMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(fadeDurationInMilliseconds), "Must be non-negative");
             lock (lockObject)
             {
                 fadeSamplePosition = 0;
                 fadeSampleCount = (int)((fadeDurationInMilliseconds * source.WaveFormat.SampleRate) / 1000);
-                fadeState = FadeState.FadingIn;
+                if (fadeSampleCount <= 0)
+                {
+                    fadeState = FadeState.FullVolume;
+                }
+                else
+                {
+                    fadeState = FadeState.FadingIn;
+                }
             }
         }
 
@@ -50,11 +60,19 @@
         /// <param name="fadeDurationInMilliseconds">Duration of fade in milliseconds</param>
         public void BeginFadeOut(double fadeDurationInMilliseconds)
         {
+            if (fadeDurationInMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(fadeDurationInMilliseconds), "Must be non-negative");
             lock (lockObject)
             {
                 fadeSamplePosition = 0;
                 fadeSampleCount = (int)((fadeDurationInMilliseconds * source.WaveFormat.SampleRate) / 1000);
-                fadeState = FadeState.FadingOut;
+                if (fadeSampleCount <= 0)
+                {
+                    fadeState = FadeState.Silence;
+                }
+                else
+                {
+                    fadeState = FadeState.FadingOut;
+                }
             }
         }
 
@@ -88,10 +106,7 @@
 
         private static void ClearBuffer(float[] buffer, int offset, int count)
         {
-            for (var n = 0; n < count; n++)
-            {
-                buffer[n + offset] = 0;
-            }
+            Array.Clear(buffer, offset, count);
         }
 
         private void FadeOut(float[] buffer, int offset, int sourceSamplesRead)
@@ -102,12 +117,13 @@
             while (sample < sourceSamplesRead)
             {
                 var multiplier = 1.0f - (fadeSamplePosition * invFadeCount);
+                if (multiplier < 0f) multiplier = 0f;
                 for (var ch = 0; ch < channels; ch++)
                 {
                     buffer[offset + sample++] *= multiplier;
                 }
                 fadeSamplePosition++;
-                if (fadeSamplePosition > fadeSampleCount)
+                if (fadeSamplePosition >= fadeSampleCount)
                 {
                     fadeState = FadeState.Silence;
                     // clear out the end
@@ -125,12 +141,13 @@
             while (sample < sourceSamplesRead)
             {
                 var multiplier = fadeSamplePosition * invFadeCount;
+                if (multiplier > 1.0f) multiplier = 1.0f;
                 for (var ch = 0; ch < channels; ch++)
                 {
                     buffer[offset + sample++] *= multiplier;
                 }
                 fadeSamplePosition++;
-                if (fadeSamplePosition > fadeSampleCount)
+                if (fadeSamplePosition >= fadeSampleCount)
                 {
                     fadeState = FadeState.FullVolume;
                     // no need to multiply any more

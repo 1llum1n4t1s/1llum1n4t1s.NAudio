@@ -39,13 +39,24 @@ public class MidiFileInspector : IAudioFileInspector
 
     private string ToMBT(long eventTime, int ticksPerQuarterNote, TimeSignatureEvent timeSignature)
     {
+        if (ticksPerQuarterNote <= 0)
+            return $"0:0:{eventTime}";
         var beatsPerBar = timeSignature == null ? 4 : timeSignature.Numerator;
-        var ticksPerBar = timeSignature == null ? ticksPerQuarterNote * 4 : (timeSignature.Numerator * ticksPerQuarterNote * 4) / (1 << timeSignature.Denominator);
+        if (beatsPerBar <= 0)
+            beatsPerBar = 4;
+        var denominator = timeSignature?.Denominator ?? 2;
+        if (denominator < 0 || denominator > 30)
+            denominator = 2;
+        var ticksPerBar = timeSignature == null ? ticksPerQuarterNote * 4 : (timeSignature.Numerator * ticksPerQuarterNote * 4) / (1 << denominator);
+        if (ticksPerBar <= 0)
+            ticksPerBar = ticksPerQuarterNote * 4;
         var ticksPerBeat = ticksPerBar / beatsPerBar;
+        if (ticksPerBeat <= 0)
+            ticksPerBeat = 1;
         var bar = 1 + (eventTime / ticksPerBar);
         var beat = 1 + ((eventTime % ticksPerBar) / ticksPerBeat);
         var tick = eventTime % ticksPerBeat;
-        return string.Format("{0}:{1}:{2}", bar, beat, tick);
+        return $"{bar}:{beat}:{tick}";
     }
 
     /// <summary>

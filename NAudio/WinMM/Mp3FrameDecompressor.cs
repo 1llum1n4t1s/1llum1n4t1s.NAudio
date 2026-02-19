@@ -49,12 +49,22 @@ namespace NAudio.Wave
             {
                 throw new ArgumentNullException("frame", "You must provide a non-null Mp3Frame to decompress");
             }
+            if (frame.FrameLength > conversionStream.SourceBuffer.Length)
+            {
+                throw new InvalidOperationException(
+                    $"MP3 frame is too large for the conversion buffer ({frame.FrameLength} > {conversionStream.SourceBuffer.Length})");
+            }
             Array.Copy(frame.RawData, conversionStream.SourceBuffer, frame.FrameLength);
             var converted = conversionStream.Convert(frame.FrameLength, out var sourceBytesConverted);
             if (sourceBytesConverted != frame.FrameLength)
             {
                 throw new InvalidOperationException(String.Format("Couldn't convert the whole MP3 frame (converted {0}/{1})",
                     sourceBytesConverted, frame.FrameLength));
+            }
+            if (destOffset + converted > dest.Length)
+            {
+                throw new InvalidOperationException(
+                    $"Decompressed MP3 frame exceeds destination buffer (need {destOffset + converted}, have {dest.Length})");
             }
             Array.Copy(conversionStream.DestBuffer, 0, dest, destOffset, converted);
             return converted;
@@ -76,10 +86,10 @@ namespace NAudio.Wave
             if (!disposed)
             {
                 disposed = true;
-				if(conversionStream != null)
-					conversionStream.Dispose();
-                GC.SuppressFinalize(this);
+                if (conversionStream != null)
+                    conversionStream.Dispose();
             }
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -88,7 +98,6 @@ namespace NAudio.Wave
         ~AcmMp3FrameDecompressor()
         {
             System.Diagnostics.Debug.Assert(false, "AcmMp3FrameDecompressor Dispose was not called");
-            Dispose();
         }
     }
 }

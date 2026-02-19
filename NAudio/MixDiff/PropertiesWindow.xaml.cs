@@ -8,6 +8,7 @@ namespace MarkHeath.AudioUtils;
 public partial class PropertiesWindow : Window
 {
     private readonly MixdownInfo _mixdownInfo;
+    private int _originalVolumeDecibels;
 
     /// <summary>
     /// コンストラクター。
@@ -21,6 +22,7 @@ public partial class PropertiesWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _originalVolumeDecibels = _mixdownInfo.VolumeDecibels;
         TextBoxDelay.Text = _mixdownInfo.DelayMilliseconds.ToString();
         TextBoxOffset.Text = _mixdownInfo.OffsetMilliseconds.ToString();
         SliderVolume.Value = _mixdownInfo.VolumeDecibels;
@@ -62,6 +64,7 @@ public partial class PropertiesWindow : Window
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
+        _mixdownInfo.VolumeDecibels = _originalVolumeDecibels;
         DialogResult = false;
         Close();
     }

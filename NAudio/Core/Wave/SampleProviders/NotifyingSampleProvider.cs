@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace NAudio.Wave.SampleProviders
 {
@@ -34,16 +35,18 @@ namespace NAudio.Wave.SampleProviders
         /// <param name="offset">Offset into sample buffer</param>
         /// <param name="sampleCount">Number of samples desired</param>
         /// <returns>Number of samples read</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Read(float[] buffer, int offset, int sampleCount)
         {
             var samplesRead = source.Read(buffer, offset, sampleCount);
-            if (Sample != null)
+            var handler = Sample;
+            if (handler != null)
             {
                 for (var n = 0; n < samplesRead; n += channels)
                 {
                     sampleArgs.Left = buffer[offset + n];
                     sampleArgs.Right = channels > 1 ? buffer[offset + n + 1] : sampleArgs.Left;
-                    Sample(this, sampleArgs);
+                    handler(this, sampleArgs);
                 }
             }
             return samplesRead;

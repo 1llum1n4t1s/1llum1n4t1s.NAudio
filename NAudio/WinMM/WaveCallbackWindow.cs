@@ -154,12 +154,30 @@ internal sealed class WaveCallbackWindow : IDisposable
             return;
         if (_handle != IntPtr.Zero)
         {
+            // Clear USERDATA first so WndProc won't access the GCHandle
+            // during or after DestroyWindow
+            SetWindowLongPtr(_handle, GWLP_USERDATA, IntPtr.Zero);
             DestroyWindow(_handle);
             _handle = IntPtr.Zero;
+        }
+        if (_selfHandle.IsAllocated)
+        {
             _selfHandle.Free();
         }
         _disposed = true;
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Destructor - releases unmanaged resources if Dispose was not called.
+    /// </summary>
+    ~WaveCallbackWindow()
+    {
+        if (_selfHandle.IsAllocated)
+        {
+            _selfHandle.Free();
+        }
+        System.Diagnostics.Debug.Assert(false, "WaveCallbackWindow was not disposed");
     }
 }
 

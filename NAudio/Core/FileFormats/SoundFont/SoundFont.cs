@@ -35,7 +35,7 @@ namespace NAudio.SoundFont
                     var formHeader = riff.ReadChunkID();
                     if (formHeader != "sfbk")
                     {
-                        throw new InvalidDataException(String.Format("Not a SoundFont ({0})", formHeader));
+                        throw new InvalidDataException($"Not a SoundFont ({formHeader})");
                     }
                     var list = riff.GetNextSubChunk();
                     if (list.ChunkID == "LIST")
@@ -51,7 +51,7 @@ namespace NAudio.SoundFont
                     }
                     else
                     {
-                        throw new InvalidDataException(String.Format("Not info list found ({0})", list.ChunkID));
+                        throw new InvalidDataException($"Not info list found ({list.ChunkID})");
                     }
                 }
                 else
@@ -91,8 +91,7 @@ namespace NAudio.SoundFont
         /// </summary>
         public override string ToString()
         {
-            return String.Format("Info Chunk:\r\n{0}\r\nPresets Chunk:\r\n{1}",
-                                    info, presetsChunk);
+            return $"Info Chunk:\r\n{info}\r\nPresets Chunk:\r\n{presetsChunk}";
         }
 
         // TODO: save / save as function

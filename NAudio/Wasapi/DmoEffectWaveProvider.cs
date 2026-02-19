@@ -40,9 +40,9 @@ namespace NAudio.Wave
                 throw new ArgumentException(@"Unsupported Input Stream format", nameof(inputProvider));
             }
 
-            mediaObject.AllocateStreamingResources();
             mediaObject.SetInputWaveFormat(0, this.inputProvider.WaveFormat);
             mediaObject.SetOutputWaveFormat(0, this.inputProvider.WaveFormat);
+            mediaObject.AllocateStreamingResources();
         }
 
         /// <summary>

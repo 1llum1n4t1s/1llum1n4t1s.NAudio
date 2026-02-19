@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Collections.Generic;
 using NAudio.FileFormats.Wav;
@@ -36,7 +37,7 @@ namespace NAudio.Wave
         /// </summary>
         /// <param name="inputStream">The input stream containing a WAV file including header</param>
         public WaveFileReader(Stream inputStream) :
-           this(inputStream, false)
+           this(inputStream ?? throw new ArgumentNullException(nameof(inputStream)), false)
         {
         }
 
@@ -164,7 +165,7 @@ namespace NAudio.Wave
             {
                 lock (lockObject)
                 {
-                    value = Math.Min(value, Length);
+                    value = Math.Max(Math.Min(value, Length), 0);
                     // make sure we don't get out of sync
                     value -= (value % waveFormat.BlockAlign);
                     waveStream.Position = value + dataPosition;
@@ -221,22 +222,22 @@ namespace NAudio.Wave
             {
                 if (waveFormat.BitsPerSample == 16)
                 {
-                    sampleFrame[channel] = BitConverter.ToInt16(raw, offset)/32768f;
+                    sampleFrame[channel] = BinaryPrimitives.ReadInt16LittleEndian(raw.AsSpan(offset)) / (short.MaxValue + 1f);
                     offset += 2;
                 }
                 else if (waveFormat.BitsPerSample == 24)
                 {
-                    sampleFrame[channel] = (((sbyte)raw[offset + 2] << 16) | (raw[offset + 1] << 8) | raw[offset]) / 8388608f;
+                    sampleFrame[channel] = (((sbyte)raw[offset + 2] << 16) | (raw[offset + 1] << 8) | raw[offset]) / (float)(1 << 23);
                     offset += 3;
                 }
                 else if (waveFormat.BitsPerSample == 32 && waveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
                 {
-                    sampleFrame[channel] = BitConverter.ToSingle(raw, offset);
+                    sampleFrame[channel] = BinaryPrimitives.ReadSingleLittleEndian(raw.AsSpan(offset));
                     offset += 4;
                 }
                 else if (waveFormat.BitsPerSample == 32)
                 {
-                    sampleFrame[channel] = BitConverter.ToInt32(raw, offset) / (Int32.MaxValue + 1f);
+                    sampleFrame[channel] = BinaryPrimitives.ReadInt32LittleEndian(raw.AsSpan(offset)) / (Int32.MaxValue + 1f);
                     offset += 4;
                 }
                 else

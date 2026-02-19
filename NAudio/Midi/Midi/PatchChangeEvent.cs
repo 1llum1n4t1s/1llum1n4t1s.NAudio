@@ -90,9 +90,7 @@ namespace NAudio.Midi
         /// <returns>String describing the patch change event</returns>
         public override string ToString()
         {
-            return String.Format("{0} {1}",
-                base.ToString(),
-                GetPatchName(this.patch));
+            return $"{base.ToString()} {GetPatchName(patch)}";
         }
 
         /// <summary>

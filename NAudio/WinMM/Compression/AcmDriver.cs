@@ -130,17 +130,22 @@ namespace NAudio.Wave.Compression
             selectedFormat = null;
             selectedFormatDescription = null;
             selectedFormatTagDescription = null;
-            if (result == MmResult.NoError)
+            try
             {
-                selectedFormat = WaveFormat.MarshalFromPtr(formatChoose.selectedWaveFormatPointer);
-                selectedFormatDescription = formatChoose.formatDescription;
-                selectedFormatTagDescription = formatChoose.formatTagDescription;
-            }            
-            
-            Marshal.FreeHGlobal(formatChoose.waveFormatEnumPointer);
-            Marshal.FreeHGlobal(formatChoose.selectedWaveFormatPointer);
+                if (result == MmResult.NoError)
+                {
+                    selectedFormat = WaveFormat.MarshalFromPtr(formatChoose.selectedWaveFormatPointer);
+                    selectedFormatDescription = formatChoose.formatDescription;
+                    selectedFormatTagDescription = formatChoose.formatTagDescription;
+                }
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(formatChoose.waveFormatEnumPointer);
+                Marshal.FreeHGlobal(formatChoose.selectedWaveFormatPointer);
+            }
             if(result != MmResult.AcmCancelled && result != MmResult.NoError)
-            {                
+            {
                 throw new MmException(result, "acmFormatChoose");
             }
             return result == MmResult.NoError;

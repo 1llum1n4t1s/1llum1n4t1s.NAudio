@@ -79,4 +79,6 @@ internal class WaveOutComboItem
         DeviceName = deviceName;
         DeviceNumber = deviceNumber;
     }
+
+    public override string ToString() => DeviceName;
 }

@@ -22,6 +22,10 @@ namespace NAudio.Midi
                 throw new FormatException("Invalid tempo length");
             }
             microsecondsPerQuarterNote = (br.ReadByte() << 16) + (br.ReadByte() << 8) + br.ReadByte();
+            if (microsecondsPerQuarterNote == 0)
+            {
+                throw new FormatException("MIDI tempo event has zero microseconds per quarter note");
+            }
         }
 
         /// <summary>
@@ -32,6 +36,10 @@ namespace NAudio.Midi
         public TempoEvent(int microsecondsPerQuarterNote, long absoluteTime)
             : base(MetaEventType.SetTempo,3,absoluteTime)
         {
+            if (microsecondsPerQuarterNote <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(microsecondsPerQuarterNote), "Microseconds per quarter note must be greater than zero");
+            }
             this.microsecondsPerQuarterNote = microsecondsPerQuarterNote;
         }
 
@@ -44,7 +52,7 @@ namespace NAudio.Midi
         /// Describes this tempo event
         /// </summary>
         /// <returns>String describing the tempo event</returns>
-        public override string ToString() 
+        public override string ToString()
         {
             return String.Format("{0} {2}bpm ({1})",
                 base.ToString(),
@@ -58,7 +66,11 @@ namespace NAudio.Midi
         public int MicrosecondsPerQuarterNote
         {
             get { return microsecondsPerQuarterNote; }
-            set { microsecondsPerQuarterNote = value; }
+            set
+            {
+                if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value), "Microseconds per quarter note must be greater than zero");
+                microsecondsPerQuarterNote = value;
+            }
         }
 
         /// <summary>
@@ -66,8 +78,15 @@ namespace NAudio.Midi
         /// </summary>
         public double Tempo
         {
-            get { return (60000000.0/microsecondsPerQuarterNote); }
-            set { microsecondsPerQuarterNote = (int) (60000000.0/value); }
+            get
+            {
+                return (60000000.0/microsecondsPerQuarterNote);
+            }
+            set
+            {
+                if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value), "Tempo must be greater than zero");
+                microsecondsPerQuarterNote = (int) (60000000.0/value);
+            }
         }
 
         /// <summary>

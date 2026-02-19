@@ -92,9 +92,9 @@ namespace NAudio.SoundFont
 		public override string ToString()
 		{
 			if(midiContinuousController)
-				return String.Format("{0} CC{1}",sourceType,midiContinuousControllerNumber);
+				return $"{sourceType} CC{midiContinuousControllerNumber}";
 			else
-				return String.Format("{0} {1}",sourceType,controllerSource);
+				return $"{sourceType} {controllerSource}";
 		}
 
 	}

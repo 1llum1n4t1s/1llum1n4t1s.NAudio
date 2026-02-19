@@ -71,8 +71,24 @@ namespace NAudio.Midi
                 }
                 // 0 = single track, 1 = multi-track synchronous, 2 = multi-track asynchronous
                 fileFormat = SwapUInt16(br.ReadUInt16());
+                if (fileFormat > 2)
+                {
+                    throw new FormatException($"Unsupported MIDI file format: {fileFormat}");
+                }
                 int tracks = SwapUInt16(br.ReadUInt16());
+                if (tracks == 0)
+                {
+                    throw new FormatException("MIDI file has no tracks");
+                }
+                if (fileFormat == 0 && tracks != 1)
+                {
+                    throw new FormatException($"MIDI file format 0 must have exactly 1 track, but has {tracks}");
+                }
                 deltaTicksPerQuarterNote = SwapUInt16(br.ReadUInt16());
+                if (deltaTicksPerQuarterNote == 0)
+                {
+                    throw new FormatException("MIDI file has zero delta ticks per quarter note");
+                }
 
                 events = new MidiEventCollection((fileFormat == 0) ? 0 : 1, deltaTicksPerQuarterNote);
                 for (var n = 0; n < tracks; n++)
@@ -96,6 +112,12 @@ namespace NAudio.Midi
                     chunkSize = SwapUInt32(br.ReadUInt32());
 
                     var startPos = br.BaseStream.Position;
+                    var endPos = startPos + chunkSize;
+                    if (endPos > br.BaseStream.Length)
+                    {
+                        throw new FormatException(
+                            $"Track {track} chunk size {chunkSize} exceeds stream length (position {startPos}, stream length {br.BaseStream.Length})");
+                    }
                     MidiEvent me = null;
                     var outstandingNoteOns = new List<NoteOnEvent>();
                     while(br.BaseStream.Position < startPos + chunkSize) 
@@ -273,7 +295,7 @@ namespace NAudio.Midi
 
                     var absoluteTime = events.StartAbsoluteTime;
 
-                    // use a stable sort to preserve ordering of MIDI events whose 
+                    // use a stable sort to preserve ordering of MIDI events whose
                     // absolute times are the same
                     MergeSort.Sort(eventList, new MidiEventComparer());
                     if (eventList.Count > 0)

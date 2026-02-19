@@ -56,7 +56,7 @@ namespace NAudio.Wave
 
             var sourceSamples = sourceBytesRead / 2;
             var destOffset = offset / 4;
-            var scale = (1.0f / 32768f) * volume;
+            var scale = (1.0f / (short.MaxValue + 1f)) * volume;
             for (var sample = 0; sample < sourceSamples; sample++)
             {
                 destWaveBuffer.FloatBuffer[destOffset++] = sourceWaveBuffer.ShortBuffer[sample] * scale;

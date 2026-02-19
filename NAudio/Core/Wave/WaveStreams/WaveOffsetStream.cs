@@ -31,6 +31,7 @@ namespace NAudio.Wave
         /// <param name="sourceLength">length of time to play from source stream</param>
         public WaveOffsetStream(WaveStream sourceStream, TimeSpan startTime, TimeSpan sourceOffset, TimeSpan sourceLength)
         {
+            if (sourceStream == null) throw new ArgumentNullException(nameof(sourceStream));
             if (sourceStream.WaveFormat.Encoding != WaveFormatEncoding.Pcm)
                 throw new ArgumentException("Only PCM supported");
             // TODO: add support for IEEE float + perhaps some others -
@@ -171,21 +172,22 @@ namespace NAudio.Wave
                 if (position < audioStartPosition)
                 {
                     bytesWritten = (int)Math.Min(numBytes, audioStartPosition - position);
-                    for (var n = 0; n < bytesWritten; n++)
-                        destBuffer[n + offset] = 0;
+                    Array.Clear(destBuffer, offset, bytesWritten);
                 }
                 if (bytesWritten < numBytes)
                 {
                     // don't read too far into source stream
-                    var sourceBytesRequired = (int)Math.Min(
+                    var sourceBytesRequired = (int)Math.Max(0, Math.Min(
                         numBytes - bytesWritten,
-                        sourceLengthBytes + sourceOffsetBytes - sourceStream.Position);
-                    var read = sourceStream.Read(destBuffer, bytesWritten + offset, sourceBytesRequired);
+                        sourceLengthBytes + sourceOffsetBytes - sourceStream.Position));
+                    var read = sourceBytesRequired > 0 ? sourceStream.Read(destBuffer, bytesWritten + offset, sourceBytesRequired) : 0;
                     bytesWritten += read;
                 }
                 // 3. Fill out with zeroes
-                for (var n = bytesWritten; n < numBytes; n++)
-                    destBuffer[offset + n] = 0;
+                if (bytesWritten < numBytes)
+                {
+                    Array.Clear(destBuffer, offset + bytesWritten, numBytes - bytesWritten);
+                }
                 position += numBytes;
                 return numBytes;
             }

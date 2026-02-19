@@ -6,19 +6,22 @@ namespace NAudio.Dmo
 {
     /// <summary>
     /// http://msdn.microsoft.com/en-us/library/aa929922.aspx
-    /// DMO_MEDIA_TYPE 
+    /// DMO_MEDIA_TYPE
     /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
     public struct DmoMediaType
     {
         Guid majortype;
         Guid subtype;
+        [MarshalAs(UnmanagedType.Bool)]
         bool bFixedSizeSamples;
+        [MarshalAs(UnmanagedType.Bool)]
         bool bTemporalCompression;
         int lSampleSize;
         Guid formattype;
         IntPtr pUnk; // not used
         int cbFormat;
-        IntPtr pbFormat; 
+        IntPtr pbFormat;
         
         /// <summary>
         /// Major type

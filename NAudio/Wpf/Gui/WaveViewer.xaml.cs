@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.ComponentModel;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -83,7 +84,7 @@ public partial class WaveViewer
             short low = 0, high = 0;
             for (var n = 0; n < bytesRead; n += 2)
             {
-                var sample = BitConverter.ToInt16(waveData, n);
+                var sample = BinaryPrimitives.ReadInt16LittleEndian(waveData.AsSpan(n));
                 if (sample < low) low = sample;
                 if (sample > high) high = sample;
             }

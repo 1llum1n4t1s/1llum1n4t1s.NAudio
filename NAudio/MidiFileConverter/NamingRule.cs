@@ -16,7 +16,7 @@ namespace MarkHeath.MidiUtils
             var namingRules = new NamingRules();
             namingRules.rules = new List<NamingRule>();
 
-            using (XmlReader reader = new XmlTextReader(xmlPath))
+            using (XmlReader reader = XmlReader.Create(xmlPath))
             {
                 reader.ReadStartElement("Rules");
                 reader.ReadStartElement("GeneralSettings");
@@ -59,6 +59,10 @@ namespace MarkHeath.MidiUtils
                 }
                 reader.ReadEndElement();
             }
+            if (string.IsNullOrEmpty(namingRules.filenameRegex))
+                throw new FormatException("FilenameRegex must not be empty");
+            if (namingRules.contextSeparator == null)
+                namingRules.contextSeparator = string.Empty;
             return namingRules;
         }
 
@@ -90,8 +94,8 @@ namespace MarkHeath.MidiUtils
 
         public NamingRule(string regex, string replacement)
         {
-            this.regex = regex;
-            this.replacement = replacement;
+            this.regex = regex ?? throw new ArgumentNullException(nameof(regex));
+            this.replacement = replacement ?? string.Empty;
         }
 
         public string Regex

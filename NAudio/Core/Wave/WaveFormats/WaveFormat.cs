@@ -270,7 +270,8 @@ namespace NAudio.Wave
                     sampleRate == other.sampleRate &&
                     averageBytesPerSecond == other.averageBytesPerSecond &&
                     blockAlign == other.blockAlign &&
-                    bitsPerSample == other.bitsPerSample;
+                    bitsPerSample == other.bitsPerSample &&
+                    extraSize == other.extraSize;
             }
             return false;
         }
@@ -281,12 +282,13 @@ namespace NAudio.Wave
         /// <returns>A hashcode</returns>
         public override int GetHashCode()
         {
-            return (int) waveFormatTag ^ 
-                (int) channels ^ 
-                sampleRate ^ 
-                averageBytesPerSecond ^ 
-                (int) blockAlign ^ 
-                (int) bitsPerSample;
+            return (int) waveFormatTag ^
+                (int) channels ^
+                sampleRate ^
+                averageBytesPerSecond ^
+                (int) blockAlign ^
+                (int) bitsPerSample ^
+                (int) extraSize;
         }
 
         /// <summary>

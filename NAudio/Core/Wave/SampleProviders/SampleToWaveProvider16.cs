@@ -55,7 +55,7 @@ namespace NAudio.Wave.SampleProviders
                     sample32 = 1.0f;
                 if (sample32 < -1.0f)
                     sample32 = -1.0f;
-                destWaveBuffer.ShortBuffer[destOffset++] = (short)(sample32 * 32767);
+                destWaveBuffer.ShortBuffer[destOffset++] = (short)Math.Clamp(sample32 * (short.MaxValue + 1f), short.MinValue, short.MaxValue);
             }
 
             return sourceSamples * 2;

@@ -205,20 +205,14 @@ namespace NAudio.Wave
         {
             if (frame.SampleRate != Mp3WaveFormat.SampleRate)
             {
-                var message =
-                    String.Format(
-                        "Got a frame at sample rate {0}, in an MP3 with sample rate {1}. Mp3FileReader does not support sample rate changes.",
-                        frame.SampleRate, Mp3WaveFormat.SampleRate);
-                throw new InvalidOperationException(message);
+                throw new InvalidOperationException(
+                    $"Got a frame at sample rate {frame.SampleRate}, in an MP3 with sample rate {Mp3WaveFormat.SampleRate}. Mp3FileReader does not support sample rate changes.");
             }
             var channels = frame.ChannelMode == ChannelMode.Mono ? 1 : 2;
             if (channels != Mp3WaveFormat.Channels)
             {
-                var message =
-                    String.Format(
-                        "Got a frame with channel mode {0}, in an MP3 with {1} channels. Mp3FileReader does not support changes to channel count.",
-                        frame.ChannelMode, Mp3WaveFormat.Channels);
-                throw new InvalidOperationException(message);
+                throw new InvalidOperationException(
+                    $"Got a frame with channel mode {frame.ChannelMode}, in an MP3 with {Mp3WaveFormat.Channels} channels. Mp3FileReader does not support changes to channel count.");
             }
         }
 

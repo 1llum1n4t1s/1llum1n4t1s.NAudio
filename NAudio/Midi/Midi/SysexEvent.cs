@@ -25,18 +25,18 @@ namespace NAudio.Midi
             //se.data = br.ReadBytes(se.length);
 
             var sysexData = new List<byte>();
-            var loop = true;
-            while(loop) 
+            while(true)
             {
+                if (br.BaseStream.Position >= br.BaseStream.Length)
+                {
+                    throw new FormatException("Sysex message missing end byte (0xF7)");
+                }
                 var b = br.ReadByte();
-                if(b == 0xF7) 
+                if(b == 0xF7)
                 {
-                    loop = false;
+                    break;
                 }
-                else 
-                {
-                    sysexData.Add(b);
-                }
+                sysexData.Add(b);
             }
             
             se.data = sysexData.ToArray();

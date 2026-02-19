@@ -102,6 +102,7 @@ namespace NAudio.Wave
             {
                 _callbackWindow.Dispose();
                 _callbackWindow = null;
+                Handle = IntPtr.Zero;
             }
             if (_subclass != null)
             {

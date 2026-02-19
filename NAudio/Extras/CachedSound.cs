@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Buffers;
 using NAudio.Wave;
 
 namespace NAudio.Extras
@@ -26,16 +26,39 @@ namespace NAudio.Extras
         {
             using (var audioFileReader = new AudioFileReader(audioFileName))
             {
-                // TODO: could add resampling in here if required
                 WaveFormat = audioFileReader.WaveFormat;
-                var wholeFile = new List<float>((int)(audioFileReader.Length / 4));
-                var readBuffer = new float[audioFileReader.WaveFormat.SampleRate * audioFileReader.WaveFormat.Channels];
-                int samplesRead;
-                while ((samplesRead = audioFileReader.Read(readBuffer, 0, readBuffer.Length)) > 0)
+                var estimatedSamples = (int)(audioFileReader.Length / 4);
+                var audioData = new float[estimatedSamples];
+                var totalSamplesRead = 0;
+                var bufferSize = audioFileReader.WaveFormat.SampleRate * audioFileReader.WaveFormat.Channels;
+                var readBuffer = ArrayPool<float>.Shared.Rent(bufferSize);
+                try
                 {
-                    wholeFile.AddRange(readBuffer.Take(samplesRead));
+                    int samplesRead;
+                    while ((samplesRead = audioFileReader.Read(readBuffer, 0, bufferSize)) > 0)
+                    {
+                        if (totalSamplesRead + samplesRead > audioData.Length)
+                        {
+                            var newSize = Math.Max(audioData.Length * 2, totalSamplesRead + samplesRead);
+                            var newArray = new float[newSize];
+                            Array.Copy(audioData, 0, newArray, 0, totalSamplesRead);
+                            audioData = newArray;
+                        }
+                        Array.Copy(readBuffer, 0, audioData, totalSamplesRead, samplesRead);
+                        totalSamplesRead += samplesRead;
+                    }
                 }
-                AudioData = wholeFile.ToArray();
+                finally
+                {
+                    ArrayPool<float>.Shared.Return(readBuffer);
+                }
+                if (totalSamplesRead < audioData.Length)
+                {
+                    var trimmed = new float[totalSamplesRead];
+                    Array.Copy(audioData, 0, trimmed, 0, totalSamplesRead);
+                    audioData = trimmed;
+                }
+                AudioData = audioData;
             }
         }
     }

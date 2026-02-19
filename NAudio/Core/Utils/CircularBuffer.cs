@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 
 namespace NAudio.Utils
@@ -20,6 +20,7 @@ namespace NAudio.Utils
         /// <param name="size">Max buffer size in bytes</param>
         public CircularBuffer(int size)
         {
+            if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size), "Buffer size must be greater than zero");
             buffer = new byte[size];
             lockObject = new object();
         }
@@ -33,16 +34,29 @@ namespace NAudio.Utils
         /// <returns>number of bytes written</returns>
         public int Write(byte[] data, int offset, int count)
         {
+            return Write(data.AsSpan(offset, count));
+        }
+
+        /// <summary>
+        /// Write data to the buffer from a ReadOnlySpan
+        /// </summary>
+        /// <param name="data">Data to write</param>
+        /// <returns>number of bytes written</returns>
+        public int Write(ReadOnlySpan<byte> data)
+        {
             lock (lockObject)
             {
-                var bytesWritten = 0;
+                var count = data.Length;
                 if (count > buffer.Length - byteCount)
                 {
                     count = buffer.Length - byteCount;
                 }
+                if (count == 0) return 0;
+
+                var bytesWritten = 0;
                 // write to end
                 var writeToEnd = Math.Min(buffer.Length - writePosition, count);
-                Array.Copy(data, offset, buffer, writePosition, writeToEnd);
+                data.Slice(0, writeToEnd).CopyTo(buffer.AsSpan(writePosition, writeToEnd));
                 writePosition += writeToEnd;
                 writePosition %= buffer.Length;
                 bytesWritten += writeToEnd;
@@ -50,8 +64,9 @@ namespace NAudio.Utils
                 {
                     Debug.Assert(writePosition == 0);
                     // must have wrapped round. Write to start
-                    Array.Copy(data, offset + bytesWritten, buffer, writePosition, count - bytesWritten);
-                    writePosition += (count - bytesWritten);
+                    var remaining = count - bytesWritten;
+                    data.Slice(bytesWritten, remaining).CopyTo(buffer.AsSpan(writePosition, remaining));
+                    writePosition += remaining;
                     bytesWritten = count;
                 }
                 byteCount += bytesWritten;
@@ -68,15 +83,28 @@ namespace NAudio.Utils
         /// <returns>Number of bytes actually read</returns>
         public int Read(byte[] data, int offset, int count)
         {
+            return Read(data.AsSpan(offset, count));
+        }
+
+        /// <summary>
+        /// Read from the buffer into a Span
+        /// </summary>
+        /// <param name="data">Span to read into</param>
+        /// <returns>Number of bytes actually read</returns>
+        public int Read(Span<byte> data)
+        {
             lock (lockObject)
             {
+                var count = data.Length;
                 if (count > byteCount)
                 {
                     count = byteCount;
                 }
+                if (count == 0) return 0;
+
                 var bytesRead = 0;
                 var readToEnd = Math.Min(buffer.Length - readPosition, count);
-                Array.Copy(buffer, readPosition, data, offset, readToEnd);
+                buffer.AsSpan(readPosition, readToEnd).CopyTo(data);
                 bytesRead += readToEnd;
                 readPosition += readToEnd;
                 readPosition %= buffer.Length;
@@ -85,8 +113,9 @@ namespace NAudio.Utils
                 {
                     // must have wrapped round. Read from start
                     Debug.Assert(readPosition == 0);
-                    Array.Copy(buffer, readPosition, data, offset + bytesRead, count - bytesRead);
-                    readPosition += (count - bytesRead);
+                    var remaining = count - bytesRead;
+                    buffer.AsSpan(readPosition, remaining).CopyTo(data.Slice(bytesRead));
+                    readPosition += remaining;
                     bytesRead = count;
                 }
 

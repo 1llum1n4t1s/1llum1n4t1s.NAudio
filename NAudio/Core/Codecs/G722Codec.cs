@@ -60,8 +60,8 @@ namespace NAudio.Codecs
             wd1 = Saturate(s.Band[band].a[1] << 2);
 
             wd2 = (s.Band[band].sg[0] == s.Band[band].sg[1]) ? -wd1 : wd1;
-            if (wd2 > 32767)
-                wd2 = 32767;
+            if (wd2 > short.MaxValue)
+                wd2 = short.MaxValue;
             wd3 = (s.Band[band].sg[0] == s.Band[band].sg[2]) ? 128 : -128;
             wd3 += (wd2 >> 7);
             wd3 += (s.Band[band].a[2] * 32512) >> 15;

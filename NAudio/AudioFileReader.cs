@@ -28,6 +28,7 @@ namespace NAudio.Wave
         /// <param name="fileName">The file to open</param>
         public AudioFileReader(string fileName)
         {
+            if (fileName == null) throw new ArgumentNullException(nameof(fileName));
             lockObject = new object();
             FileName = fileName;
             CreateReaderStream(fileName);
@@ -49,8 +50,8 @@ namespace NAudio.Wave
                 readerStream = new WaveFileReader(fileName);
                 if (readerStream.WaveFormat.Encoding != WaveFormatEncoding.Pcm && readerStream.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
                 {
-                    readerStream = WaveFormatConversionStream.CreatePcmStream(readerStream);
-                    readerStream = new BlockAlignReductionStream(readerStream);
+                    var convertedStream = WaveFormatConversionStream.CreatePcmStream(readerStream);
+                    readerStream = new BlockAlignReductionStream(convertedStream);
                 }
             }
             else if (fileName.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))

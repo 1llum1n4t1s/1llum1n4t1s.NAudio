@@ -96,9 +96,13 @@ namespace NAudio.Midi
             MidiCommandCode commandCode;
             var channel = 1;
             var b = br.ReadByte();
-            if((b & 0x80) == 0) 
+            if((b & 0x80) == 0)
             {
                 // a running command - command & channel are same as previous
+                if (previous == null)
+                {
+                    throw new FormatException("Unexpected running status with no previous event");
+                }
                 commandCode = previous.CommandCode;
                 channel = previous.Channel;
                 br.BaseStream.Position--; // need to push this back
@@ -382,7 +386,12 @@ namespace NAudio.Midi
             {
                 throw new FormatException("Can't export unsorted MIDI events");
             }
-            WriteVarInt(writer,(int) (this.absoluteTime - absoluteTime));
+            var delta = this.absoluteTime - absoluteTime;
+            if (delta > 0x0FFFFFFF)
+            {
+                throw new FormatException($"Delta time {delta} exceeds maximum variable-length integer value");
+            }
+            WriteVarInt(writer,(int) delta);
             absoluteTime = this.absoluteTime;
             var output = (int) commandCode;
             if (commandCode < MidiCommandCode.Sysex)

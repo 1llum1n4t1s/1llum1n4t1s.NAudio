@@ -45,19 +45,25 @@ namespace NAudio.Mixer
 				GetControlDetails();
 				return unsignedDetails[0].dwValue;
 			}
-			set 
+			set
 			{
                 var structSize = Marshal.SizeOf(unsignedDetails[0]);
 
                 mixerControlDetails.paDetails = Marshal.AllocHGlobal(structSize * nChannels);
-                for (var channel = 0; channel < nChannels; channel++)
+                try
                 {
-                    unsignedDetails[channel].dwValue = value;
-                    var pointer = mixerControlDetails.paDetails.ToInt64() + (structSize * channel);                    
-                    Marshal.StructureToPtr(unsignedDetails[channel], (IntPtr)pointer, false);
+                    for (var channel = 0; channel < nChannels; channel++)
+                    {
+                        unsignedDetails[channel].dwValue = value;
+                        var pointer = mixerControlDetails.paDetails.ToInt64() + (structSize * channel);
+                        Marshal.StructureToPtr(unsignedDetails[channel], (IntPtr)pointer, false);
+                    }
+                    MmException.Try(MixerInterop.mixerSetControlDetails(mixerHandle, ref mixerControlDetails, MixerFlags.Value | mixerHandleType), "mixerSetControlDetails");
                 }
-				MmException.Try(MixerInterop.mixerSetControlDetails(mixerHandle, ref mixerControlDetails, MixerFlags.Value | mixerHandleType), "mixerSetControlDetails");
-                Marshal.FreeHGlobal(mixerControlDetails.paDetails);
+                finally
+                {
+                    Marshal.FreeHGlobal(mixerControlDetails.paDetails);
+                }
 			}
 		}
 		

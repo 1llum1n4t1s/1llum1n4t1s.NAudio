@@ -18,6 +18,7 @@ namespace NAudio.CoreAudioApi
         private readonly IAudioSessionControl audioSessionControlInterface;
         private readonly IAudioSessionControl2 audioSessionControlInterface2;
         private AudioSessionEventsCallback audioSessionEventCallback;
+        private bool disposed;
 
         /// <summary>
         /// Constructor.
@@ -41,14 +42,17 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
+            if (disposed) return;
+            disposed = true;
             if (audioSessionEventCallback != null)
             {
-                Marshal.ThrowExceptionForHR(audioSessionControlInterface.UnregisterAudioSessionNotification(audioSessionEventCallback));
+                audioSessionControlInterface.UnregisterAudioSessionNotification(audioSessionEventCallback);
                 audioSessionEventCallback = null;
             }
+            Marshal.ReleaseComObject(audioSessionControlInterface);
             GC.SuppressFinalize(this);
         }
-        
+
         /// <summary>
         /// Finalizer
         /// </summary>

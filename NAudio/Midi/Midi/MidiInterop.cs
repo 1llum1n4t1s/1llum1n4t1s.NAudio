@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace NAudio.Midi
 {
@@ -83,9 +84,8 @@ namespace NAudio.Midi
         public static extern MmResult midiInGetDevCaps(IntPtr deviceId, out MidiInCapabilities capabilities, int size);
 
         // http://msdn.microsoft.com/en-us/library/dd798454%28VS.85%29.aspx
-        // TODO: review this, probably doesn't work
         [DllImport("winmm.dll")]
-        public static extern MmResult midiInGetErrorText(int err, string lpText, int uSize);
+        public static extern MmResult midiInGetErrorText(int err, StringBuilder lpText, int uSize);
 
         // http://msdn.microsoft.com/en-us/library/dd798455%28VS.85%29.aspx
         [DllImport("winmm.dll")]
@@ -144,9 +144,8 @@ namespace NAudio.Midi
         public static extern MmResult midiOutGetDevCaps(IntPtr deviceNumber, out MidiOutCapabilities caps, int uSize);
 
         // http://msdn.microsoft.com/en-us/library/dd798470%28VS.85%29.aspx
-        // TODO: review, probably doesn't work
         [DllImport("winmm.dll")]
-        public static extern MmResult midiOutGetErrorText(IntPtr err, string lpText, int uSize);
+        public static extern MmResult midiOutGetErrorText(IntPtr err, StringBuilder lpText, int uSize);
 
         // http://msdn.microsoft.com/en-us/library/dd798471%28VS.85%29.aspx
         [DllImport("winmm.dll")]
@@ -198,7 +197,7 @@ namespace NAudio.Midi
 
         // http://msdn.microsoft.com/en-us/library/dd798486%28VS.85%29.aspx
         [DllImport("winmm.dll")]
-        public static extern MmResult midiStreamOpen(out IntPtr hMidiStream, IntPtr puDeviceID, int cMidi, IntPtr dwCallback, IntPtr dwInstance, int fdwOpen);
+        public static extern MmResult midiStreamOpen(out IntPtr hMidiStream, ref int puDeviceID, int cMidi, IntPtr dwCallback, IntPtr dwInstance, int fdwOpen);
 
         // http://msdn.microsoft.com/en-us/library/dd798487%28VS.85%29.aspx
         [DllImport("winmm.dll")]
@@ -246,7 +245,7 @@ namespace NAudio.Midi
             public int dwStreamID;
             public int dwEvent;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public int dwParms;
+            public int[] dwParms;
         }
 
         // http://msdn.microsoft.com/en-us/library/dd798449%28VS.85%29.aspx

@@ -58,11 +58,12 @@ namespace NAudio.CoreAudioApi
             var firstFloatPtr = (IntPtr)((long)notifyData + (long)offset);
 
             var voldata = new float[data.nChannels];
-            
+
             //Read all floats from memory.
             for (var i = 0; i < data.nChannels; i++)
             {
                 voldata[i] = Marshal.PtrToStructure<float>(firstFloatPtr);
+                firstFloatPtr = (IntPtr)((long)firstFloatPtr + Marshal.SizeOf<float>());
             }
 
             //Create combined structure and Fire Event in parent class.
