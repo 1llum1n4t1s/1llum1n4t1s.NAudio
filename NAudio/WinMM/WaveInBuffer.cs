@@ -9,6 +9,7 @@ namespace NAudio.Wave
     /// </summary>
     public class WaveInBuffer : IDisposable
     {
+        private static readonly int WaveHeaderSize = Marshal.SizeOf<WaveHeader>();
         private readonly WaveHeader header;
         private readonly Int32 bufferSize; // allocated bytes, may not be the same as bytes read
         private readonly byte[] buffer;
@@ -37,8 +38,8 @@ namespace NAudio.Wave
             hThis = GCHandle.Alloc(this);
             header.userData = (IntPtr)hThis;
 
-            MmException.Try(WaveInterop.waveInPrepareHeader(waveInHandle, header, Marshal.SizeOf(header)), "waveInPrepareHeader");
-            //MmException.Try(WaveInterop.waveInAddBuffer(waveInHandle, header, Marshal.SizeOf(header)), "waveInAddBuffer");
+            MmException.Try(WaveInterop.waveInPrepareHeader(waveInHandle, header, WaveHeaderSize), "waveInPrepareHeader");
+            //MmException.Try(WaveInterop.waveInAddBuffer(waveInHandle, header, WaveHeaderSize), "waveInAddBuffer");
         }
 
         /// <summary>
@@ -47,10 +48,10 @@ namespace NAudio.Wave
         public void Reuse()
         {
             // TEST: we might not actually need to bother unpreparing and repreparing
-            MmException.Try(WaveInterop.waveInUnprepareHeader(waveInHandle, header, Marshal.SizeOf(header)), "waveUnprepareHeader");
-            MmException.Try(WaveInterop.waveInPrepareHeader(waveInHandle, header, Marshal.SizeOf(header)), "waveInPrepareHeader");
+            MmException.Try(WaveInterop.waveInUnprepareHeader(waveInHandle, header, WaveHeaderSize), "waveUnprepareHeader");
+            MmException.Try(WaveInterop.waveInPrepareHeader(waveInHandle, header, WaveHeaderSize), "waveInPrepareHeader");
             //System.Diagnostics.Debug.Assert(header.bytesRecorded == 0, "bytes recorded was not reset properly");
-            MmException.Try(WaveInterop.waveInAddBuffer(waveInHandle, header, Marshal.SizeOf(header)), "waveInAddBuffer");
+            MmException.Try(WaveInterop.waveInAddBuffer(waveInHandle, header, WaveHeaderSize), "waveInAddBuffer");
         }
 
         #region Dispose Pattern
@@ -85,7 +86,7 @@ namespace NAudio.Wave
             // free unmanaged resources
             if (waveInHandle != IntPtr.Zero)
             {
-                WaveInterop.waveInUnprepareHeader(waveInHandle, header, Marshal.SizeOf(header));
+                WaveInterop.waveInUnprepareHeader(waveInHandle, header, WaveHeaderSize);
                 waveInHandle = IntPtr.Zero;
             }
             if (hHeader.IsAllocated)

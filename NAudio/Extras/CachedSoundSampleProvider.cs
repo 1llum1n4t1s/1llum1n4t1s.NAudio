@@ -16,6 +16,8 @@ namespace NAudio.Extras
         public int Read(float[] buffer, int offset, int count)
         {
             var availableSamples = cachedSound.AudioData.Length - position;
+            if (availableSamples <= 0)
+                return 0;
             var samplesToCopy = Math.Min(availableSamples, count);
             Array.Copy(cachedSound.AudioData, position, buffer, offset, samplesToCopy);
             position += samplesToCopy;

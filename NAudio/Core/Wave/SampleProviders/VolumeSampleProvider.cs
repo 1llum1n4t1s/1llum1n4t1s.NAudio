@@ -1,4 +1,7 @@
-﻿namespace NAudio.Wave.SampleProviders
+﻿using System;
+using System.Numerics;
+
+namespace NAudio.Wave.SampleProviders
 {
     /// <summary>
     /// Very simple sample provider supporting adjustable gain
@@ -34,17 +37,43 @@
             var samplesRead = source.Read(buffer, offset, sampleCount);
             if (Volume != 1f)
             {
-                for (var n = 0; n < samplesRead; n++)
+                var span = new Span<float>(buffer, offset, samplesRead);
+                if (Vector.IsHardwareAccelerated && samplesRead >= Vector<float>.Count)
                 {
-                    buffer[offset + n] *= Volume;
+                    var volVec = new Vector<float>(Volume);
+                    var vecSize = Vector<float>.Count;
+                    var n = 0;
+                    for (; n <= samplesRead - vecSize; n += vecSize)
+                    {
+                        var v = new Vector<float>(span.Slice(n));
+                        (v * volVec).CopyTo(span.Slice(n));
+                    }
+                    // scalar remainder
+                    for (; n < samplesRead; n++)
+                    {
+                        span[n] *= Volume;
+                    }
+                }
+                else
+                {
+                    for (var n = 0; n < samplesRead; n++)
+                    {
+                        span[n] *= Volume;
+                    }
                 }
             }
             return samplesRead;
         }
 
+        private float volume;
+
         /// <summary>
         /// Allows adjusting the volume, 1.0f = full volume
         /// </summary>
-        public float Volume { get; set; }
+        public float Volume
+        {
+            get { return volume; }
+            set { volume = Math.Max(0f, value); }
+        }
     }
 }

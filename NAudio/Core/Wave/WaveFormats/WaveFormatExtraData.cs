@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using System.IO;
 
 // ReSharper disable once CheckNamespace
@@ -39,7 +40,13 @@ namespace NAudio.Wave
         {
             if (this.extraSize > 0)
             {
-                reader.Read(extraData, 0, extraSize);
+                var bytesToRead = Math.Min(extraSize, extraData.Length);
+                reader.Read(extraData, 0, bytesToRead);
+                if (extraSize > extraData.Length)
+                {
+                    // skip remaining extra data that doesn't fit in buffer
+                    reader.BaseStream.Position += extraSize - extraData.Length;
+                }
             }
         }
 
@@ -51,7 +58,7 @@ namespace NAudio.Wave
             base.Serialize(writer);
             if (extraSize > 0)
             {
-                writer.Write(extraData, 0, extraSize);
+                writer.Write(extraData, 0, Math.Min(extraSize, extraData.Length));
             }
         }
     }

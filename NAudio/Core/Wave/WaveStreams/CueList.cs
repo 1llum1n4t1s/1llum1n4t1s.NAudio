@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -138,15 +139,15 @@ namespace NAudio.Wave
         /// <param name="listChunkData">The data contained in the list chunk</param>
         internal CueList(byte[] cueChunkData, byte[] listChunkData)
         {
-            var cueCount = BitConverter.ToInt32(cueChunkData, 0);
+            var cueCount = BinaryPrimitives.ReadInt32LittleEndian(cueChunkData.AsSpan(0));
             var cueIndex = new Dictionary<int, int>();
             var positions = new int[cueCount];
             var cue = 0;
 
             for (var p = 4; cueChunkData.Length - p >= 24; p += 24, cue++)
             {
-                cueIndex[BitConverter.ToInt32(cueChunkData, p)] = cue;
-                positions[cue] = BitConverter.ToInt32(cueChunkData, p + 20);
+                cueIndex[BinaryPrimitives.ReadInt32LittleEndian(cueChunkData.AsSpan(p))] = cue;
+                positions[cue] = BinaryPrimitives.ReadInt32LittleEndian(cueChunkData.AsSpan(p + 20));
             }
 
             var labels = new string[cueCount];
@@ -155,10 +156,10 @@ namespace NAudio.Wave
             var labelChunkId = ChunkIdentifier.ChunkIdentifierToInt32("labl");
             for (var p = 4; listChunkData.Length - p >= 16; p += labelLength + labelLength % 2 + 12)
             {
-                labelLength = BitConverter.ToInt32(listChunkData, p + 4) - 4;
-                if (BitConverter.ToInt32(listChunkData, p) == labelChunkId)
+                labelLength = BinaryPrimitives.ReadInt32LittleEndian(listChunkData.AsSpan(p + 4)) - 4;
+                if (BinaryPrimitives.ReadInt32LittleEndian(listChunkData.AsSpan(p)) == labelChunkId)
                 {
-                    var cueId = BitConverter.ToInt32(listChunkData, p + 8);
+                    var cueId = BinaryPrimitives.ReadInt32LittleEndian(listChunkData.AsSpan(p + 8));
                     cue = cueIndex[cueId];
                     labels[cue] = Encoding.UTF8.GetString(listChunkData, p + 12, labelLength - 1);
                 }

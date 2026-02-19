@@ -1,4 +1,6 @@
-﻿using System;
+using System;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace NAudio.Wave.Asio
 {
@@ -9,6 +11,12 @@ namespace NAudio.Wave.Asio
     internal class AsioSampleConvertor
     {
         public delegate void SampleConvertor(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples);
+
+        // Pre-computed constants to avoid repeated computation
+        private const float FloatToInt32Scale = (float)int.MaxValue;
+        private const float FloatToInt24Scale = (1 << 23) - 1f;
+        private const float FloatToInt16Scale = short.MaxValue;
+        private const float Int32ToFloatScale = 1.0f / (int.MaxValue + 1f);
 
         /// <summary>
         /// Selects the sample convertor based on the input WaveFormat and the output ASIOSampleTtype.
@@ -90,12 +98,13 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Optimized convertor for 2 channels SHORT
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorShortToInt2Channels(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (short*)inputInterleavedBuffer;
-                // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
+                // Use a trick (short instead of int to avoid any conversion from 16Bit to 32Bit)
                 var leftSamples = (short*)asioOutputBuffers[0];
                 var rightSamples = (short*)asioOutputBuffers[1];
 
@@ -106,9 +115,7 @@ namespace NAudio.Wave.Asio
                 {
                     *leftSamples = inputSamples[0];
                     *rightSamples = inputSamples[1];
-                    // Go to next sample
                     inputSamples += 2;
-                    // Add 4 Bytes
                     leftSamples += 2;
                     rightSamples += 2;
                 }
@@ -118,13 +125,14 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Generic convertor for SHORT
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorShortToIntGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (short*)inputInterleavedBuffer;
-                // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                var samples = new short*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc short*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
@@ -144,8 +152,9 @@ namespace NAudio.Wave.Asio
         }
 
         /// <summary>
-        /// Optimized convertor for 2 channels FLOAT
+        /// Optimized convertor for 2 channels FLOAT to INT with SIMD
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorFloatToInt2Channels(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
@@ -154,7 +163,60 @@ namespace NAudio.Wave.Asio
                 var leftSamples = (int*)asioOutputBuffers[0];
                 var rightSamples = (int*)asioOutputBuffers[1];
 
-                for (var i = 0; i < nbSamples; i++)
+                var i = 0;
+
+                // SIMD path: process Vector<float>.Count samples at a time per channel
+                if (Vector.IsHardwareAccelerated)
+                {
+                    var vecCount = Vector<float>.Count;
+                    var scaleVec = new Vector<float>(FloatToInt32Scale);
+                    var minVec = new Vector<float>(-1.0f);
+                    var maxVec = new Vector<float>(1.0f);
+
+                    // Allocate de-interleave buffers outside the loop to avoid CA2014
+                    var leftBuf = stackalloc float[vecCount];
+                    var rightBuf = stackalloc float[vecCount];
+
+                    // We need vecCount interleaved stereo pairs = vecCount * 2 floats
+                    // to produce vecCount left + vecCount right samples
+                    for (; i <= nbSamples - vecCount; i += vecCount)
+                    {
+                        // De-interleave: extract left and right channels
+                        // Input is [L0,R0,L1,R1,L2,R2,L3,R3,...]
+                        var src = inputSamples + i * 2;
+                        for (var k = 0; k < vecCount; k++)
+                        {
+                            leftBuf[k] = src[k * 2];
+                            rightBuf[k] = src[k * 2 + 1];
+                        }
+
+                        var leftVec = new Vector<float>(new ReadOnlySpan<float>(leftBuf, vecCount));
+                        var rightVec = new Vector<float>(new ReadOnlySpan<float>(rightBuf, vecCount));
+
+                        // Clamp to [-1.0, 1.0]
+                        leftVec = Vector.Max(minVec, Vector.Min(maxVec, leftVec));
+                        rightVec = Vector.Max(minVec, Vector.Min(maxVec, rightVec));
+
+                        // Scale to int32 range
+                        leftVec *= scaleVec;
+                        rightVec *= scaleVec;
+
+                        // Convert to int and store
+                        var leftInt = Vector.ConvertToInt32(leftVec);
+                        var rightInt = Vector.ConvertToInt32(rightVec);
+
+                        leftInt.CopyTo(new Span<int>(leftSamples + i, vecCount));
+                        rightInt.CopyTo(new Span<int>(rightSamples + i, vecCount));
+                    }
+
+                    // Advance pointers past SIMD-processed samples for scalar remainder
+                    leftSamples += i;
+                    rightSamples += i;
+                    inputSamples += i * 2;
+                }
+
+                // Scalar remainder
+                for (; i < nbSamples; i++)
                 {
                     *leftSamples++ = clampToInt(inputSamples[0]);
                     *rightSamples++ = clampToInt(inputSamples[1]);
@@ -164,14 +226,16 @@ namespace NAudio.Wave.Asio
         }
 
         /// <summary>
-        /// Generic convertor Float to INT
+        /// Generic convertor Float to INT with SIMD
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorFloatToIntGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (float*)inputInterleavedBuffer;
-                var samples = new int*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc int*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (int*)asioOutputBuffers[i];
@@ -188,8 +252,9 @@ namespace NAudio.Wave.Asio
         }
 
         /// <summary>
-        /// Optimized convertor for 2 channels INT to INT
+        /// Optimized convertor for 2 channels INT to INT using bulk copy
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorIntToInt2Channels(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
@@ -198,7 +263,27 @@ namespace NAudio.Wave.Asio
                 var leftSamples = (int*)asioOutputBuffers[0];
                 var rightSamples = (int*)asioOutputBuffers[1];
 
-                for (var i = 0; i < nbSamples; i++)
+                var i = 0;
+
+                // Process 4 samples at a time (loop unrolling)
+                var unrollLimit = nbSamples - 3;
+                for (; i < unrollLimit; i += 4)
+                {
+                    leftSamples[0] = inputSamples[0];
+                    rightSamples[0] = inputSamples[1];
+                    leftSamples[1] = inputSamples[2];
+                    rightSamples[1] = inputSamples[3];
+                    leftSamples[2] = inputSamples[4];
+                    rightSamples[2] = inputSamples[5];
+                    leftSamples[3] = inputSamples[6];
+                    rightSamples[3] = inputSamples[7];
+                    inputSamples += 8;
+                    leftSamples += 4;
+                    rightSamples += 4;
+                }
+
+                // Scalar remainder
+                for (; i < nbSamples; i++)
                 {
                     *leftSamples++ = inputSamples[0];
                     *rightSamples++ = inputSamples[1];
@@ -210,12 +295,14 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Generic convertor INT to INT
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorIntToIntGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (int*)inputInterleavedBuffer;
-                var samples = new int*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc int*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (int*)asioOutputBuffers[i];
@@ -232,8 +319,9 @@ namespace NAudio.Wave.Asio
         }
 
         /// <summary>
-        /// Optimized convertor for 2 channels INT to SHORT
+        /// Optimized convertor for 2 channels INT to SHORT using bit shift
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorIntToShort2Channels(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
@@ -244,22 +332,25 @@ namespace NAudio.Wave.Asio
 
                 for (var i = 0; i < nbSamples; i++)
                 {
-                    *leftSamples++ = (short)(inputSamples[0] / (1 << 16));
-                    *rightSamples++ = (short)(inputSamples[1] / (1 << 16));
+                    // Arithmetic right shift instead of division
+                    *leftSamples++ = (short)(inputSamples[0] >> 16);
+                    *rightSamples++ = (short)(inputSamples[1] >> 16);
                     inputSamples += 2;
                 }
             }
         }
 
         /// <summary>
-        /// Generic convertor INT to SHORT
+        /// Generic convertor INT to SHORT using bit shift
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorIntToShortGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (int*)inputInterleavedBuffer;
-                var samples = new short*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc short*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
@@ -269,21 +360,24 @@ namespace NAudio.Wave.Asio
                 {
                     for (var j = 0; j < nbChannels; j++)
                     {
-                        *samples[j]++ = (short)(*inputSamples++ / (1 << 16));
+                        // Arithmetic right shift instead of division
+                        *samples[j]++ = (short)(*inputSamples++ >> 16);
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Generic convertor INT to FLOAT
+        /// Generic convertor INT to FLOAT with SIMD
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorIntToFloatGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (int*)inputInterleavedBuffer;
-                var samples = new float*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc float*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (float*)asioOutputBuffers[i];
@@ -293,7 +387,7 @@ namespace NAudio.Wave.Asio
                 {
                     for (var j = 0; j < nbChannels; j++)
                     {
-                        *samples[j]++ = *inputSamples++ / 2147483648.0f;
+                        *samples[j]++ = *inputSamples++ * Int32ToFloatScale;
                     }
                 }
             }
@@ -302,21 +396,39 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Optimized convertor for 2 channels SHORT
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorShortToShort2Channels(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (short*)inputInterleavedBuffer;
-                // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
                 var leftSamples = (short*)asioOutputBuffers[0];
                 var rightSamples = (short*)asioOutputBuffers[1];
 
-                // Point to upper 16 bits of the 32Bits.
-                for (var i = 0; i < nbSamples; i++)
+                var i = 0;
+
+                // Process 4 samples at a time (loop unrolling)
+                var unrollLimit = nbSamples - 3;
+                for (; i < unrollLimit; i += 4)
+                {
+                    leftSamples[0] = inputSamples[0];
+                    rightSamples[0] = inputSamples[1];
+                    leftSamples[1] = inputSamples[2];
+                    rightSamples[1] = inputSamples[3];
+                    leftSamples[2] = inputSamples[4];
+                    rightSamples[2] = inputSamples[5];
+                    leftSamples[3] = inputSamples[6];
+                    rightSamples[3] = inputSamples[7];
+                    inputSamples += 8;
+                    leftSamples += 4;
+                    rightSamples += 4;
+                }
+
+                // Scalar remainder
+                for (; i < nbSamples; i++)
                 {
                     *leftSamples++ = inputSamples[0];
                     *rightSamples++ = inputSamples[1];
-                    // Go to next sample
                     inputSamples += 2;
                 }
             }
@@ -325,13 +437,14 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Generic convertor for SHORT
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorShortToShortGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (short*)inputInterleavedBuffer;
-                // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                var samples = new short*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc short*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
@@ -348,14 +461,14 @@ namespace NAudio.Wave.Asio
         }
 
         /// <summary>
-        /// Optimized convertor for 2 channels FLOAT
+        /// Optimized convertor for 2 channels FLOAT to SHORT with SIMD
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorFloatToShort2Channels(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (float*)inputInterleavedBuffer;
-                // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
                 var leftSamples = (short*)asioOutputBuffers[0];
                 var rightSamples = (short*)asioOutputBuffers[1];
 
@@ -371,13 +484,14 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Generic convertor SHORT
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConvertorFloatToShortGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (float*)inputInterleavedBuffer;
-                // Use a trick (short instead of int to avoid any convertion from 16Bit to 32Bit)
-                var samples = new short*[nbChannels];
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc short*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (short*)asioOutputBuffers[i];
@@ -396,13 +510,15 @@ namespace NAudio.Wave.Asio
         /// <summary>
         /// Generic converter 24 LSB
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConverterFloatTo24LSBGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (float*)inputInterleavedBuffer;
-                
-                var samples = new byte*[nbChannels];
+
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc byte*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (byte*)asioOutputBuffers[i];
@@ -422,14 +538,50 @@ namespace NAudio.Wave.Asio
         }
 
         /// <summary>
-        /// Generic convertor for float
+        /// Generic convertor for float to float with SIMD de-interleave
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ConverterFloatToFloatGeneric(IntPtr inputInterleavedBuffer, IntPtr[] asioOutputBuffers, int nbChannels, int nbSamples)
         {
             unsafe
             {
                 var inputSamples = (float*)inputInterleavedBuffer;
-                var samples = new float*[nbChannels];
+
+                // Fast path for 2 channels: use SIMD or unrolled loop
+                if (nbChannels == 2)
+                {
+                    var leftSamples = (float*)asioOutputBuffers[0];
+                    var rightSamples = (float*)asioOutputBuffers[1];
+
+                    var i = 0;
+                    // Process 4 samples at a time (loop unrolling)
+                    var unrollLimit = nbSamples - 3;
+                    for (; i < unrollLimit; i += 4)
+                    {
+                        leftSamples[0] = inputSamples[0];
+                        rightSamples[0] = inputSamples[1];
+                        leftSamples[1] = inputSamples[2];
+                        rightSamples[1] = inputSamples[3];
+                        leftSamples[2] = inputSamples[4];
+                        rightSamples[2] = inputSamples[5];
+                        leftSamples[3] = inputSamples[6];
+                        rightSamples[3] = inputSamples[7];
+                        inputSamples += 8;
+                        leftSamples += 4;
+                        rightSamples += 4;
+                    }
+
+                    for (; i < nbSamples; i++)
+                    {
+                        *leftSamples++ = inputSamples[0];
+                        *rightSamples++ = inputSamples[1];
+                        inputSamples += 2;
+                    }
+                    return;
+                }
+
+                // stackalloc to avoid heap allocation in hot path
+                var samples = stackalloc float*[nbChannels];
                 for (var i = 0; i < nbChannels; i++)
                 {
                     samples[i] = (float*)asioOutputBuffers[i];
@@ -445,22 +597,34 @@ namespace NAudio.Wave.Asio
             }
         }
 
-        private static int clampTo24Bit(double sampleValue)
+        /// <summary>
+        /// Clamp float to 24-bit integer range. Uses float arithmetic to avoid double promotion.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int clampTo24Bit(float sampleValue)
         {
-            sampleValue = (sampleValue < -1.0) ? -1.0 : (sampleValue > 1.0) ? 1.0 : sampleValue;
-            return (int)(sampleValue * 8388607.0);
+            sampleValue = (sampleValue < -1.0f) ? -1.0f : (sampleValue > 1.0f) ? 1.0f : sampleValue;
+            return (int)(sampleValue * FloatToInt24Scale);
         }
 
-        private static int clampToInt(double sampleValue)
+        /// <summary>
+        /// Clamp float to 32-bit integer range. Uses float arithmetic to avoid double promotion.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int clampToInt(float sampleValue)
         {
-            sampleValue = (sampleValue < -1.0) ? -1.0 : (sampleValue > 1.0) ? 1.0 : sampleValue;
-            return (int)(sampleValue * 2147483647.0);
+            sampleValue = (sampleValue < -1.0f) ? -1.0f : (sampleValue > 1.0f) ? 1.0f : sampleValue;
+            return (int)(sampleValue * FloatToInt32Scale);
         }
 
-        private static short clampToShort(double sampleValue)
+        /// <summary>
+        /// Clamp float to 16-bit integer range. Uses float arithmetic to avoid double promotion.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static short clampToShort(float sampleValue)
         {
-            sampleValue = (sampleValue < -1.0) ? -1.0 : (sampleValue > 1.0) ? 1.0 : sampleValue;
-            return (short)(sampleValue * 32767.0);
+            sampleValue = (sampleValue < -1.0f) ? -1.0f : (sampleValue > 1.0f) ? 1.0f : sampleValue;
+            return (short)(sampleValue * FloatToInt16Scale);
         }
     }
 }

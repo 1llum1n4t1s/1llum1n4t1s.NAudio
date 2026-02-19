@@ -148,8 +148,7 @@ namespace NAudio.Wave
                 if (position < 0)
                 {
                     bytesWritten = (int) Math.Min(numBytes, 0 - position);
-                    for (var n = 0; n < bytesWritten; n++)
-                        destBuffer[n + offset] = 0;
+                    Array.Clear(destBuffer, offset, bytesWritten);
                 }
                 if (bytesWritten < numBytes)
                 {
@@ -198,7 +197,7 @@ namespace NAudio.Wave
         public float Volume
         {
             get { return volume; }
-            set { volume = value; }
+            set { volume = Math.Max(0f, value); }
         }
 
         /// <summary>
@@ -207,7 +206,7 @@ namespace NAudio.Wave
         public float Pan
         {
             get { return pan; }
-            set { pan = value; }
+            set { pan = Math.Max(-1f, Math.Min(1f, value)); }
         }
 
         /// <summary>

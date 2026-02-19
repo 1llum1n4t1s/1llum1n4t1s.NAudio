@@ -40,6 +40,7 @@ namespace NAudio.CoreAudioApi
         private AudioEndpointVolume audioEndpointVolume;
         private AudioSessionManager audioSessionManager;
         private DeviceTopology deviceTopology;
+        private bool disposed;
         #endregion
 
         #region Guids
@@ -300,17 +301,32 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
-            this.audioEndpointVolume?.Dispose();
-            this.audioSessionManager?.Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
+
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        /// <param name="disposing">True if disposing from Dispose(), false if from finalizer</param>
+        private void Dispose(bool disposing)
+        {
+            if (disposed) return;
+            disposed = true;
+            this.audioEndpointVolume?.Dispose();
+            this.audioSessionManager?.Dispose();
+            this.audioMeterInformation = null;
+            this.deviceTopology = null;
+            this.propertyStore = null;
+            Marshal.ReleaseComObject(deviceInterface);
+        }
+
         /// <summary>
         /// Finalizer
         /// </summary>
         ~MMDevice()
         {
-            Dispose();
+            Dispose(false);
         }
     }
 }

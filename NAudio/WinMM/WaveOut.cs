@@ -17,7 +17,7 @@ namespace NAudio.Wave
         private readonly WaveInterop.WaveCallback callback;
         private readonly WaveCallbackInfo callbackInfo;
         private readonly object waveOutLock;
-        private int queuedBuffers;
+        private volatile int queuedBuffers;
         private readonly SynchronizationContext syncContext;
 
         /// <summary>
@@ -106,6 +106,7 @@ namespace NAudio.Wave
         /// <param name="waveProvider">WaveProvider to play</param>
         public void Init(IWaveProvider waveProvider)
         {
+            if (waveProvider == null) throw new ArgumentNullException(nameof(waveProvider));
             waveStream = waveProvider;
             var bufferSize = waveProvider.WaveFormat.ConvertLatencyToByteSize((DesiredLatency + NumberOfBuffers - 1) / NumberOfBuffers);
 
@@ -301,7 +302,11 @@ namespace NAudio.Wave
 
             lock (waveOutLock)
             {
-                WaveInterop.waveOutClose(hWaveOut);
+                if (hWaveOut != IntPtr.Zero)
+                {
+                    WaveInterop.waveOutClose(hWaveOut);
+                    hWaveOut = IntPtr.Zero;
+                }
             }
             if (disposing)
             {
@@ -325,6 +330,7 @@ namespace NAudio.Wave
             {
                 var hBuffer = (GCHandle)wavhdr.userData;
                 var buffer = (WaveOutBuffer)hBuffer.Target;
+                if (buffer == null) return;
                 Interlocked.Decrement(ref queuedBuffers);
                 Exception exception = null;
                 // check that we're not here through pressing stop

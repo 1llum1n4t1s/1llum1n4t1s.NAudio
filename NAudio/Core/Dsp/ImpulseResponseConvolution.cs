@@ -15,16 +15,23 @@ namespace NAudio.Dsp
         /// </remarks>
         public float[] Convolve(float[] input, float[] impulseResponse)
         {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (impulseResponse == null) throw new ArgumentNullException(nameof(impulseResponse));
+
             var output = new float[input.Length + impulseResponse.Length - 1];
-            for(var t = 0; t < output.Length; t++)
+            // Optimized inner loop: compute valid overlap range to avoid branching per iteration
+            for (var t = 0; t < output.Length; t++)
             {
-                for(var n = 0; n < impulseResponse.Length; n++)
+                // n must satisfy: n >= 0, n < impulseResponse.Length, t - n >= 0, t - n < input.Length
+                // => n in [max(0, t - input.Length + 1), min(impulseResponse.Length - 1, t)]
+                var nStart = Math.Max(0, t - input.Length + 1);
+                var nEnd = Math.Min(impulseResponse.Length - 1, t);
+                float sum = 0;
+                for (var n = nStart; n <= nEnd; n++)
                 {
-                    if((t >= n) && (t-n < input.Length))
-                    {
-                        output[t] += impulseResponse[n] * input[t-n];
-                    }
+                    sum += impulseResponse[n] * input[t - n];
                 }
+                output[t] = sum;
             }
             Normalize(output);
             return output;
@@ -35,12 +42,16 @@ namespace NAudio.Dsp
         /// </summary>
         public void Normalize(float[] data)
         {
+            if (data == null) throw new ArgumentNullException(nameof(data));
             float max = 0;
-            for(var n = 0; n < data.Length; n++)
-                max = Math.Max(max,Math.Abs(data[n]));
-            if(max > 1.0)
-                for(var n = 0; n < data.Length; n++)
-                    data[n] /= max;
+            for (var n = 0; n < data.Length; n++)
+                max = MathF.Max(max, MathF.Abs(data[n]));
+            if (max > 1.0f)
+            {
+                var invMax = 1.0f / max;
+                for (var n = 0; n < data.Length; n++)
+                    data[n] *= invMax;
+            }
         }
     }
 }

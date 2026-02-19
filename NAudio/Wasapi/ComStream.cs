@@ -144,20 +144,12 @@ namespace NAudio.Wave
 
         protected override void Dispose(bool disposing)
         {
+            if (disposing && stream != null)
+            {
+                stream.Dispose();
+                stream = null;
+            }
             base.Dispose(disposing);
-            if (stream == null)
-                return;
-            stream.Dispose();
-            stream = null;
-        }
-
-        public override void Close()
-        {
-            base.Close();
-            if (stream == null)
-                return;
-            stream.Close();
-            stream = null;
         }
     }
 }

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.CompilerServices;
 using NAudio.Utils;
 
 namespace NAudio.Wave
@@ -79,19 +82,26 @@ namespace NAudio.Wave
         {
             this.writer.Write(System.Text.Encoding.UTF8.GetBytes("SSND"));
             dataSizePos = this.outStream.Position;
-            this.writer.Write((int)0);  // placeholder
-            this.writer.Write((int)0);  // zero offset
-            this.writer.Write((int)0);  // zero blockSize
+            this.writer.Write(SwapEndian((int)0));  // placeholder (big-endian)
+            this.writer.Write(SwapEndian((int)0));  // zero offset (big-endian)
+            this.writer.Write(SwapEndian((int)0));  // zero blockSize (big-endian)
         }
 
+        private readonly byte[] swapBuf2 = new byte[2];
+        private readonly byte[] swapBuf4 = new byte[4];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte[] SwapEndian(short n)
         {
-            return new byte[] { (byte)(n >> 8), (byte)(n & 0xff) };
+            BinaryPrimitives.WriteInt16BigEndian(swapBuf2, n);
+            return swapBuf2;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte[] SwapEndian(int n)
         {
-            return new byte[] { (byte)((n >> 24) & 0xff), (byte)((n >> 16) & 0xff), (byte)((n >> 8) & 0xff), (byte)(n & 0xff), };
+            BinaryPrimitives.WriteInt32BigEndian(swapBuf4, n);
+            return swapBuf4;
         }
 
         private void CreateCommChunk()
@@ -195,20 +205,26 @@ namespace NAudio.Wave
         /// <param name="count">the number of bytes to write</param>
         public override void Write(byte[] data, int offset, int count)
         {
-            var swappedData = new byte[count];
-
-            var align = format.BitsPerSample / 8;
-
-            for (var i = 0; i < count; i++)
+            var swappedData = ArrayPool<byte>.Shared.Rent(count);
+            try
             {
-                var sampleRelPos = i % align;
-                var sampleStart = (i / align) * align;
-                var pos = sampleStart + (align - sampleRelPos - 1);
-                swappedData[i] = data[offset + pos];
-            }
+                var align = format.BitsPerSample / 8;
 
-            outStream.Write(swappedData, 0, count);
-            dataChunkSize += count;
+                for (var i = 0; i < count; i++)
+                {
+                    var sampleRelPos = i % align;
+                    var sampleStart = (i / align) * align;
+                    var pos = sampleStart + (align - sampleRelPos - 1);
+                    swappedData[i] = data[offset + pos];
+                }
+
+                outStream.Write(swappedData, 0, count);
+                dataChunkSize += count;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(swappedData);
+            }
         }
 
         private byte[] value24 = new byte[3]; // keep this around to save us creating it every time
@@ -221,21 +237,25 @@ namespace NAudio.Wave
         {
             if (WaveFormat.BitsPerSample == 16)
             {
-                writer.Write(SwapEndian((Int16)(Int16.MaxValue * sample)));
+                writer.Write(SwapEndian(ClampToInt16(sample)));
                 dataChunkSize += 2;
             }
             else if (WaveFormat.BitsPerSample == 24)
             {
-                var value = BitConverter.GetBytes((Int32)(Int32.MaxValue * sample));
-                value24[2] = value[1];
-                value24[1] = value[2];
+                var clamped = ClampToFloat(sample);
+                Span<byte> value = stackalloc byte[4];
+                BinaryPrimitives.WriteInt32LittleEndian(value, (Int32)(Int32.MaxValue * (double)clamped));
+                // Big-endian 24-bit: write the top 3 bytes in big-endian order
                 value24[0] = value[3];
+                value24[1] = value[2];
+                value24[2] = value[1];
                 writer.Write(value24);
                 dataChunkSize += 3;
             }
             else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == NAudio.Wave.WaveFormatEncoding.Extensible)
             {
-                writer.Write(SwapEndian((int)(Int32.MaxValue * (double)sample)));
+                var clamped = ClampToFloat(sample);
+                writer.Write(SwapEndian((int)(Int32.MaxValue * (double)clamped)));
                 dataChunkSize += 4;
             }
             else
@@ -253,6 +273,10 @@ namespace NAudio.Wave
         /// <param name="count">The number of floating point samples to write</param>
         public void WriteSamples(float[] samples, int offset, int count)
         {
+            if (samples == null) throw new ArgumentNullException(nameof(samples));
+            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset), "Must be non-negative");
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count), "Must be non-negative");
+            if (offset + count > samples.Length) throw new ArgumentException("offset + count exceeds buffer length");
             for (var n = 0; n < count; n++)
             {
                 WriteSample(samples[offset + n]);
@@ -267,6 +291,10 @@ namespace NAudio.Wave
         /// <param name="count">The number of 16 bit samples to write</param>
         public void WriteSamples(short[] samples, int offset, int count)
         {
+            if (samples == null) throw new ArgumentNullException(nameof(samples));
+            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset), "Must be non-negative");
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count), "Must be non-negative");
+            if (offset + count > samples.Length) throw new ArgumentException("offset + count exceeds buffer length");
             // 16 bit PCM data
             if (WaveFormat.BitsPerSample == 16)
             {
@@ -279,13 +307,16 @@ namespace NAudio.Wave
             // 24 bit PCM data
             else if (WaveFormat.BitsPerSample == 24)
             {
-                byte[] value;
+                Span<byte> value = stackalloc byte[4];
                 for (var sample = 0; sample < count; sample++)
                 {
-                    value = BitConverter.GetBytes(UInt16.MaxValue * (Int32)samples[sample + offset]);
-                    value24[2] = value[1];
-                    value24[1] = value[2];
-                    value24[0] = value[3];
+                    // Shift 16-bit sample left by 8 bits for 16→24 bit conversion.
+                    // WriteInt32LittleEndian stores as [byte0=LSB, byte1, byte2, byte3=MSB].
+                    // For big-endian 24-bit output, write lower 3 bytes in reverse order.
+                    BinaryPrimitives.WriteInt32LittleEndian(value, (int)samples[sample + offset] << 8);
+                    value24[0] = value[2];
+                    value24[1] = value[1];
+                    value24[2] = value[0];
                     writer.Write(value24);
                 }
                 dataChunkSize += (count * 3);
@@ -374,5 +405,18 @@ namespace NAudio.Wave
         }
 
         #endregion
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static short ClampToInt16(float sample)
+        {
+            sample = (sample < -1.0f) ? -1.0f : (sample > 1.0f) ? 1.0f : sample;
+            return (short)(sample * short.MaxValue);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float ClampToFloat(float sample)
+        {
+            return (sample < -1.0f) ? -1.0f : (sample > 1.0f) ? 1.0f : sample;
+        }
     }
 }

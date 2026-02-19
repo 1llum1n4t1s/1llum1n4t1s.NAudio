@@ -77,6 +77,7 @@ namespace NAudio.Wave
                     activate = activator;
                     return comObject;
                 }
+                Marshal.ReleaseComObject(activator);
             }
             return null;
         }

@@ -36,8 +36,8 @@ namespace NAudio.Wave.SampleProviders
         {
             if (sourceSample + 1 < sourceSamples)
             {
-                sampleLeft = sourceWaveBuffer.ShortBuffer[sourceSample++] * (1.0f / 32768.0f);
-                sampleRight = sourceWaveBuffer.ShortBuffer[sourceSample++] * (1.0f / 32768.0f);
+                sampleLeft = sourceWaveBuffer.ShortBuffer[sourceSample++] * (1.0f / (short.MaxValue + 1f));
+                sampleRight = sourceWaveBuffer.ShortBuffer[sourceSample++] * (1.0f / (short.MaxValue + 1f));
                 return true;
             }
             else

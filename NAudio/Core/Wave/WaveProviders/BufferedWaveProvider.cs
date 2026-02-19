@@ -89,14 +89,22 @@ namespace NAudio.Wave
         /// </summary>
         public void AddSamples(byte[] buffer, int offset, int count)
         {
+            AddSamples(buffer.AsSpan(offset, count));
+        }
+
+        /// <summary>
+        /// Adds samples from a ReadOnlySpan. Takes a copy of data, so that the source can be reused if necessary
+        /// </summary>
+        public void AddSamples(ReadOnlySpan<byte> data)
+        {
             // create buffer here to allow user to customise buffer length
             if (circularBuffer == null)
-            { 
+            {
                 circularBuffer = new CircularBuffer(BufferLength);
             }
 
-            var written = circularBuffer.Write(buffer, offset, count);
-            if (written < count && !DiscardOnBufferOverflow)
+            var written = circularBuffer.Write(data);
+            if (written < data.Length && !DiscardOnBufferOverflow)
             {
                 throw new InvalidOperationException("Buffer full");
             }
@@ -106,17 +114,17 @@ namespace NAudio.Wave
         /// Reads from this WaveProvider
         /// Will always return count bytes, since we will zero-fill the buffer if not enough available
         /// </summary>
-        public int Read(byte[] buffer, int offset, int count) 
+        public int Read(byte[] buffer, int offset, int count)
         {
             var read = 0;
             if (circularBuffer != null) // not yet created
-            { 
+            {
                 read = circularBuffer.Read(buffer, offset, count);
             }
             if (ReadFully && read < count)
             {
                 // zero the end of the buffer
-                Array.Clear(buffer, offset + read, count - read);
+                buffer.AsSpan(offset + read, count - read).Clear();
                 read = count;
             }
             return read;

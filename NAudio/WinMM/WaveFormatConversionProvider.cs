@@ -25,6 +25,8 @@ namespace NAudio.Wave
         /// <param name="sourceProvider">Source Provider</param>
         public WaveFormatConversionProvider(WaveFormat targetFormat, IWaveProvider sourceProvider)
         {
+            if (targetFormat == null) throw new ArgumentNullException(nameof(targetFormat));
+            if (sourceProvider == null) throw new ArgumentNullException(nameof(sourceProvider));
             this.sourceProvider = sourceProvider;
             WaveFormat = targetFormat;
 
@@ -44,6 +46,10 @@ namespace NAudio.Wave
         /// </summary>
         public void Reposition()
         {
+            if (isDisposed)
+            {
+                throw new ObjectDisposedException(nameof(WaveFormatConversionProvider));
+            }
             leftoverDestBytes = 0;
             leftoverDestOffset = 0;
             leftoverSourceBytes = 0;
@@ -59,6 +65,10 @@ namespace NAudio.Wave
         /// <returns>Number of bytes read</returns>
         public int Read(byte[] buffer, int offset, int count)
         {
+            if (isDisposed)
+            {
+                throw new ObjectDisposedException(nameof(WaveFormatConversionProvider));
+            }
             var bytesRead = 0;
             if (count % WaveFormat.BlockAlign != 0)
             {
@@ -86,6 +96,11 @@ namespace NAudio.Wave
                 // now we'll convert one full source buffer
                 var sourceReadSize = Math.Min(preferredSourceReadSize,
                     conversionStream.SourceBuffer.Length - leftoverSourceBytes);
+                if (sourceReadSize <= 0)
+                {
+                    // source buffer is full of leftovers with no room for more data
+                    break;
+                }
 
                 // always read our preferred size, we can always keep leftovers for the next call to Read if we get
                 // too much
@@ -109,8 +124,8 @@ namespace NAudio.Wave
 
                 if (leftoverSourceBytes > 0)
                 {
-                    // buffer.blockcopy is safe for overlapping copies
-                    Buffer.BlockCopy(conversionStream.SourceBuffer, sourceBytesConverted, conversionStream.SourceBuffer,
+                    // Array.Copy is safe for overlapping copies within the same array
+                    Array.Copy(conversionStream.SourceBuffer, sourceBytesConverted, conversionStream.SourceBuffer,
                         0, leftoverSourceBytes);
                 }
 
@@ -124,6 +139,11 @@ namespace NAudio.Wave
                     {
                         leftoverDestBytes = destBytesConverted - toCopy;
                         leftoverDestOffset = toCopy;
+                    }
+                    else
+                    {
+                        leftoverDestBytes = 0;
+                        leftoverDestOffset = 0;
                     }
                     Array.Copy(conversionStream.DestBuffer, 0, buffer, bytesRead + offset, toCopy);
                     bytesRead += toCopy;

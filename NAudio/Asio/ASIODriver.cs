@@ -33,7 +33,7 @@ namespace NAudio.Wave.Asio
             {
                 return regKey.GetSubKeyNames();
             }
-            return new string[0];
+            return Array.Empty<string>();
         }
 
         /// <summary>
@@ -48,7 +48,12 @@ namespace NAudio.Wave.Asio
             {
                 throw new ArgumentException($"Driver Name {name} doesn't exist");
             }
-            var guid = regKey.GetValue("CLSID").ToString();
+            var clsidValue = regKey.GetValue("CLSID");
+            if (clsidValue == null)
+            {
+                throw new InvalidOperationException($"ASIO driver '{name}' registry entry is missing the CLSID value");
+            }
+            var guid = clsidValue.ToString();
             return GetAsioDriverByGuid(new Guid(guid));
         }
 
@@ -258,7 +263,11 @@ namespace NAudio.Wave.Asio
         public AsioError DisposeBuffers()
         {
             var result = asioDriverVTable.disposeBuffers(pAsioComObject);
-            Marshal.FreeHGlobal(pinnedcallbacks);
+            if (pinnedcallbacks != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(pinnedcallbacks);
+                pinnedcallbacks = IntPtr.Zero;
+            }
             return result;
         }
 

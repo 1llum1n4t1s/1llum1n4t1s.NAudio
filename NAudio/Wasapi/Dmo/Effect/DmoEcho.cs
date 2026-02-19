@@ -231,17 +231,17 @@ namespace NAudio.Dmo.Effect
         {
             var guidEcho = new Guid("EF3E932C-D40B-4F51-8CCF-3F98F1B29D5D");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidEcho));
 
-            if (targetDescriptor != null)
-            {
-                var mediaComObject = Activator.CreateInstance(Type.GetTypeFromCLSID(targetDescriptor.Clsid));
+            if (targetDescriptor == null)
+                throw new InvalidOperationException("DMO Echo effect not found on this system");
 
-                mediaObject = new MediaObject((IMediaObject) mediaComObject);
-                mediaObjectInPlace = new MediaObjectInPlace((IMediaObjectInPlace) mediaComObject);
-                effectParams = new Params((IDirectSoundFXEcho) mediaComObject);
-            }
+            var mediaComObject = Activator.CreateInstance(Type.GetTypeFromCLSID(targetDescriptor.Clsid));
+
+            mediaObject = new MediaObject((IMediaObject) mediaComObject);
+            mediaObjectInPlace = new MediaObjectInPlace((IMediaObjectInPlace) mediaComObject);
+            effectParams = new Params((IDirectSoundFXEcho) mediaComObject);
         }
 
         /// <summary>

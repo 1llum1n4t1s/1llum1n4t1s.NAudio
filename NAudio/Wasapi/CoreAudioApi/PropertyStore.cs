@@ -20,6 +20,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 // this version modified for NAudio from Ray Molenkamp's original
+using System;
 using System.Runtime.InteropServices;
 using NAudio.CoreAudioApi.Interfaces;
 
@@ -67,7 +68,9 @@ namespace NAudio.CoreAudioApi
         public bool Contains(PropertyKey key)
         {
             var result = storeInterface.GetValue(ref key, out var propVariant);
-            return result >= 0 && (VarEnum)propVariant.vt != VarEnum.VT_EMPTY;
+            var found = result >= 0 && (VarEnum)propVariant.vt != VarEnum.VT_EMPTY;
+            PropVariantNative.PropVariantClear(ref propVariant);
+            return found;
         }
 
         /// <summary>
@@ -81,11 +84,15 @@ namespace NAudio.CoreAudioApi
         {
             obj = default;
             var result = storeInterface.GetValue(ref key, out var propVariant);
-            
-            if (result < 0 || (VarEnum)propVariant.vt == VarEnum.VT_EMPTY) 
+
+            if (result < 0 || (VarEnum)propVariant.vt == VarEnum.VT_EMPTY)
+            {
+                PropVariantNative.PropVariantClear(ref propVariant);
                 return false;
+            }
 
             obj = (T)propVariant.Value;
+            PropVariantNative.PropVariantClear(ref propVariant);
             return true;
         }
 

@@ -106,7 +106,7 @@ namespace NAudio.Wave
                 writer.BaseStream.Position += 4; // skip over ds64 chunk size
                 writer.Write(riffSize);
                 writer.Write(dataLength);
-                writer.Write(dataLength / bytesPerSample);
+                writer.Write(bytesPerSample > 0 ? dataLength / bytesPerSample : 0L);
 
                 // data chunk size can stay as -1
             }

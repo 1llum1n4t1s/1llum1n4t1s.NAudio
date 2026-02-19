@@ -169,15 +169,21 @@ namespace NAudio.Wave.Compression
         /// <returns>The number of converted bytes in the DestinationBuffer</returns>
         public int Convert(int bytesToConvert, out int sourceBytesConverted)
         {
+            if (streamHeader == null)
+            {
+                throw new ObjectDisposedException(nameof(AcmStream));
+            }
+
             if (bytesToConvert % sourceFormat.BlockAlign != 0)
             {
                 System.Diagnostics.Debug.WriteLine(String.Format("Not a whole number of blocks: {0} ({1})", bytesToConvert, sourceFormat.BlockAlign));
                 bytesToConvert -= (bytesToConvert % sourceFormat.BlockAlign);
             }
 
-            if (streamHeader == null)
+            if (bytesToConvert == 0)
             {
-                throw new ObjectDisposedException("AcmStream has already been disposed");
+                sourceBytesConverted = 0;
+                return 0;
             }
 
             return streamHeader.Convert(bytesToConvert, out sourceBytesConverted);
@@ -240,11 +246,10 @@ namespace NAudio.Wave.Compression
             {
                 var result = AcmInterop.acmStreamClose(streamHandle, 0);
                 streamHandle = IntPtr.Zero;
-                if (result != MmResult.NoError)
+                if (disposing && result != MmResult.NoError)
                 {
                     throw new MmException(result, "acmStreamClose");
                 }
-
             }
             // Set large fields to null.
             if (driverHandle != IntPtr.Zero)

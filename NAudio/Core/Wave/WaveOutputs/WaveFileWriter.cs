@@ -1,5 +1,7 @@
 using System;
+using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.CompilerServices;
 using NAudio.Wave.SampleProviders;
 using NAudio.Utils;
 
@@ -90,8 +92,8 @@ namespace NAudio.Wave
         /// <param name="format">Wave format to use</param>
         public WaveFileWriter(Stream outStream, WaveFormat format)
         {
-            this.outStream = outStream;
-            this.format = format;
+            this.outStream = outStream ?? throw new ArgumentNullException(nameof(outStream));
+            this.format = format ?? throw new ArgumentNullException(nameof(format));
             writer = new BinaryWriter(outStream, System.Text.Encoding.UTF8);
             writer.Write(System.Text.Encoding.UTF8.GetBytes("RIFF"));
             writer.Write((int)0); // placeholder
@@ -244,12 +246,14 @@ namespace NAudio.Wave
         {
             if (WaveFormat.BitsPerSample == 16)
             {
-                writer.Write((Int16)(Int16.MaxValue * sample));
+                writer.Write(ClampToInt16(sample));
                 dataChunkSize += 2;
             }
             else if (WaveFormat.BitsPerSample == 24)
             {
-                var value = BitConverter.GetBytes((Int32)(Int32.MaxValue * sample));
+                var clamped = ClampToFloat(sample);
+                Span<byte> value = stackalloc byte[4];
+                BinaryPrimitives.WriteInt32LittleEndian(value, (Int32)(Int32.MaxValue * (double)clamped));
                 value24[0] = value[1];
                 value24[1] = value[2];
                 value24[2] = value[3];
@@ -258,7 +262,8 @@ namespace NAudio.Wave
             }
             else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == WaveFormatEncoding.Extensible)
             {
-                writer.Write((int)(Int32.MaxValue * (double)sample));
+                var clamped = ClampToFloat(sample);
+                writer.Write((int)(Int32.MaxValue * (double)clamped));
                 dataChunkSize += 4;
             }
             else if (WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
@@ -281,6 +286,10 @@ namespace NAudio.Wave
         /// <param name="count">The number of floating point samples to write</param>
         public void WriteSamples(float[] samples, int offset, int count)
         {
+            if (samples == null) throw new ArgumentNullException(nameof(samples));
+            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset), "Must be non-negative");
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count), "Must be non-negative");
+            if (offset + count > samples.Length) throw new ArgumentException("offset + count exceeds buffer length");
             for (var n = 0; n < count; n++)
             {
                 WriteSample(samples[offset + n]);
@@ -308,6 +317,10 @@ namespace NAudio.Wave
         /// <param name="count">The number of 16 bit samples to write</param>
         public void WriteSamples(short[] samples, int offset, int count)
         {
+            if (samples == null) throw new ArgumentNullException(nameof(samples));
+            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset), "Must be non-negative");
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count), "Must be non-negative");
+            if (offset + count > samples.Length) throw new ArgumentException("offset + count exceeds buffer length");
             // 16 bit PCM data
             if (WaveFormat.BitsPerSample == 16)
             {
@@ -320,12 +333,16 @@ namespace NAudio.Wave
             // 24 bit PCM data
             else if (WaveFormat.BitsPerSample == 24)
             {
+                Span<byte> value = stackalloc byte[4];
                 for (var sample = 0; sample < count; sample++)
                 {
-                    var value = BitConverter.GetBytes(UInt16.MaxValue * (Int32)samples[sample + offset]);
-                    value24[0] = value[1];
-                    value24[1] = value[2];
-                    value24[2] = value[3];
+                    // Shift 16-bit sample left by 8 bits for 16→24 bit conversion.
+                    // WriteInt32LittleEndian stores as [byte0=LSB, byte1, byte2, byte3=MSB].
+                    // The lower 3 bytes [0],[1],[2] are the 24-bit little-endian value.
+                    BinaryPrimitives.WriteInt32LittleEndian(value, (int)samples[sample + offset] << 8);
+                    value24[0] = value[0];
+                    value24[1] = value[1];
+                    value24[2] = value[2];
                     writer.Write(value24);
                 }
                 dataChunkSize += (count * 3);
@@ -439,5 +456,18 @@ namespace NAudio.Wave
         }
 
         #endregion
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static short ClampToInt16(float sample)
+        {
+            sample = (sample < -1.0f) ? -1.0f : (sample > 1.0f) ? 1.0f : sample;
+            return (short)(sample * short.MaxValue);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float ClampToFloat(float sample)
+        {
+            return (sample < -1.0f) ? -1.0f : (sample > 1.0f) ? 1.0f : sample;
+        }
     }
 }

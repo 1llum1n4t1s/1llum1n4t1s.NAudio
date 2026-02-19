@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
@@ -71,8 +72,24 @@ namespace NAudio.Midi
                 }
                 // 0 = single track, 1 = multi-track synchronous, 2 = multi-track asynchronous
                 fileFormat = SwapUInt16(br.ReadUInt16());
+                if (fileFormat > 2)
+                {
+                    throw new FormatException($"Unsupported MIDI file format: {fileFormat}");
+                }
                 int tracks = SwapUInt16(br.ReadUInt16());
+                if (tracks == 0)
+                {
+                    throw new FormatException("MIDI file has no tracks");
+                }
+                if (fileFormat == 0 && tracks != 1)
+                {
+                    throw new FormatException($"MIDI file format 0 must have exactly 1 track, but has {tracks}");
+                }
                 deltaTicksPerQuarterNote = SwapUInt16(br.ReadUInt16());
+                if (deltaTicksPerQuarterNote == 0)
+                {
+                    throw new FormatException("MIDI file has zero delta ticks per quarter note");
+                }
 
                 events = new MidiEventCollection((fileFormat == 0) ? 0 : 1, deltaTicksPerQuarterNote);
                 for (var n = 0; n < tracks; n++)
@@ -96,6 +113,12 @@ namespace NAudio.Midi
                     chunkSize = SwapUInt32(br.ReadUInt32());
 
                     var startPos = br.BaseStream.Position;
+                    var endPos = startPos + chunkSize;
+                    if (endPos > br.BaseStream.Length)
+                    {
+                        throw new FormatException(
+                            $"Track {track} chunk size {chunkSize} exceeds stream length (position {startPos}, stream length {br.BaseStream.Length})");
+                    }
                     MidiEvent me = null;
                     var outstandingNoteOns = new List<NoteOnEvent>();
                     while(br.BaseStream.Position < startPos + chunkSize) 
@@ -196,17 +219,20 @@ namespace NAudio.Midi
         private void FindNoteOn(NoteEvent offEvent, List<NoteOnEvent> outstandingNoteOns)
         {
             var found = false;
-            foreach(var noteOnEvent in outstandingNoteOns)
+            // Search from the end: most recent NoteOn is the most likely match,
+            // improving performance when outstandingNoteOns is large.
+            for (var i = outstandingNoteOns.Count - 1; i >= 0; i--)
             {
-                if ((noteOnEvent.Channel == offEvent.Channel) && (noteOnEvent.NoteNumber == offEvent.NoteNumber)) 
+                var noteOnEvent = outstandingNoteOns[i];
+                if ((noteOnEvent.Channel == offEvent.Channel) && (noteOnEvent.NoteNumber == offEvent.NoteNumber))
                 {
                     noteOnEvent.OffEvent = offEvent;
-                    outstandingNoteOns.Remove(noteOnEvent);
+                    outstandingNoteOns.RemoveAt(i);
                     found = true;
                     break;
                 }
             }
-            if(!found) 
+            if (!found)
             {
                 if (strictChecking)
                 {
@@ -215,30 +241,29 @@ namespace NAudio.Midi
             }
         }
         
-        private static uint SwapUInt32(uint i) 
+        private static uint SwapUInt32(uint i)
         {
-            return ((i & 0xFF000000) >> 24) | ((i & 0x00FF0000) >> 8) | ((i & 0x0000FF00) << 8) | ((i & 0x000000FF) << 24);
+            return BinaryPrimitives.ReverseEndianness(i);
         }
 
-        private static ushort SwapUInt16(ushort i) 
+        private static ushort SwapUInt16(ushort i)
         {
-            return (ushort) (((i & 0xFF00) >> 8) | ((i & 0x00FF) << 8));
+            return BinaryPrimitives.ReverseEndianness(i);
         }
         
         /// <summary>
         /// Describes the MIDI file
         /// </summary>
         /// <returns>A string describing the MIDI file and its events</returns>
-        public override string ToString() 
+        public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("Format {0}, Tracks {1}, Delta Ticks Per Quarter Note {2}\r\n",
-                fileFormat,Tracks,deltaTicksPerQuarterNote);
+            sb.Append($"Format {fileFormat}, Tracks {Tracks}, Delta Ticks Per Quarter Note {deltaTicksPerQuarterNote}\r\n");
             for (var n = 0; n < Tracks; n++)
             {
                 foreach (var midiEvent in events[n])
                 {
-                    sb.AppendFormat("{0}\r\n", midiEvent);
+                    sb.Append(midiEvent).Append("\r\n");
                 }
             }
             return sb.ToString();
@@ -273,7 +298,7 @@ namespace NAudio.Midi
 
                     var absoluteTime = events.StartAbsoluteTime;
 
-                    // use a stable sort to preserve ordering of MIDI events whose 
+                    // use a stable sort to preserve ordering of MIDI events whose
                     // absolute times are the same
                     MergeSort.Sort(eventList, new MidiEventComparer());
                     if (eventList.Count > 0)

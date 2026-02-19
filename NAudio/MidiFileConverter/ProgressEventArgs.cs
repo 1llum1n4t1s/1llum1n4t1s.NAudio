@@ -7,9 +7,6 @@ namespace MarkHeath.MidiUtils
     /// </summary>
     public class ProgressEventArgs : EventArgs
     {
-        private string message;
-        private ProgressMessageType messageType;
-
         /// <summary>
         /// New progress event arguments
         /// </summary>
@@ -17,8 +14,8 @@ namespace MarkHeath.MidiUtils
         /// <param name="message">The message</param>
         public ProgressEventArgs(ProgressMessageType messageType, string message)
         {
-            this.message = message;
-            this.messageType = messageType;
+            Message = message;
+            MessageType = messageType;
         }
 
         /// <summary>
@@ -29,31 +26,19 @@ namespace MarkHeath.MidiUtils
         /// <param name="args">format arguments</param>
         public ProgressEventArgs(ProgressMessageType messageType, string message, params object[] args)
         {
-            this.messageType = messageType;
-            this.message = String.Format(message, args);
+            MessageType = messageType;
+            Message = string.Format(message, args);
         }
 
         /// <summary>
         /// The message
         /// </summary>
-        public string Message
-        {
-            get
-            {
-                return message;
-            }
-        }
+        public string Message { get; }
 
         /// <summary>
         /// The message type
         /// </summary>
-        public ProgressMessageType MessageType
-        {
-            get
-            {
-                return messageType;
-            }
-        }
+        public ProgressMessageType MessageType { get; }
     }
 
     /// <summary>

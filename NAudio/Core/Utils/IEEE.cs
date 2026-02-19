@@ -12,7 +12,7 @@ namespace NAudio.Utils
         #region Helper Methods
         private static double UnsignedToFloat(ulong u)
         {
-            return (((double)((long)(u - 2147483647L - 1))) + 2147483648.0);
+            return (((double)((long)(u - int.MaxValue - 1))) + (int.MaxValue + 1.0));
         }
 
         private static double ldexp(double x, int exp)
@@ -28,7 +28,7 @@ namespace NAudio.Utils
 
         private static ulong FloatToUnsigned(double f)
         {
-            return ((ulong)(((long)(f - 2147483648.0)) + 2147483647L) + 1);
+            return ((ulong)(((long)(f - (int.MaxValue + 1.0))) + int.MaxValue) + 1);
         }
         #endregion
 
@@ -111,7 +111,7 @@ namespace NAudio.Utils
         /// <returns>A C# double precision number that is a close representation of the IEEE extended number.</returns>
         public static double ConvertFromIeeeExtended(byte[] bytes)
         {
-            if (bytes.Length != 10) throw new Exception("Incorrect length for IEEE extended.");
+            if (bytes.Length != 10) throw new ArgumentException("Incorrect length for IEEE extended.", nameof(bytes));
             double f;
             int expon;
             uint hiMant, loMant;

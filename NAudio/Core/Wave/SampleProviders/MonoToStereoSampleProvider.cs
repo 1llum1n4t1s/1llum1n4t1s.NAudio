@@ -1,4 +1,5 @@
 ﻿using System;
+using NAudio.Utils;
 
 namespace NAudio.Wave.SampleProviders
 {
@@ -65,10 +66,7 @@ namespace NAudio.Wave.SampleProviders
 
         private void EnsureSourceBuffer(int count)
         {
-            if (sourceBuffer == null || sourceBuffer.Length < count)
-            {
-                sourceBuffer = new float[count];
-            }
+            sourceBuffer = BufferHelpers.Ensure(sourceBuffer, count);
         }
     }
 }

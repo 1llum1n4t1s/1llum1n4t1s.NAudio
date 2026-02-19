@@ -1,4 +1,6 @@
-﻿namespace NAudio.Codecs
+﻿using System.Runtime.CompilerServices;
+
+namespace NAudio.Codecs
 {
     /// <summary>
     /// mu-law encoder
@@ -35,11 +37,12 @@
         /// </summary>
         /// <param name="sample">16 bit PCM sample</param>
         /// <returns>mu-law encoded byte</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte LinearToMuLawSample(short sample)
         {
             var sign = (sample >> 8) & 0x80;
             if (sign != 0)
-                sample = (short)-sample;
+                sample = sample == short.MinValue ? short.MaxValue : (short)-sample;
             if (sample > cClip)
                 sample = cClip;
             sample = (short)(sample + cBias);

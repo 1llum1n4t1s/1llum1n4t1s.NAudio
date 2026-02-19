@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace NAudio.Dsp
 {
@@ -54,7 +55,7 @@ namespace NAudio.Dsp
     public class SmbPitchShifter
     {
 
-        private static int MAX_FRAME_LENGTH = 16000;
+        private const int MAX_FRAME_LENGTH = 16000;
         private float[] gInFIFO = new float[MAX_FRAME_LENGTH];
         private float[] gOutFIFO = new float[MAX_FRAME_LENGTH];
         private float[] gFFTworksp = new float[2*MAX_FRAME_LENGTH];
@@ -77,13 +78,21 @@ namespace NAudio.Dsp
         }
 
         /// <summary>
-        /// Pitch Shift 
+        /// Pitch Shift
         /// </summary>
         public void PitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize,
             long osamp, float sampleRate, float[] indata)
         {
-            double magn, phase, tmp, window, real, imag;
-            double freqPerBin, expct;
+            if (indata == null) throw new ArgumentNullException(nameof(indata));
+            if (fftFrameSize < 2 || fftFrameSize > MAX_FRAME_LENGTH)
+                throw new ArgumentOutOfRangeException(nameof(fftFrameSize), $"fftFrameSize must be between 2 and {MAX_FRAME_LENGTH}");
+            if (osamp < 1) throw new ArgumentOutOfRangeException(nameof(osamp), "osamp must be at least 1");
+            if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "sampleRate must be greater than zero");
+            if (numSampsToProcess < 0 || numSampsToProcess > indata.Length)
+                throw new ArgumentOutOfRangeException(nameof(numSampsToProcess));
+
+            float magn, phase, tmp, window, real, imag;
+            float freqPerBin, expct;
             long i, k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;
 
 
@@ -91,8 +100,8 @@ namespace NAudio.Dsp
             /* set up some handy variables */
             fftFrameSize2 = fftFrameSize/2;
             stepSize = fftFrameSize/osamp;
-            freqPerBin = sampleRate/(double) fftFrameSize;
-            expct = 2.0*Math.PI*(double) stepSize/(double) fftFrameSize;
+            freqPerBin = sampleRate/fftFrameSize;
+            expct = 2.0f * MathF.PI * stepSize / fftFrameSize;
             inFifoLatency = fftFrameSize - stepSize;
             if (gRover == 0) gRover = inFifoLatency;
 
@@ -114,8 +123,8 @@ namespace NAudio.Dsp
                     /* do windowing and re,im interleave */
                     for (k = 0; k < fftFrameSize; k++)
                     {
-                        window = -.5*Math.Cos(2.0*Math.PI*(double) k/(double) fftFrameSize) + .5;
-                        gFFTworksp[2*k] = (float) (gInFIFO[k]*window);
+                        window = -0.5f * MathF.Cos(2.0f * MathF.PI * k / fftFrameSize) + 0.5f;
+                        gFFTworksp[2*k] = gInFIFO[k] * window;
                         gFFTworksp[2*k + 1] = 0.0F;
                     }
 
@@ -133,41 +142,38 @@ namespace NAudio.Dsp
                         imag = gFFTworksp[2*k + 1];
 
                         /* compute magnitude and phase */
-                        magn = 2.0*Math.Sqrt(real*real + imag*imag);
-                        phase = Math.Atan2(imag, real);
+                        magn = 2.0f * MathF.Sqrt(real*real + imag*imag);
+                        phase = MathF.Atan2(imag, real);
 
                         /* compute phase difference */
                         tmp = phase - gLastPhase[k];
-                        gLastPhase[k] = (float) phase;
+                        gLastPhase[k] = phase;
 
                         /* subtract expected phase difference */
-                        tmp -= (double) k*expct;
+                        tmp -= k * expct;
 
                         /* map delta phase into +/- Pi interval */
-                        qpd = (long) (tmp/Math.PI);
+                        qpd = (long) (tmp / MathF.PI);
                         if (qpd >= 0) qpd += qpd & 1;
                         else qpd -= qpd & 1;
-                        tmp -= Math.PI*(double) qpd;
+                        tmp -= MathF.PI * qpd;
 
                         /* get deviation from bin frequency from the +/- Pi interval */
-                        tmp = osamp*tmp/(2.0*Math.PI);
+                        tmp = osamp * tmp / (2.0f * MathF.PI);
 
                         /* compute the k-th partials' true frequency */
-                        tmp = (double) k*freqPerBin + tmp*freqPerBin;
+                        tmp = k * freqPerBin + tmp * freqPerBin;
 
                         /* store magnitude and true frequency in analysis arrays */
-                        gAnaMagn[k] = (float) magn;
-                        gAnaFreq[k] = (float) tmp;
+                        gAnaMagn[k] = magn;
+                        gAnaFreq[k] = tmp;
 
                     }
 
                     /* ***************** PROCESSING ******************* */
                     /* this does the actual pitch shifting */
-                    for (var zero = 0; zero < fftFrameSize; zero++)
-                    {
-                        gSynMagn[zero] = 0;
-                        gSynFreq[zero] = 0;
-                    }
+                    Array.Clear(gSynMagn, 0, (int)fftFrameSize);
+                    Array.Clear(gSynFreq, 0, (int)fftFrameSize);
 
                     for (k = 0; k <= fftFrameSize2; k++)
                     {
@@ -189,24 +195,24 @@ namespace NAudio.Dsp
                         tmp = gSynFreq[k];
 
                         /* subtract bin mid frequency */
-                        tmp -= (double) k*freqPerBin;
+                        tmp -= k * freqPerBin;
 
                         /* get bin deviation from freq deviation */
                         tmp /= freqPerBin;
 
                         /* take osamp into account */
-                        tmp = 2.0*Math.PI*tmp/osamp;
+                        tmp = 2.0f * MathF.PI * tmp / osamp;
 
                         /* add the overlap phase advance back in */
-                        tmp += (double) k*expct;
+                        tmp += k * expct;
 
                         /* accumulate delta phase to get bin phase */
-                        gSumPhase[k] += (float) tmp;
+                        gSumPhase[k] += tmp;
                         phase = gSumPhase[k];
 
                         /* get real and imag part and re-interleave */
-                        gFFTworksp[2*k] = (float) (magn*Math.Cos(phase));
-                        gFFTworksp[2*k + 1] = (float) (magn*Math.Sin(phase));
+                        gFFTworksp[2*k] = magn * MathF.Cos(phase);
+                        gFFTworksp[2*k + 1] = magn * MathF.Sin(phase);
                     }
 
                     /* zero negative frequencies */
@@ -218,31 +224,24 @@ namespace NAudio.Dsp
                     /* do windowing and add to output accumulator */
                     for (k = 0; k < fftFrameSize; k++)
                     {
-                        window = -.5*Math.Cos(2.0*Math.PI*(double) k/(double) fftFrameSize) + .5;
-                        gOutputAccum[k] += (float) (2.0*window*gFFTworksp[2*k]/(fftFrameSize2*osamp));
+                        window = -0.5f * MathF.Cos(2.0f * MathF.PI * k / fftFrameSize) + 0.5f;
+                        gOutputAccum[k] += 2.0f * window * gFFTworksp[2*k] / (fftFrameSize2 * osamp);
                     }
                     for (k = 0; k < stepSize; k++) gOutFIFO[k] = gOutputAccum[k];
 
                     /* shift accumulator */
-                    //memmove(gOutputAccum, gOutputAccum + stepSize, fftFrameSize * sizeof(float));
-                    for (k = 0; k < fftFrameSize; k++)
-                    {
-                        gOutputAccum[k] = gOutputAccum[k + stepSize];
-                    }
-                    for (k = fftFrameSize; k < fftFrameSize + stepSize; k++)
-                    {
-                        gOutputAccum[k] = 0.0F;
-                    }
+                    Array.Copy(gOutputAccum, (int)stepSize, gOutputAccum, 0, (int)fftFrameSize);
+                    Array.Clear(gOutputAccum, (int)fftFrameSize, (int)stepSize);
 
                     /* move input FIFO */
-                    for (k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k + stepSize];
+                    Array.Copy(gInFIFO, (int)stepSize, gInFIFO, 0, (int)inFifoLatency);
                 }
             }
         }
         /// <summary>
         /// Short Time Fourier Transform
         /// </summary>
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ShortTimeFourierTransform(float[] fftBuffer, long fftFrameSize, long sign)
         {
             float wr, wi, arg, temp;
@@ -266,16 +265,16 @@ namespace NAudio.Dsp
                     fftBuffer[j + 1] = temp;
                 }
             }
-            var max = (long) (Math.Log(fftFrameSize)/Math.Log(2.0) + .5);
+            var max = (long) (MathF.Log(fftFrameSize) / MathF.Log(2.0f) + 0.5f);
             for (k = 0, le = 2; k < max; k++)
             {
                 le <<= 1;
                 le2 = le >> 1;
                 ur = 1.0F;
                 ui = 0.0F;
-                arg = (float) Math.PI/(le2 >> 1);
-                wr = (float) Math.Cos(arg);
-                wi = (float) (sign*Math.Sin(arg));
+                arg = MathF.PI / (le2 >> 1);
+                wr = MathF.Cos(arg);
+                wi = sign * MathF.Sin(arg);
                 for (j = 0; j < le2; j += 2)
                 {
 

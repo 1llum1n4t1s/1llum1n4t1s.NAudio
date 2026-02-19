@@ -32,8 +32,10 @@ namespace NAudio.Wave
         /// <returns>The default audio loopback capture device</returns>
         public static MMDevice GetDefaultLoopbackCaptureDevice()
         {
-            var devices = new MMDeviceEnumerator();
-            return devices.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            using (var devices = new MMDeviceEnumerator())
+            {
+                return devices.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            }
         }
         
         /// <summary>

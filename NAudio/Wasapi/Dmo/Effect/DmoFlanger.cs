@@ -291,17 +291,17 @@ namespace NAudio.Dmo.Effect
         {
             var guidFlanger = new Guid("EFCA3D92-DFD8-4672-A603-7420894BAD98");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidFlanger));
 
-            if (targetDescriptor != null)
-            {
-                var mediaComObject = Activator.CreateInstance(Type.GetTypeFromCLSID(targetDescriptor.Clsid));
+            if (targetDescriptor == null)
+                throw new InvalidOperationException("DMO Flanger effect not found on this system");
 
-                mediaObject = new MediaObject((IMediaObject)mediaComObject);
-                mediaObjectInPlace = new MediaObjectInPlace((IMediaObjectInPlace)mediaComObject);
-                effectParams = new Params((IDirectSoundFXFlanger)mediaComObject);
-            }
+            var mediaComObject = Activator.CreateInstance(Type.GetTypeFromCLSID(targetDescriptor.Clsid));
+
+            mediaObject = new MediaObject((IMediaObject)mediaComObject);
+            mediaObjectInPlace = new MediaObjectInPlace((IMediaObjectInPlace)mediaComObject);
+            effectParams = new Params((IDirectSoundFXFlanger)mediaComObject);
         }
 
         /// <summary>

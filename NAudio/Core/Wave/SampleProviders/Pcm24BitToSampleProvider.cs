@@ -31,7 +31,7 @@
             var outIndex = offset;
             for (var n = 0; n < bytesRead; n += 3)
             {
-                buffer[outIndex++] = (((sbyte)sourceBuffer[n + 2] << 16) | (sourceBuffer[n + 1] << 8) | sourceBuffer[n]) * (1.0f / 8388608f);
+                buffer[outIndex++] = (((sbyte)sourceBuffer[n + 2] << 16) | (sourceBuffer[n + 1] << 8) | sourceBuffer[n]) * (1.0f / (1 << 23));
             }
             return bytesRead / 3;
         }

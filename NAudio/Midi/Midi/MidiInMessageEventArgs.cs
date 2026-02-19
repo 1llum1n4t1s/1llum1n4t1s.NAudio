@@ -20,9 +20,13 @@ namespace NAudio.Midi
             {
                 this.MidiEvent = MidiEvent.FromRawMessage(message);
             }
-            catch (Exception)
+            catch (FormatException)
             {
-                // don't worry too much - might be an invalid message
+                // MidiEvent.FromRawMessage throws FormatException for unsupported MIDI command codes
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // MIDI event constructors may reject out-of-range data values
             }
         }
 

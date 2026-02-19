@@ -29,11 +29,14 @@ namespace NAudio.Wave
             this.waveFormatTag = WaveFormatEncoding.DviAdpcm; // can also be ImaAdpcm - they are the same
             this.sampleRate = sampleRate;
             this.channels = (short)channels;
-            this.bitsPerSample = (short)bitsPerSample; // TODO: can be 3 or 4
-            this.extraSize = 2;            
-            this.blockAlign = 0; //TODO
-            this.averageBytesPerSecond = 0; //TODO
-            this.samplesPerBlock = 0; // TODO
+            this.bitsPerSample = (short)bitsPerSample;
+            this.extraSize = 2;
+            // Standard IMA ADPCM block size: 256 bytes per channel for 4-bit
+            this.blockAlign = (short)(256 * channels);
+            // Samples per block: 4 byte header per channel gives 1 initial sample,
+            // remaining bytes hold 2 samples each (4 bits per sample)
+            this.samplesPerBlock = (short)((((blockAlign - (4 * channels)) * 2) / channels) + 1);
+            this.averageBytesPerSecond = (this.sampleRate * blockAlign) / samplesPerBlock;
         }
     }
 }

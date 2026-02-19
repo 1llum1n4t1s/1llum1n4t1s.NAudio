@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Text;
 
 // ReSharper disable once CheckNamespace
@@ -27,7 +28,15 @@ namespace NAudio.Wave
         /// <summary>
         /// The chunk identifier converted to a string
         /// </summary>
-        public string IdentifierAsString => Encoding.UTF8.GetString(BitConverter.GetBytes(Identifier));
+        public string IdentifierAsString
+        {
+            get
+            {
+                Span<byte> bytes = stackalloc byte[4];
+                BinaryPrimitives.WriteInt32LittleEndian(bytes, Identifier);
+                return Encoding.UTF8.GetString(bytes);
+            }
+        }
 
         /// <summary>
         /// The chunk length

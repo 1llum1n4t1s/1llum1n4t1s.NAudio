@@ -1,11 +1,12 @@
 using System;
+using NAudio.Utils;
 
 namespace NAudio.Wave.SampleProviders
 {
     /// <summary>
     /// Takes a stereo input and turns it to mono
     /// </summary>
-    public class StereoToMonoSampleProvider : ISampleProvider
+    public class StereoToMonoSampleProvider : ISampleProvider, IDisposable
     {
         private readonly ISampleProvider sourceProvider;
         private float[] sourceBuffer;
@@ -47,19 +48,26 @@ namespace NAudio.Wave.SampleProviders
         public int Read(float[] buffer, int offset, int count)
         {
             var sourceSamplesRequired = count * 2;
-            if (sourceBuffer == null || sourceBuffer.Length < sourceSamplesRequired) sourceBuffer = new float[sourceSamplesRequired];
+            sourceBuffer = BufferHelpers.EnsurePooled(sourceBuffer, sourceSamplesRequired);
 
             var sourceSamplesRead = sourceProvider.Read(sourceBuffer, 0, sourceSamplesRequired);
             var destOffset = offset;
+            var leftVol = LeftVolume;
+            var rightVol = RightVolume;
             for (var sourceSample = 0; sourceSample < sourceSamplesRead; sourceSample += 2)
             {
-                var left = sourceBuffer[sourceSample];
-                var right = sourceBuffer[sourceSample + 1];
-                var outSample = (left * LeftVolume) + (right * RightVolume);
-
-                buffer[destOffset++] = outSample;
+                buffer[destOffset++] = (sourceBuffer[sourceSample] * leftVol) + (sourceBuffer[sourceSample + 1] * rightVol);
             }
             return sourceSamplesRead / 2;
+        }
+
+        /// <summary>
+        /// Disposes this sample provider, returning pooled buffers
+        /// </summary>
+        public void Dispose()
+        {
+            BufferHelpers.ReturnPooled(sourceBuffer);
+            sourceBuffer = null;
         }
     }
 }

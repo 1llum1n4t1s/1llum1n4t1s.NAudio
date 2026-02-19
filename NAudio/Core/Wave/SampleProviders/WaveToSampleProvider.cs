@@ -30,18 +30,7 @@ namespace NAudio.Wave.SampleProviders
             EnsureSourceBuffer(bytesNeeded);
             var bytesRead = source.Read(sourceBuffer, 0, bytesNeeded);
             var samplesRead = bytesRead / 4;
-            var outputIndex = offset;
-            unsafe
-            {
-                fixed(byte* pBytes = &sourceBuffer[0])
-                {
-                    var pFloat = (float*)pBytes;
-                    for (int n = 0, i = 0; n < bytesRead; n += 4, i++)
-                    {
-                        buffer[outputIndex++] = *(pFloat + i);
-                    }
-                }
-            }
+            Buffer.BlockCopy(sourceBuffer, 0, buffer, offset * 4, bytesRead);
             return samplesRead;
         }
     }

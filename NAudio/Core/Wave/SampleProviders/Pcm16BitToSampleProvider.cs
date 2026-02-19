@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 
 namespace NAudio.Wave.SampleProviders
 {
@@ -32,7 +33,7 @@ namespace NAudio.Wave.SampleProviders
             var outIndex = offset;
             for(var n = 0; n < bytesRead; n+=2)
             {
-                buffer[outIndex++] = BitConverter.ToInt16(sourceBuffer, n) / 32768f;
+                buffer[outIndex++] = BinaryPrimitives.ReadInt16LittleEndian(sourceBuffer.AsSpan(n)) / (short.MaxValue + 1f);
             }
             return bytesRead / 2;
         }

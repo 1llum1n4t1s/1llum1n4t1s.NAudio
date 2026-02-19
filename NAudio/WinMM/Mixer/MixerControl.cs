@@ -94,24 +94,28 @@ namespace NAudio.Mixer
 
             // set up the pointer to a structure
             var pMixerControl = Marshal.AllocCoTaskMem(Marshal.SizeOf(mc));
-            //Marshal.StructureToPtr(mc, pMixerControl, false);      
 
-            mlc.cbStruct = Marshal.SizeOf(mlc);
-            mlc.cControls = 1;
-            mlc.dwControlID = controlId;
-            mlc.cbmxctrl = Marshal.SizeOf(mc);
-            mlc.pamxctrl = pMixerControl;
-            mlc.dwLineID = nLineId;
-            var err = MixerInterop.mixerGetLineControls(mixerHandle, ref mlc, MixerFlags.OneById | mixerFlags);
-            if (err != MmResult.NoError)
+            try
+            {
+                mlc.cbStruct = Marshal.SizeOf(mlc);
+                mlc.cControls = 1;
+                mlc.dwControlID = controlId;
+                mlc.cbmxctrl = Marshal.SizeOf(mc);
+                mlc.pamxctrl = pMixerControl;
+                mlc.dwLineID = nLineId;
+                var err = MixerInterop.mixerGetLineControls(mixerHandle, ref mlc, MixerFlags.OneById | mixerFlags);
+                if (err != MmResult.NoError)
+                {
+                    throw new MmException(err, "mixerGetLineControls");
+                }
+
+                // retrieve the structure from the pointer
+                mc = Marshal.PtrToStructure<MixerInterop.MIXERCONTROL>(mlc.pamxctrl);
+            }
+            finally
             {
                 Marshal.FreeCoTaskMem(pMixerControl);
-                throw new MmException(err, "mixerGetLineControls");
             }
-
-            // retrieve the structure from the pointer
-            mc = Marshal.PtrToStructure<MixerInterop.MIXERCONTROL>(mlc.pamxctrl);
-            Marshal.FreeCoTaskMem(pMixerControl);
 
             if (IsControlBoolean(mc.dwControlType))
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 
 namespace NAudio.Wave
 {
@@ -43,11 +44,7 @@ namespace NAudio.Wave
 
         private void WriteBigEndian(byte[] buffer, int offset, int value)
         {
-            var littleEndian = BitConverter.GetBytes(value);
-            for (var n = 0; n < 4; n++)
-            {
-                buffer[offset + 3 - n] = littleEndian[n];
-            }
+            BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offset), value);
         }
 
         /// <summary>

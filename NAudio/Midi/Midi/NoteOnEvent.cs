@@ -117,6 +117,10 @@ namespace NAudio.Midi
         {
             get
             {
+                if (offEvent == null)
+                {
+                    return 0;
+                }
                 return (int)(offEvent.AbsoluteTime - this.AbsoluteTime);
             }
             set
@@ -124,6 +128,10 @@ namespace NAudio.Midi
                 if (value < 0)
                 {
                     throw new ArgumentException("NoteLength must be 0 or greater");
+                }
+                if (offEvent == null)
+                {
+                    throw new InvalidOperationException("Cannot set NoteLength when no off event is associated");
                 }
                 offEvent.AbsoluteTime = this.AbsoluteTime + value;
             }
@@ -138,12 +146,9 @@ namespace NAudio.Midi
         {
             if ((this.Velocity == 0) && (OffEvent == null))
             {
-                return String.Format("{0} (Note Off)",
-                    base.ToString());
+                return $"{base.ToString()} (Note Off)";
             }
-            return String.Format("{0} Len: {1}",
-                base.ToString(),
-                (this.OffEvent == null) ? "?" : this.NoteLength.ToString());
+            return $"{base.ToString()} Len: {((this.OffEvent == null) ? "?" : this.NoteLength.ToString())}";
         }
     }
 }

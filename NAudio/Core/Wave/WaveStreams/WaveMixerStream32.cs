@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace NAudio.Wave
@@ -55,9 +56,9 @@ namespace NAudio.Wave
         public void AddInputStream(WaveStream waveStream)
         {
             if (waveStream.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
-                throw new ArgumentException("Must be IEEE floating point", "waveStream");
+                throw new ArgumentException("Must be IEEE floating point", nameof(waveStream));
             if (waveStream.WaveFormat.BitsPerSample != 32)
-                throw new ArgumentException("Only 32 bit audio currently supported", "waveStream");
+                throw new ArgumentException("Only 32 bit audio currently supported", nameof(waveStream));
 
             if (inputStreams.Count == 0)
             {
@@ -69,7 +70,7 @@ namespace NAudio.Wave
             else
             {
                 if (!waveStream.WaveFormat.Equals(waveFormat))
-                    throw new ArgumentException("All incoming channels must have the same format", "waveStream");
+                    throw new ArgumentException("All incoming channels must have the same format", nameof(waveStream));
             }
 
             lock (inputsLock)
@@ -133,32 +134,39 @@ namespace NAudio.Wave
 
 
             if (count % bytesPerSample != 0)
-                throw new ArgumentException("Must read an whole number of samples", "count");
+                throw new ArgumentException("Must read an whole number of samples", nameof(count));
 
             // blank the buffer
             Array.Clear(buffer, offset, count);
             var bytesRead = 0;
 
             // sum the channels in
-            var readBuffer = new byte[count];
-            lock (inputsLock)
+            var readBuffer = ArrayPool<byte>.Shared.Rent(count);
+            try
             {
-                foreach (var inputStream in inputStreams)
+                lock (inputsLock)
                 {
-                    if (inputStream.HasData(count))
+                    foreach (var inputStream in inputStreams)
                     {
-                        var readFromThisStream = inputStream.Read(readBuffer, 0, count);
-                        // don't worry if input stream returns less than we requested - may indicate we have got to the end
-                        bytesRead = Math.Max(bytesRead, readFromThisStream);
-                        if (readFromThisStream > 0)
-                            Sum32BitAudio(buffer, offset, readBuffer, readFromThisStream);
-                    }
-                    else
-                    {
-                        bytesRead = Math.Max(bytesRead, count);
-                        inputStream.Position += count;
+                        if (inputStream.HasData(count))
+                        {
+                            var readFromThisStream = inputStream.Read(readBuffer, 0, count);
+                            // don't worry if input stream returns less than we requested - may indicate we have got to the end
+                            bytesRead = Math.Max(bytesRead, readFromThisStream);
+                            if (readFromThisStream > 0)
+                                Sum32BitAudio(buffer, offset, readBuffer, readFromThisStream);
+                        }
+                        else
+                        {
+                            bytesRead = Math.Max(bytesRead, count);
+                            inputStream.Position += count;
+                        }
                     }
                 }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(readBuffer);
             }
             position += count;
             return count;

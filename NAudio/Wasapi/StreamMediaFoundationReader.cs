@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using NAudio.MediaFoundation;
 
 // ReSharper disable once CheckNamespace
@@ -26,15 +27,26 @@ namespace NAudio.Wave
         /// </summary>
         protected override IMFSourceReader CreateReader(MediaFoundationReaderSettings settings)
         {
-            var ppSourceReader = MediaFoundationApi.CreateSourceReaderFromByteStream(MediaFoundationApi.CreateByteStream(new ComStream(stream)));
+            var comStream = new ComStream(stream);
+            var byteStream = MediaFoundationApi.CreateByteStream(comStream);
+            var ppSourceReader = MediaFoundationApi.CreateSourceReaderFromByteStream(byteStream);
 
             ppSourceReader.SetStreamSelection(-2, false);
             ppSourceReader.SetStreamSelection(-3, true);
-            ppSourceReader.SetCurrentMediaType(-3, IntPtr.Zero, new MediaType
+
+            var partialMediaType = new MediaType
             {
                 MajorType = MediaTypes.MFMediaType_Audio,
                 SubType = settings.RequestFloatOutput ? AudioSubtypes.MFAudioFormat_Float : AudioSubtypes.MFAudioFormat_PCM
-            }.MediaFoundationObject);
+            };
+            try
+            {
+                ppSourceReader.SetCurrentMediaType(-3, IntPtr.Zero, partialMediaType.MediaFoundationObject);
+            }
+            finally
+            {
+                Marshal.ReleaseComObject(partialMediaType.MediaFoundationObject);
+            }
 
             return ppSourceReader;
         }

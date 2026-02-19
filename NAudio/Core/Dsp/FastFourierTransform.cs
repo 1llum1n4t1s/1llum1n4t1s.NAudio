@@ -1,4 +1,6 @@
 using System;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace NAudio.Dsp
 {
@@ -8,18 +10,19 @@ namespace NAudio.Dsp
     public static class FastFourierTransform
     {
         /// <summary>
-        /// This computes an in-place complex-to-complex FFT 
+        /// This computes an in-place complex-to-complex FFT
         /// x and y are the real and imaginary arrays of 2^m points.
         /// </summary>
         public static void FFT(bool forward, int m, Complex[] data)
         {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (m < 1 || m > 30) throw new ArgumentOutOfRangeException(nameof(m), "Must be between 1 and 30 inclusive");
+            if (data.Length < (1 << m)) throw new ArgumentException($"Data array length must be at least {1 << m} for m={m}", nameof(data));
             int n, i, i1, j, k, i2, l, l1, l2;
             float c1, c2, tx, ty, t1, t2, u1, u2, z;
 
             // Calculate the number of points
-            n = 1;
-            for (i = 0; i < m; i++)
-                n *= 2;
+            n = 1 << m;
 
             // Do the bit reversal
             i2 = n >> 1;
@@ -45,7 +48,7 @@ namespace NAudio.Dsp
                 j += k;
             }
 
-            // Compute the FFT 
+            // Compute the FFT
             c1 = -1.0f;
             c2 = 0.0f;
             l2 = 1;
@@ -71,31 +74,58 @@ namespace NAudio.Dsp
                     u2 = u1 * c2 + u2 * c1;
                     u1 = z;
                 }
-                c2 = (float)Math.Sqrt((1.0f - c1) / 2.0f);
+                c2 = MathF.Sqrt((1.0f - c1) * 0.5f);
                 if (forward)
                     c2 = -c2;
-                c1 = (float)Math.Sqrt((1.0f + c1) / 2.0f);
+                c1 = MathF.Sqrt((1.0f + c1) * 0.5f);
             }
 
-            // Scaling for forward transform 
+            // Scaling for forward transform using SIMD where possible
             if (forward)
             {
-                for (i = 0; i < n; i++)
+                var invN = 1.0f / n;
+                // Vector path: scale X and Y components
+                if (Vector.IsHardwareAccelerated && n >= Vector<float>.Count)
                 {
-                    data[i].X /= n;
-                    data[i].Y /= n;
+                    // Treat the Complex array as a flat float buffer via Span
+                    var floatSpan = System.Runtime.InteropServices.MemoryMarshal.Cast<Complex, float>(data.AsSpan(0, n));
+                    var totalFloats = floatSpan.Length;
+                    var vecSize = Vector<float>.Count;
+                    var invNVec = new Vector<float>(invN);
+
+                    var fi = 0;
+                    for (; fi <= totalFloats - vecSize; fi += vecSize)
+                    {
+                        var v = new Vector<float>(floatSpan.Slice(fi));
+                        (v * invNVec).CopyTo(floatSpan.Slice(fi));
+                    }
+                    // scalar remainder
+                    for (; fi < totalFloats; fi++)
+                    {
+                        floatSpan[fi] *= invN;
+                    }
+                }
+                else
+                {
+                    for (i = 0; i < n; i++)
+                    {
+                        data[i].X *= invN;
+                        data[i].Y *= invN;
+                    }
                 }
             }
         }
-        
+
         /// <summary>
         /// Applies a Hamming Window
         /// </summary>
         /// <param name="n">Index into frame</param>
         /// <param name="frameSize">Frame size (e.g. 1024)</param>
         /// <returns>Multiplier for Hamming window</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double HammingWindow(int n, int frameSize)
         {
+            if (frameSize <= 1) return 1.0;
             return 0.54 - 0.46 * Math.Cos((2 * Math.PI * n) / (frameSize - 1));
         }
 
@@ -105,8 +135,10 @@ namespace NAudio.Dsp
         /// <param name="n">Index into frame</param>
         /// <param name="frameSize">Frame size (e.g. 1024)</param>
         /// <returns>Multiplier for Hann window</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double HannWindow(int n, int frameSize)
         {
+            if (frameSize <= 1) return 1.0;
             return 0.5 * (1 - Math.Cos((2 * Math.PI * n) / (frameSize - 1)));
         }
 
@@ -116,9 +148,12 @@ namespace NAudio.Dsp
         /// <param name="n">Index into frame</param>
         /// <param name="frameSize">Frame size (e.g. 1024)</param>
         /// <returns>Multiplier for Blackmann-Harris window</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double BlackmannHarrisWindow(int n, int frameSize)
         {
-            return 0.35875 - (0.48829 * Math.Cos((2 * Math.PI * n) / (frameSize - 1))) + (0.14128 * Math.Cos((4 * Math.PI * n) / (frameSize - 1))) - (0.01168 * Math.Cos((6 * Math.PI * n) / (frameSize - 1)));
+            if (frameSize <= 1) return 1.0;
+            var phase = (2 * Math.PI * n) / (frameSize - 1);
+            return 0.35875 - 0.48829 * Math.Cos(phase) + 0.14128 * Math.Cos(2 * phase) - 0.01168 * Math.Cos(3 * phase);
         }
     }
 }

@@ -35,20 +35,26 @@ namespace NAudio.Mixer
 		/// <summary>
 		/// The current value of the control
 		/// </summary>
-		public bool Value 
+		public bool Value
 		{
-			get 
+			get
 			{
 				GetControlDetails(); // make sure we have the latest value
 				return (boolDetails.fValue == 1);
 			}
-			set 
+			set
 			{
                 boolDetails.fValue = (value) ? 1 : 0;
                 mixerControlDetails.paDetails = Marshal.AllocHGlobal(Marshal.SizeOf(boolDetails));
-                Marshal.StructureToPtr(boolDetails, mixerControlDetails.paDetails, false);
-                MmException.Try(MixerInterop.mixerSetControlDetails(mixerHandle, ref mixerControlDetails, MixerFlags.Value | mixerHandleType), "mixerSetControlDetails");
-                Marshal.FreeHGlobal(mixerControlDetails.paDetails);
+                try
+                {
+                    Marshal.StructureToPtr(boolDetails, mixerControlDetails.paDetails, false);
+                    MmException.Try(MixerInterop.mixerSetControlDetails(mixerHandle, ref mixerControlDetails, MixerFlags.Value | mixerHandleType), "mixerSetControlDetails");
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(mixerControlDetails.paDetails);
+                }
 			}
 		}		
 	}

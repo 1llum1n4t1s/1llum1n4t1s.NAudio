@@ -1,3 +1,4 @@
+using System;
 using NAudio.Dsp;
 using NAudio.Wave;
 
@@ -16,15 +17,16 @@ namespace NAudio.Extras
         private readonly BiQuadFilter[,] filters;
         private readonly int channels;
         private readonly int bandCount;
-        private bool updated;
+        private volatile bool updated;
 
         /// <summary>
         /// Creates a new Equalizer
         /// </summary>
         public Equalizer(ISampleProvider sourceProvider, EqualizerBand[] bands)
         {
-            this.sourceProvider = sourceProvider;
-            this.bands = bands;
+            this.sourceProvider = sourceProvider ?? throw new ArgumentNullException(nameof(sourceProvider));
+            this.bands = bands ?? throw new ArgumentNullException(nameof(bands));
+            if (bands.Length == 0) throw new ArgumentException("Must provide at least one equalizer band", nameof(bands));
             channels = sourceProvider.WaveFormat.Channels;
             bandCount = bands.Length;
             filters = new BiQuadFilter[channels,bands.Length];

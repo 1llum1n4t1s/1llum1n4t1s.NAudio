@@ -1,5 +1,8 @@
-﻿using System;
+using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using NAudio.Utils;
 
 namespace NAudio.Wave.SampleProviders
@@ -7,7 +10,7 @@ namespace NAudio.Wave.SampleProviders
     /// <summary>
     /// A sample provider mixer, allowing inputs to be added and removed
     /// </summary>
-    public class MixingSampleProvider : ISampleProvider
+    public class MixingSampleProvider : ISampleProvider, IDisposable
     {
         private readonly List<ISampleProvider> sources;
         private float[] sourceBuffer;
@@ -142,26 +145,17 @@ namespace NAudio.Wave.SampleProviders
         public int Read(float[] buffer, int offset, int count)
         {
             var outputSamples = 0;
-            sourceBuffer = BufferHelpers.Ensure(sourceBuffer, count);
             lock (sources)
             {
+                sourceBuffer = BufferHelpers.EnsurePooled(sourceBuffer, count);
                 var index = sources.Count - 1;
                 while (index >= 0)
                 {
                     var source = sources[index];
                     var samplesRead = source.Read(sourceBuffer, 0, count);
-                    var outIndex = offset;
-                    for (var n = 0; n < samplesRead; n++)
-                    {
-                        if (n >= outputSamples)
-                        {
-                            buffer[outIndex++] = sourceBuffer[n];
-                        }
-                        else
-                        {
-                            buffer[outIndex++] += sourceBuffer[n];
-                        }
-                    }
+                    var srcSpan = new Span<float>(sourceBuffer, 0, samplesRead);
+                    var dstSpan = new Span<float>(buffer, offset, count);
+                    MixSamples(srcSpan, dstSpan, samplesRead, outputSamples);
                     outputSamples = Math.Max(samplesRead, outputSamples);
                     if (samplesRead < count)
                     {
@@ -174,14 +168,65 @@ namespace NAudio.Wave.SampleProviders
             // optionally ensure we return a full buffer
             if (ReadFully && outputSamples < count)
             {
-                var outputIndex = offset + outputSamples;
-                while (outputIndex < offset + count)
-                {
-                    buffer[outputIndex++] = 0;
-                }
+                new Span<float>(buffer, offset + outputSamples, count - outputSamples).Clear();
                 outputSamples = count;
             }
             return outputSamples;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void MixSamples(Span<float> src, Span<float> dst, int samplesRead, int outputSamples)
+        {
+            if (outputSamples == 0)
+            {
+                // First source: direct copy
+                src.CopyTo(dst);
+            }
+            else
+            {
+                // Subsequent sources: add to existing using SIMD where possible
+                var overlapCount = Math.Min(samplesRead, outputSamples);
+
+                if (Vector.IsHardwareAccelerated && overlapCount >= Vector<float>.Count)
+                {
+                    var vecSize = Vector<float>.Count;
+                    var n = 0;
+                    for (; n <= overlapCount - vecSize; n += vecSize)
+                    {
+                        var srcVec = new Vector<float>(src.Slice(n));
+                        var dstVec = new Vector<float>(dst.Slice(n));
+                        (dstVec + srcVec).CopyTo(dst.Slice(n));
+                    }
+                    // scalar remainder for overlap region
+                    for (; n < overlapCount; n++)
+                    {
+                        dst[n] += src[n];
+                    }
+                }
+                else
+                {
+                    for (var n = 0; n < overlapCount; n++)
+                    {
+                        dst[n] += src[n];
+                    }
+                }
+
+                // Copy any samples beyond the current output length
+                if (samplesRead > outputSamples)
+                {
+                    src.Slice(outputSamples, samplesRead - outputSamples)
+                       .CopyTo(dst.Slice(outputSamples));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Disposes this sample provider, returning pooled buffers
+        /// </summary>
+        public void Dispose()
+        {
+            BufferHelpers.ReturnPooled(sourceBuffer);
+            sourceBuffer = null;
         }
     }
 

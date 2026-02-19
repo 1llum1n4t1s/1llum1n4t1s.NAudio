@@ -100,6 +100,10 @@ namespace NAudio.CoreAudioApi
             WaveFormat waveFormat,
             Guid audioSessionGuid)
         {
+            // Release any previously obtained sub-client interfaces before re-initializing,
+            // because they become invalid after a new Initialize call.
+            DisposeSubClients();
+
             this.shareMode = shareMode;
             var hresult = audioClientInterface.Initialize(shareMode, streamFlags, bufferDuration, periodicity, waveFormat, ref audioSessionGuid);
             Marshal.ThrowExceptionForHR(hresult);
@@ -273,48 +277,53 @@ namespace NAudio.CoreAudioApi
         /// <returns>True if the format is supported</returns>
         public bool IsFormatSupported(AudioClientShareMode shareMode, WaveFormat desiredFormat, out WaveFormatExtensible closestMatchFormat)
         {
-            var pointerToPtr = GetPointerToPointer(); // IntPtr.Zero; // Marshal.AllocHGlobal(Marshal.SizeOf<WaveFormatExtensible>());
+            var pointerToPtr = GetPointerToPointer();
             closestMatchFormat = null;
-            var hresult = audioClientInterface.IsFormatSupported(shareMode, desiredFormat, pointerToPtr);
+            try
+            {
+                var hresult = audioClientInterface.IsFormatSupported(shareMode, desiredFormat, pointerToPtr);
 
-            // -2147467263 0x80004001
-            // E_NOTIMPL
-            // Since the HRESULT isn't checked until after we read the pointer previously
-            // the pointer is uninitialized memory and dereferencing it throws an AV exception
-            if (hresult == -0x7FFFBFFF)
-            {
-                return false;
-            }
+                // -2147467263 0x80004001
+                // E_NOTIMPL
+                // Since the HRESULT isn't checked until after we read the pointer previously
+                // the pointer is uninitialized memory and dereferencing it throws an AV exception
+                if (hresult == -0x7FFFBFFF)
+                {
+                    return false;
+                }
 
-            var closestMatchPtr = Marshal.PtrToStructure<IntPtr>(pointerToPtr);
+                var closestMatchPtr = Marshal.PtrToStructure<IntPtr>(pointerToPtr);
 
-            if (closestMatchPtr != IntPtr.Zero)
-            {
-                closestMatchFormat = Marshal.PtrToStructure<WaveFormatExtensible>(closestMatchPtr);
-                Marshal.FreeCoTaskMem(closestMatchPtr);
+                if (closestMatchPtr != IntPtr.Zero)
+                {
+                    closestMatchFormat = Marshal.PtrToStructure<WaveFormatExtensible>(closestMatchPtr);
+                    Marshal.FreeCoTaskMem(closestMatchPtr);
+                }
+                // S_OK is 0, S_FALSE = 1
+                if (hresult == 0)
+                {
+                    // directly supported
+                    return true;
+                }
+                if (hresult == 1)
+                {
+                    return false;
+                }
+                if (hresult == AudioClientErrorCode.UnsupportedFormat)
+                {
+                    // documentation is confusing as to what this flag means
+                    // https://docs.microsoft.com/en-us/windows/desktop/api/audioclient/nf-audioclient-iaudioclient-isformatsupported
+                    // "Succeeded but the specified format is not supported in exclusive mode."
+                    return false;
+                }
+                Marshal.ThrowExceptionForHR(hresult);
+                // shouldn't get here
+                throw new NotSupportedException("Unknown hresult " + hresult);
             }
-            Marshal.FreeHGlobal(pointerToPtr);
-            // S_OK is 0, S_FALSE = 1
-            if (hresult == 0)
+            finally
             {
-
-                // directly supported
-                return true;
+                Marshal.FreeHGlobal(pointerToPtr);
             }
-            if (hresult == 1)
-            {
-                return false;
-            }
-            if (hresult == AudioClientErrorCode.UnsupportedFormat)
-            {
-                // documentation is confusing as to what this flag means
-                // https://docs.microsoft.com/en-us/windows/desktop/api/audioclient/nf-audioclient-iaudioclient-isformatsupported
-                // "Succeeded but the specified format is not supported in exclusive mode."
-                return false; // shareMode != AudioClientShareMode.Exclusive;
-            }
-            Marshal.ThrowExceptionForHR(hresult);
-            // shouldn't get here
-            throw new NotSupportedException("Unknown hresult " + hresult);
         }
 
         /// <summary>
@@ -353,6 +362,30 @@ namespace NAudio.CoreAudioApi
             audioClientInterface.Reset();
         }
 
+        private void DisposeSubClients()
+        {
+            if (audioClockClient != null)
+            {
+                audioClockClient.Dispose();
+                audioClockClient = null;
+            }
+            if (audioRenderClient != null)
+            {
+                audioRenderClient.Dispose();
+                audioRenderClient = null;
+            }
+            if (audioCaptureClient != null)
+            {
+                audioCaptureClient.Dispose();
+                audioCaptureClient = null;
+            }
+            if (audioStreamVolume != null)
+            {
+                audioStreamVolume.Dispose();
+                audioStreamVolume = null;
+            }
+        }
+
         #region IDisposable Members
 
         /// <summary>
@@ -362,29 +395,23 @@ namespace NAudio.CoreAudioApi
         {
             if (audioClientInterface != null)
             {
-                if (audioClockClient != null)
-                {
-                    audioClockClient.Dispose();
-                    audioClockClient = null;
-                }
-                if (audioRenderClient != null)
-                {
-                    audioRenderClient.Dispose();
-                    audioRenderClient = null;
-                }
-                if (audioCaptureClient != null)
-                {
-                    audioCaptureClient.Dispose();
-                    audioCaptureClient = null;
-                }
-                if (audioStreamVolume != null)
-                {
-                    audioStreamVolume.Dispose();
-                    audioStreamVolume = null;
-                }
+                DisposeSubClients();
                 Marshal.ReleaseComObject(audioClientInterface);
                 audioClientInterface = null;
-                GC.SuppressFinalize(this);
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Finalizer
+        /// </summary>
+        ~AudioClient()
+        {
+            if (audioClientInterface != null)
+            {
+                DisposeSubClients();
+                Marshal.ReleaseComObject(audioClientInterface);
+                audioClientInterface = null;
             }
         }
 

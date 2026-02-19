@@ -1,4 +1,6 @@
-﻿namespace NAudio.Codecs
+﻿using System.Runtime.CompilerServices;
+
+namespace NAudio.Codecs
 {
     /// <summary>
     /// a-law decoder
@@ -51,6 +53,7 @@
         /// </summary>
         /// <param name="aLaw">a-law encoded byte</param>
         /// <returns>Linear sample</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static short ALawToLinearSample(byte aLaw)
         {
             return ALawDecompressTable[aLaw];

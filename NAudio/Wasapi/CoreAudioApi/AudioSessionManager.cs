@@ -24,6 +24,7 @@ namespace NAudio.CoreAudioApi
 
         private SimpleAudioVolume simpleAudioVolume;
         private AudioSessionControl audioSessionControl;
+        private bool disposed;
 
         /// <summary>
         /// Session created delegate
@@ -111,8 +112,10 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
+            if (disposed) return;
+            disposed = true;
             UnregisterNotifications();
-
+            Marshal.ReleaseComObject(audioSessionInterface);
             GC.SuppressFinalize(this);
         }
 
@@ -122,8 +125,7 @@ namespace NAudio.CoreAudioApi
 
             if (audioSessionNotification != null && audioSessionInterface2 != null)
             {
-                Marshal.ThrowExceptionForHR(
-                    audioSessionInterface2.UnregisterSessionNotification(audioSessionNotification));
+                audioSessionInterface2.UnregisterSessionNotification(audioSessionNotification);
                 audioSessionNotification = null;
             }
         }

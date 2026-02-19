@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 
 namespace NAudio.Wave
 {
@@ -55,24 +56,16 @@ namespace NAudio.Wave
             var bytesRead = sourceProvider.Read(buffer, offset, count);
             if (this.volume == 0.0f)
             {
-                for (var n = 0; n < bytesRead; n++)
-                {
-                    buffer[offset++] = 0;
-                }
+                Array.Clear(buffer, offset, bytesRead);
             }
             else if (this.volume != 1.0f)
             {
+                var span = buffer.AsSpan(offset, bytesRead);
                 for (var n = 0; n < bytesRead; n += 2)
                 {
-                    var sample = (short)((buffer[offset + 1] << 8) | buffer[offset]);
-                    var newSample = sample * this.volume;
-                    // clip if necessary
-                    if (newSample > Int16.MaxValue) newSample = Int16.MaxValue;
-                    else if (newSample < Int16.MinValue) newSample = Int16.MinValue;
-                    sample = (short)newSample;
-
-                    buffer[offset++] = (byte)(sample & 0xFF);
-                    buffer[offset++] = (byte)(sample >> 8);
+                    var sample = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(n));
+                    var newSample = (short)Math.Clamp(sample * this.volume, Int16.MinValue, Int16.MaxValue);
+                    BinaryPrimitives.WriteInt16LittleEndian(span.Slice(n), newSample);
                 }
             }
             return bytesRead;

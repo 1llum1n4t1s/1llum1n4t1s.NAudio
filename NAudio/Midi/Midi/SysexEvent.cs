@@ -25,18 +25,18 @@ namespace NAudio.Midi
             //se.data = br.ReadBytes(se.length);
 
             var sysexData = new List<byte>();
-            var loop = true;
-            while(loop) 
+            while(true)
             {
+                if (br.BaseStream.Position >= br.BaseStream.Length)
+                {
+                    throw new FormatException("Sysex message missing end byte (0xF7)");
+                }
                 var b = br.ReadByte();
-                if(b == 0xF7) 
+                if(b == 0xF7)
                 {
-                    loop = false;
+                    break;
                 }
-                else 
-                {
-                    sysexData.Add(b);
-                }
+                sysexData.Add(b);
             }
             
             se.data = sysexData.ToArray();
@@ -58,14 +58,14 @@ namespace NAudio.Midi
         /// Describes this sysex message
         /// </summary>
         /// <returns>A string describing the sysex message</returns>
-        public override string ToString() 
+        public override string ToString()
         {
             var sb = new StringBuilder();
             foreach (var b in data)
             {
-                sb.AppendFormat("{0:X2} ", b);
+                sb.Append(b.ToString("X2")).Append(' ');
             }
-            return String.Format("{0} Sysex: {1} bytes\r\n{2}",this.AbsoluteTime,data.Length,sb.ToString());
+            return $"{this.AbsoluteTime} Sysex: {data.Length} bytes\r\n{sb}";
         }
         
         /// <summary>

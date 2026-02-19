@@ -98,8 +98,7 @@ namespace NAudio.CoreAudioApi
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(levels),
-                    String.Format(CultureInfo.InvariantCulture, "SetAllVolumes MUST be supplied with a volume level for ALL channels. The AudioStream has {0} channels and you supplied {1} channels.",
-                                  channelCount, levels.Length));
+                    $"SetAllVolumes MUST be supplied with a volume level for ALL channels. The AudioStream has {channelCount} channels and you supplied {levels.Length} channels.");
             }
             for (var i = 0; i < levels.Length; i++)
             {

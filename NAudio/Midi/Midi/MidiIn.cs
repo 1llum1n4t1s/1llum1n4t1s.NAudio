@@ -9,8 +9,8 @@ namespace NAudio.Midi
     public class MidiIn : IDisposable 
     {
         private IntPtr hMidiIn = IntPtr.Zero;
-        private bool disposeIsRunning = false; // true while the Dispose() method run.
-        private bool disposed = false;
+        private volatile bool disposeIsRunning = false; // true while the Dispose() method run.
+        private volatile bool disposed = false;
         private MidiInterop.MidiInCallback callback;
 
         //  Buffer headers created and marshalled to recive incoming Sysex mesages
@@ -75,6 +75,7 @@ namespace NAudio.Midi
         /// </summary>
         public void Start()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             MmException.Try(MidiInterop.midiInStart(hMidiIn), "midiInStart");
         }
 
@@ -83,6 +84,7 @@ namespace NAudio.Midi
         /// </summary>
         public void Stop()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             MmException.Try(MidiInterop.midiInStop(hMidiIn), "midiInStop");
         }
 
@@ -91,6 +93,7 @@ namespace NAudio.Midi
         /// </summary>
         public void Reset()
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             MmException.Try(MidiInterop.midiInReset(hMidiIn), "midiInReset");
         }
 
@@ -101,6 +104,7 @@ namespace NAudio.Midi
         /// <param name="numberOfBuffers">The number of buffers needed to handle incoming Midi while busy</param>
         public void CreateSysexBuffers(int bufferSize, int numberOfBuffers)
         {
+            if (disposed) throw new ObjectDisposedException(nameof(MidiIn));
             SysexBufferHeaders = new IntPtr[numberOfBuffers];
 
             var hdrSize = Marshal.SizeOf(typeof(MidiInterop.MIDIHDR));
@@ -132,17 +136,11 @@ namespace NAudio.Midi
                 case MidiInterop.MidiInMessage.Data:
                     // parameter 1 is packed MIDI message
                     // parameter 2 is milliseconds since MidiInStart
-                    if (MessageReceived != null)
-                    {
-                        MessageReceived(this, new MidiInMessageEventArgs(messageParameter1.ToInt32(), messageParameter2.ToInt32()));
-                    }
+                    MessageReceived?.Invoke(this, new MidiInMessageEventArgs(messageParameter1.ToInt32(), messageParameter2.ToInt32()));
                     break;
                 case MidiInterop.MidiInMessage.Error:
                     // parameter 1 is invalid MIDI message
-                    if (ErrorReceived != null)
-                    {
-                        ErrorReceived(this, new MidiInMessageEventArgs(messageParameter1.ToInt32(), messageParameter2.ToInt32()));
-                    } 
+                    ErrorReceived?.Invoke(this, new MidiInMessageEventArgs(messageParameter1.ToInt32(), messageParameter2.ToInt32()));
                     break;
                 case MidiInterop.MidiInMessage.Close:
                     // message Parameter 1 & 2 are not used
@@ -150,7 +148,8 @@ namespace NAudio.Midi
                 case MidiInterop.MidiInMessage.LongData:
                     // parameter 1 is pointer to MIDI header
                     // parameter 2 is milliseconds since MidiInStart
-                    if (SysexMessageReceived != null)
+                    var sysexHandler = SysexMessageReceived;
+                    if (sysexHandler != null)
                     {
                         var hdr = (MidiInterop.MIDIHDR)Marshal.PtrToStructure(messageParameter1, typeof(MidiInterop.MIDIHDR));
 
@@ -159,8 +158,8 @@ namespace NAudio.Midi
                         Marshal.Copy(hdr.lpData, sysexBytes, 0, hdr.dwBytesRecorded);
 
                         if (sysexBytes.Length!=0) // do not trigger the sysex event if no data in SYSEX message
-                            SysexMessageReceived(this, new MidiInSysexMessageEventArgs(sysexBytes, messageParameter2.ToInt32()));
-                        
+                            sysexHandler(this, new MidiInSysexMessageEventArgs(sysexBytes, messageParameter2.ToInt32()));
+
                         //  Re-use the buffer - but not if we have no event handler registered as we are closing
                         //  BUT When disposing the (resetting the MidiIn port), LONGDATA midi message are fired with a zero length.
                         //  In that case, buffer should no be ReAdd to avoid an inifinite loop of callback as buffer are reused forever.

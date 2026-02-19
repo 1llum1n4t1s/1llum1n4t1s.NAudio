@@ -32,20 +32,26 @@ namespace NAudio.Mixer
 		/// <summary>
 		/// The value of the control
 		/// </summary>
-		public int Value 
+		public int Value
 		{
-			get 
+			get
 			{
-				GetControlDetails();				
+				GetControlDetails();
 				return signedDetails.lValue;
 			}
-			set 
+			set
 			{
-				signedDetails.lValue = value;                
+				signedDetails.lValue = value;
                 mixerControlDetails.paDetails = Marshal.AllocHGlobal(Marshal.SizeOf(signedDetails));
-                Marshal.StructureToPtr(signedDetails, mixerControlDetails.paDetails, false);
-                MmException.Try(MixerInterop.mixerSetControlDetails(mixerHandle, ref mixerControlDetails, MixerFlags.Value | mixerHandleType), "mixerSetControlDetails");
-                Marshal.FreeHGlobal(mixerControlDetails.paDetails);
+                try
+                {
+                    Marshal.StructureToPtr(signedDetails, mixerControlDetails.paDetails, false);
+                    MmException.Try(MixerInterop.mixerSetControlDetails(mixerHandle, ref mixerControlDetails, MixerFlags.Value | mixerHandleType), "mixerSetControlDetails");
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(mixerControlDetails.paDetails);
+                }
 			}
 		}
 		
@@ -92,7 +98,7 @@ namespace NAudio.Mixer
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("{0} {1}%", base.ToString(), Percent);
+            return $"{base.ToString()} {Percent}%";
         }
 	}
 }

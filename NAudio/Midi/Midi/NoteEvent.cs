@@ -148,13 +148,13 @@ namespace NAudio.Midi
                         case 79: return "Open Cuica";
                         case 80: return "Mute Triangle";
                         case 81: return "Open Triangle";
-                        default: return String.Format("Drum {0}", noteNumber);
+                        default: return $"Drum {noteNumber}";
                     }
                 }
                 else
                 {
                     var octave = noteNumber / 12;
-                    return String.Format("{0}{1}", NoteNames[noteNumber % 12], octave);
+                    return $"{NoteNames[noteNumber % 12]}{octave}";
                 }
             }
         }
@@ -165,10 +165,7 @@ namespace NAudio.Midi
         /// <returns>Note event as a string</returns>
         public override string ToString()
         {
-            return String.Format("{0} {1} Vel:{2}",
-                base.ToString(),
-                this.NoteName,
-                this.Velocity);
+            return $"{base.ToString()} {NoteName} Vel:{Velocity}";
         }
 
         /// <summary>

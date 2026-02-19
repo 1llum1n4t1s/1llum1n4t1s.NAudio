@@ -31,6 +31,12 @@ namespace NAudio.Wave.Asio
         private int bufferSize;
         private int outputChannelOffset;
         private int inputChannelOffset;
+
+        // prevent GC from collecting the delegates while they are in use by unmanaged code
+        private AsioCallbacks.AsioBufferSwitchCallBack bufferSwitchCallBackPin;
+        private AsioCallbacks.AsioBufferSwitchTimeInfoCallBack bufferSwitchTimeInfoCallBackPin;
+        private AsioCallbacks.AsioAsioMessageCallBack asioMessageCallBackPin;
+        private AsioCallbacks.AsioSampleRateDidChangeCallBack sampleRateDidChangeCallBackPin;
         /// <summary>
         /// Reset Request Callback
         /// </summary>
@@ -51,10 +57,16 @@ namespace NAudio.Wave.Asio
             }
 
             callbacks = new AsioCallbacks();
-            callbacks.pasioMessage = AsioMessageCallBack;
-            callbacks.pbufferSwitch = BufferSwitchCallBack;
-            callbacks.pbufferSwitchTimeInfo = BufferSwitchTimeInfoCallBack;
-            callbacks.psampleRateDidChange = SampleRateDidChangeCallBack;
+            // store delegate references in fields to prevent GC collection
+            bufferSwitchCallBackPin = BufferSwitchCallBack;
+            bufferSwitchTimeInfoCallBackPin = BufferSwitchTimeInfoCallBack;
+            asioMessageCallBackPin = AsioMessageCallBack;
+            sampleRateDidChangeCallBackPin = SampleRateDidChangeCallBack;
+
+            callbacks.pasioMessage = asioMessageCallBackPin;
+            callbacks.pbufferSwitch = bufferSwitchCallBackPin;
+            callbacks.pbufferSwitchTimeInfo = bufferSwitchTimeInfoCallBackPin;
+            callbacks.psampleRateDidChange = sampleRateDidChangeCallBackPin;
 
             BuildCapabilities();
         }
@@ -125,7 +137,8 @@ namespace NAudio.Wave.Asio
                 driver.DisposeBuffers();
             } catch (Exception ex)
             {
-                Console.Out.WriteLine(ex.ToString());
+                // Swallow during cleanup to ensure ReleaseComAsioDriver always runs
+                System.Diagnostics.Trace.TraceWarning("ASIO DisposeBuffers failed during driver release: {0}", ex.Message);
             }
             driver.ReleaseComAsioDriver();
         }
@@ -225,6 +238,11 @@ namespace NAudio.Wave.Asio
             {
                 // use the drivers preferred buffer size
                 bufferSize = capability.BufferPreferredSize;
+            }
+
+            if (nbTotalChannels == 0)
+            {
+                throw new InvalidOperationException("Cannot create ASIO buffers: driver reports zero total channels");
             }
 
             unsafe
@@ -342,14 +360,13 @@ namespace NAudio.Wave.Asio
                         case AsioMessageSelector.kAsioEngineVersion:
                             return 1;
                         case AsioMessageSelector.kAsioResetRequest:
-                            ResetRequestCallback?.Invoke();
-                            return 0;
+                            return 1;
                         case AsioMessageSelector.kAsioBufferSizeChange:
                             return 0;
                         case AsioMessageSelector.kAsioResyncRequest:
                             return 0;
                         case AsioMessageSelector.kAsioLatenciesChanged:
-                            return 0;
+                            return 1;
                         case AsioMessageSelector.kAsioSupportsTimeInfo:
 //                            return 1; DON'T SUPPORT FOR NOW. NEED MORE TESTING.
                             return 0;

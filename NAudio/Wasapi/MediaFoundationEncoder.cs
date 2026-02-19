@@ -314,10 +314,10 @@ namespace NAudio.Wave
             return writer;
         }
 
-        private static IMFSinkWriter CreateSinkWriter(IStream outputStream, Guid TranscodeContainerType) 
+        private static IMFSinkWriter CreateSinkWriter(IStream outputStream, Guid TranscodeContainerType)
         {
             // n.b. could try specifying the container type using attributes, but I think
-            // it does a decent job of working it out from the file extension 
+            // it does a decent job of working it out from the file extension
             // n.b. AAC encode on Win 8 can have AAC extension, but use MP4 in win 7
             // http://msdn.microsoft.com/en-gb/library/windows/desktop/dd389284%28v=vs.85%29.aspx
             IMFSinkWriter writer;
@@ -327,9 +327,16 @@ namespace NAudio.Wave
             try
             {
                 MediaFoundationInterop.MFCreateMFByteStreamOnStream(outputStream, out var ppByteStream);
-                MediaFoundationInterop.MFCreateSinkWriterFromURL(null, ppByteStream, attributes, out writer);
-            } 
-            finally 
+                try
+                {
+                    MediaFoundationInterop.MFCreateSinkWriterFromURL(null, ppByteStream, attributes, out writer);
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(ppByteStream);
+                }
+            }
+            finally
             {
                 Marshal.ReleaseComObject(attributes);
             }
@@ -364,27 +371,43 @@ namespace NAudio.Wave
         {
             long durationConverted = 0;
             var buffer = MediaFoundationApi.CreateMemoryBuffer(managedBuffer.Length);
-            buffer.GetMaxLength(out var maxLength);
-
-            var sample = MediaFoundationApi.CreateSample();
-            sample.AddBuffer(buffer);
-
-            var read = inputProvider.Read(managedBuffer, 0, maxLength);
-            if (read > 0)
+            try
             {
-                buffer.Lock(out var ptr, out maxLength, out var currentLength);
-                durationConverted = BytesToNsPosition(read, inputProvider.WaveFormat);
-                Marshal.Copy(managedBuffer, 0, ptr, read);
-                buffer.SetCurrentLength(read);
-                buffer.Unlock();
-                sample.SetSampleTime(position);
-                sample.SetSampleDuration(durationConverted);
-                writer.WriteSample(streamIndex, sample);
-                //writer.Flush(streamIndex);
+                buffer.GetMaxLength(out var maxLength);
+
+                var sample = MediaFoundationApi.CreateSample();
+                try
+                {
+                    sample.AddBuffer(buffer);
+
+                    var read = inputProvider.Read(managedBuffer, 0, maxLength);
+                    if (read > 0)
+                    {
+                        buffer.Lock(out var ptr, out maxLength, out var currentLength);
+                        try
+                        {
+                            durationConverted = BytesToNsPosition(read, inputProvider.WaveFormat);
+                            Marshal.Copy(managedBuffer, 0, ptr, read);
+                            buffer.SetCurrentLength(read);
+                        }
+                        finally
+                        {
+                            buffer.Unlock();
+                        }
+                        sample.SetSampleTime(position);
+                        sample.SetSampleDuration(durationConverted);
+                        writer.WriteSample(streamIndex, sample);
+                    }
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(sample);
+                }
             }
-            
-            Marshal.ReleaseComObject(sample);
-            Marshal.ReleaseComObject(buffer);
+            finally
+            {
+                Marshal.ReleaseComObject(buffer);
+            }
             return durationConverted;
         }
 
@@ -394,7 +417,13 @@ namespace NAudio.Wave
         /// <param name="disposing"></param>
         protected void Dispose(bool disposing)
         {
-            Marshal.ReleaseComObject(outputMediaType.MediaFoundationObject);
+            if (disposing)
+            {
+                if (outputMediaType?.MediaFoundationObject != null)
+                {
+                    Marshal.ReleaseComObject(outputMediaType.MediaFoundationObject);
+                }
+            }
         }
 
         /// <summary>
@@ -408,14 +437,6 @@ namespace NAudio.Wave
                 Dispose(true);
             }
             GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Finalizer
-        /// </summary>
-        ~MediaFoundationEncoder()
-        {
-            Dispose(false);
         }
     }
 }

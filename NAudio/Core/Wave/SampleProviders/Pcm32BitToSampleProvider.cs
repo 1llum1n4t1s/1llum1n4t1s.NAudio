@@ -1,4 +1,7 @@
-﻿namespace NAudio.Wave.SampleProviders
+﻿using System;
+using System.Buffers.Binary;
+
+namespace NAudio.Wave.SampleProviders
 {
     /// <summary>
     /// Converts an IWaveProvider containing 32 bit PCM to an
@@ -25,18 +28,15 @@
         /// <returns>number of samples provided</returns>
         public override int Read(float[] buffer, int offset, int count)
         {
-            var sourceBytesRequired = count*4;
+            var sourceBytesRequired = count * 4;
             EnsureSourceBuffer(sourceBytesRequired);
             var bytesRead = source.Read(sourceBuffer, 0, sourceBytesRequired);
             var outIndex = offset;
             for (var n = 0; n < bytesRead; n += 4)
             {
-                buffer[outIndex++] = (((sbyte) sourceBuffer[n + 3] << 24 |
-                                       sourceBuffer[n + 2] << 16) |
-                                      (sourceBuffer[n + 1] << 8) |
-                                      sourceBuffer[n]) * (1.0f / 2147483648f);
+                buffer[outIndex++] = BinaryPrimitives.ReadInt32LittleEndian(sourceBuffer.AsSpan(n)) * (1.0f / (int.MaxValue + 1f));
             }
-            return bytesRead/4;
+            return bytesRead / 4;
         }
     }
 }

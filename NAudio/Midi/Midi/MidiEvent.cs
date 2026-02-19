@@ -78,7 +78,7 @@ namespace NAudio.Midi
                 //case MidiCommandCode.MetaEvent:
                 //case MidiCommandCode.Sysex:
                 default:
-                    throw new FormatException(String.Format("Unsupported MIDI Command Code for Raw Message {0}", commandCode));
+                    throw new FormatException($"Unsupported MIDI Command Code for Raw Message {commandCode}");
             }
             return me;
 
@@ -96,9 +96,20 @@ namespace NAudio.Midi
             MidiCommandCode commandCode;
             var channel = 1;
             var b = br.ReadByte();
-            if((b & 0x80) == 0) 
+            if((b & 0x80) == 0)
             {
                 // a running command - command & channel are same as previous
+                if (previous == null)
+                {
+                    throw new FormatException("Unexpected running status with no previous event");
+                }
+                // Running status only applies to channel messages (0x80-0xEF).
+                // System messages (Sysex, Meta, etc.) do not set running status.
+                if (previous.CommandCode >= MidiCommandCode.Sysex)
+                {
+                    throw new FormatException(
+                        $"Running status is not valid after a system message (previous command: {previous.CommandCode})");
+                }
                 commandCode = previous.CommandCode;
                 channel = previous.Channel;
                 br.BaseStream.Position--; // need to push this back
@@ -152,7 +163,7 @@ namespace NAudio.Midi
                 me = MetaEvent.ReadMetaEvent(br);
                 break;
             default:
-                throw new FormatException(String.Format("Unsupported MIDI Command Code {0:X2}",(byte) commandCode));
+                throw new FormatException($"Unsupported MIDI Command Code {(byte)commandCode:X2}");
             }
             me.channel = channel;
             me.deltaTime = deltaTime;
@@ -209,7 +220,7 @@ namespace NAudio.Midi
                 if ((value < 1) || (value > 16))
                 {
                     throw new ArgumentOutOfRangeException("value", value,
-                        String.Format("Channel must be 1-16 (Got {0})",value));
+                        $"Channel must be 1-16 (Got {value})");
                 }
                 channel = value;
             }
@@ -305,12 +316,12 @@ namespace NAudio.Midi
         /// Displays a summary of the MIDI event
         /// </summary>
         /// <returns>A string containing a brief description of this MIDI event</returns>
-        public override string ToString() 
+        public override string ToString()
         {
-            if(commandCode >= MidiCommandCode.Sysex)
-                return String.Format("{0} {1}",absoluteTime,commandCode);
+            if (commandCode >= MidiCommandCode.Sysex)
+                return $"{absoluteTime} {commandCode}";
             else
-                return String.Format("{0} {1} Ch: {2}", absoluteTime, commandCode, channel);
+                return $"{absoluteTime} {commandCode} Ch: {channel}";
         }
         
         /// <summary>
@@ -382,7 +393,12 @@ namespace NAudio.Midi
             {
                 throw new FormatException("Can't export unsorted MIDI events");
             }
-            WriteVarInt(writer,(int) (this.absoluteTime - absoluteTime));
+            var delta = this.absoluteTime - absoluteTime;
+            if (delta > 0x0FFFFFFF)
+            {
+                throw new FormatException($"Delta time {delta} exceeds maximum variable-length integer value");
+            }
+            WriteVarInt(writer,(int) delta);
             absoluteTime = this.absoluteTime;
             var output = (int) commandCode;
             if (commandCode < MidiCommandCode.Sysex)

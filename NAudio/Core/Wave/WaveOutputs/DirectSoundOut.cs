@@ -111,6 +111,7 @@ namespace NAudio.Wave
         /// <param name="device">Selected device</param>
         public DirectSoundOut(Guid device, int latency)
         {
+            if (latency <= 0) throw new ArgumentOutOfRangeException(nameof(latency), "Latency must be greater than zero");
             if (device == Guid.Empty)
             {
                 device = DSDEVID_DefaultPlayback;
@@ -126,7 +127,7 @@ namespace NAudio.Wave
         /// </summary>
         ~DirectSoundOut()
         {
-            Dispose();
+            Dispose(false);
         }
 
         /// <summary>
@@ -222,6 +223,7 @@ namespace NAudio.Wave
         /// <param name="waveProvider">The waveprovider to be played</param>
         public void Init(IWaveProvider waveProvider)
         {
+            if (waveProvider == null) throw new ArgumentNullException(nameof(waveProvider));
             this.waveStream = waveProvider;
             this.waveFormat = waveProvider.WaveFormat;
         }
@@ -364,8 +366,26 @@ namespace NAudio.Wave
         /// </summary>
         public void Dispose()
         {
-            Stop();
+            Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            // Signal playback thread to stop (safe to call from Finalizer: uses unmanaged handle)
+            playbackState = PlaybackState.Stopped;
+            stopEventWaitHandle.Set();
+
+            if (disposing)
+            {
+                // Join the playback thread only when called from Dispose (not Finalizer)
+                var thread = notifyThread;
+                if (thread != null)
+                {
+                    thread.Join(250);
+                }
+                stopEventWaitHandle?.Dispose();
+            }
         }
 
         /// <summary>
@@ -485,7 +505,7 @@ namespace NAudio.Wave
                             lContinuePlayback = false;
                             // report this as an error in the Playback Stopped
                             // seems to happen when device is unplugged
-                            throw new Exception("DirectSound buffer timeout");
+                            throw new TimeoutException("DirectSound buffer timeout");
                         }
                     }
                 }
@@ -566,6 +586,21 @@ namespace NAudio.Wave
                 {
                     Marshal.ReleaseComObject(directSound);
                     directSound = null;
+                }
+                if (frameEventWaitHandle1 != null)
+                {
+                    frameEventWaitHandle1.Dispose();
+                    frameEventWaitHandle1 = null;
+                }
+                if (frameEventWaitHandle2 != null)
+                {
+                    frameEventWaitHandle2.Dispose();
+                    frameEventWaitHandle2 = null;
+                }
+                if (endEventWaitHandle != null)
+                {
+                    endEventWaitHandle.Dispose();
+                    endEventWaitHandle = null;
                 }
             }
         }

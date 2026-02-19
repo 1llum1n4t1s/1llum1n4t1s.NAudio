@@ -80,6 +80,7 @@ namespace NAudio.Wave
             {
                 lock (lockObject)
                 {
+                    value = Math.Max(0, value);
                     // make sure we don't get out of sync
                     value -= (value % BlockAlign);
                     sourceStream.Position = value * 2;
@@ -135,7 +136,7 @@ namespace NAudio.Wave
                     }
                     else
                     {
-                        psDestBuffer[n] = (short)(sampleVal * 32767);
+                        psDestBuffer[n] = (short)(sampleVal * short.MaxValue);
                     }
                 }
             }
