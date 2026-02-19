@@ -219,7 +219,9 @@ namespace NAudio.Midi
         private void FindNoteOn(NoteEvent offEvent, List<NoteOnEvent> outstandingNoteOns)
         {
             var found = false;
-            for (var i = 0; i < outstandingNoteOns.Count; i++)
+            // Search from the end: most recent NoteOn is the most likely match,
+            // improving performance when outstandingNoteOns is large.
+            for (var i = outstandingNoteOns.Count - 1; i >= 0; i--)
             {
                 var noteOnEvent = outstandingNoteOns[i];
                 if ((noteOnEvent.Channel == offEvent.Channel) && (noteOnEvent.NoteNumber == offEvent.NoteNumber))
