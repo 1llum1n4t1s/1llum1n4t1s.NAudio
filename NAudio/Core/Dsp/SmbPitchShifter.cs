@@ -55,7 +55,7 @@ namespace NAudio.Dsp
     public class SmbPitchShifter
     {
 
-        private static int MAX_FRAME_LENGTH = 16000;
+        private const int MAX_FRAME_LENGTH = 16000;
         private float[] gInFIFO = new float[MAX_FRAME_LENGTH];
         private float[] gOutFIFO = new float[MAX_FRAME_LENGTH];
         private float[] gFFTworksp = new float[2*MAX_FRAME_LENGTH];
@@ -78,11 +78,19 @@ namespace NAudio.Dsp
         }
 
         /// <summary>
-        /// Pitch Shift 
+        /// Pitch Shift
         /// </summary>
         public void PitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize,
             long osamp, float sampleRate, float[] indata)
         {
+            if (indata == null) throw new ArgumentNullException(nameof(indata));
+            if (fftFrameSize < 2 || fftFrameSize > MAX_FRAME_LENGTH)
+                throw new ArgumentOutOfRangeException(nameof(fftFrameSize), $"fftFrameSize must be between 2 and {MAX_FRAME_LENGTH}");
+            if (osamp < 1) throw new ArgumentOutOfRangeException(nameof(osamp), "osamp must be at least 1");
+            if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "sampleRate must be greater than zero");
+            if (numSampsToProcess < 0 || numSampsToProcess > indata.Length)
+                throw new ArgumentOutOfRangeException(nameof(numSampsToProcess));
+
             float magn, phase, tmp, window, real, imag;
             float freqPerBin, expct;
             long i, k, qpd, index, inFifoLatency, stepSize, fftFrameSize2;

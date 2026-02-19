@@ -240,6 +240,11 @@ namespace NAudio.Wave.Asio
                 bufferSize = capability.BufferPreferredSize;
             }
 
+            if (nbTotalChannels == 0)
+            {
+                throw new InvalidOperationException("Cannot create ASIO buffers: driver reports zero total channels");
+            }
+
             unsafe
             {
                 fixed (AsioBufferInfo* infos = &bufferInfos[0])

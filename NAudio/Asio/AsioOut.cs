@@ -106,6 +106,7 @@ namespace NAudio.Wave
                 driver.ReleaseDriver();
                 driver = null;
             }
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

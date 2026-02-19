@@ -340,7 +340,8 @@ public partial class MainWindow : Window
         var compareModeNode = doc.SelectSingleNode("MixDiff/Settings/@CompareMode");
         if (compareModeNode != null)
         {
-            _compareMode = (CompareMode)Enum.Parse(typeof(CompareMode), compareModeNode.Value);
+            if (Enum.TryParse<CompareMode>(compareModeNode.Value, out var parsedMode))
+                _compareMode = parsedMode;
             CompareMode_UpdateMenu();
         }
         var mixes = doc.SelectNodes("MixDiff/Mix");

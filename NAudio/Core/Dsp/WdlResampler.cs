@@ -551,10 +551,14 @@ namespace NAudio.Dsp
                         m_filter_coeffs[hsz + x] = (WDL_SincFilterSample)val;
                         if (x < hsz) filtpower += val;
                     }
-                    filtpower = m_lp_oversize / filtpower;
-                    for (x = 0; x < sz + m_lp_oversize; x++)
+                    // guard against zero filtpower (degenerate filter configuration)
+                    if (filtpower != 0.0)
                     {
-                        m_filter_coeffs[x] = (WDL_SincFilterSample)(m_filter_coeffs[x] * filtpower);
+                        filtpower = m_lp_oversize / filtpower;
+                        for (x = 0; x < sz + m_lp_oversize; x++)
+                        {
+                            m_filter_coeffs[x] = (WDL_SincFilterSample)(m_filter_coeffs[x] * filtpower);
+                        }
                     }
                 }
                 else m_filter_coeffs_size = 0;

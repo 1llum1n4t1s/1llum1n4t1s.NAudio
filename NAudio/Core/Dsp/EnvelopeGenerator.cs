@@ -120,7 +120,7 @@ namespace NAudio.Dsp
         {
             if (rate <= 0)
                 return 0;
-            return (float)Math.Exp(-Math.Log((1.0f + targetRatio) / targetRatio) / rate);
+            return MathF.Exp(-MathF.Log((1.0f + targetRatio) / targetRatio) / rate);
         }
 
         /// <summary>

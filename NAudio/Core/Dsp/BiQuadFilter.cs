@@ -110,6 +110,7 @@ namespace NAudio.Dsp
         public void SetLowPassFilter(float sampleRate, float cutoffFrequency, float q)
         {
             if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "Must be greater than zero");
+            if (cutoffFrequency <= 0 || cutoffFrequency >= sampleRate / 2) throw new ArgumentOutOfRangeException(nameof(cutoffFrequency), "Must be greater than zero and less than Nyquist frequency");
             if (q <= 0) throw new ArgumentOutOfRangeException(nameof(q), "Must be greater than zero");
             // H(s) = 1 / (s^2 + s/Q + 1)
             var w0 = 2 * Math.PI * cutoffFrequency / sampleRate;
@@ -135,6 +136,7 @@ namespace NAudio.Dsp
         public void SetPeakingEq(float sampleRate, float centreFrequency, float q, float dbGain)
         {
             if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "Must be greater than zero");
+            if (centreFrequency <= 0 || centreFrequency >= sampleRate / 2) throw new ArgumentOutOfRangeException(nameof(centreFrequency), "Must be greater than zero and less than Nyquist frequency");
             if (q <= 0) throw new ArgumentOutOfRangeException(nameof(q), "Must be greater than zero");
             // H(s) = (s^2 + s*(A/Q) + 1) / (s^2 + s/(A*Q) + 1)
             var w0 = 2 * Math.PI * centreFrequency / sampleRate;
@@ -158,6 +160,7 @@ namespace NAudio.Dsp
         public void SetHighPassFilter(float sampleRate, float cutoffFrequency, float q)
         {
             if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate), "Must be greater than zero");
+            if (cutoffFrequency <= 0 || cutoffFrequency >= sampleRate / 2) throw new ArgumentOutOfRangeException(nameof(cutoffFrequency), "Must be greater than zero and less than Nyquist frequency");
             if (q <= 0) throw new ArgumentOutOfRangeException(nameof(q), "Must be greater than zero");
             // H(s) = s^2 / (s^2 + s/Q + 1)
             var w0 = 2 * Math.PI * cutoffFrequency / sampleRate;
