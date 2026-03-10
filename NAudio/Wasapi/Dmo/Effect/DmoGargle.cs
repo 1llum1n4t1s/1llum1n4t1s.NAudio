@@ -135,7 +135,7 @@ namespace NAudio.Dmo.Effect
         {
             var guidGargle = new Guid("DAFD8210-5711-4B91-9FE3-F75B7AE279BF");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidGargle));
 
             if (targetDescriptor != null)

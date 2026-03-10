@@ -47,7 +47,7 @@ namespace NAudio.Dmo.Effect
             /// <summary>
             /// DSFXECHO_WETDRYMIX_DEFAULT
             /// </summary>
-            public const float WetDeyMixDefault = 50.0f;
+            public const float WetDryMixDefault = 50.0f;
 
             /// <summary>
             /// DSFXECHO_FEEDBACK_MIN

@@ -12,6 +12,11 @@ namespace NAudio.CoreAudioApi
     /// </summary>
     public class AudioClient : IDisposable
     {
+        private static readonly Guid AudioStreamVolumeGuid = new Guid("93014887-242D-4068-8A15-CF5E93B90FE3");
+        private static readonly Guid AudioClockClientGuid = new Guid("CD63314F-3FBA-4a1b-812C-EF96358728E7");
+        private static readonly Guid AudioRenderClientGuid = new Guid("F294ACFC-3146-4483-A7BF-ADDCA7C260E2");
+        private static readonly Guid AudioCaptureClientGuid = new Guid("c8adbd64-e71e-48a0-a4de-185c395cd317");
+
         private IAudioClient audioClientInterface;
         private WaveFormat mixFormat;
         private AudioRenderClient audioRenderClient;
@@ -192,8 +197,7 @@ namespace NAudio.CoreAudioApi
                 }
                 if (audioStreamVolume == null)
                 {
-                    var audioStreamVolumeGuid = new Guid("93014887-242D-4068-8A15-CF5E93B90FE3");
-                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(audioStreamVolumeGuid, out var audioStreamVolumeInterface));
+                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(AudioStreamVolumeGuid, out var audioStreamVolumeInterface));
                     audioStreamVolume = new AudioStreamVolume((IAudioStreamVolume)audioStreamVolumeInterface);
                 }
                 return audioStreamVolume;
@@ -209,8 +213,7 @@ namespace NAudio.CoreAudioApi
             {
                 if (audioClockClient == null)
                 {
-                    var audioClockClientGuid = new Guid("CD63314F-3FBA-4a1b-812C-EF96358728E7");
-                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(audioClockClientGuid, out var audioClockClientInterface));
+                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(AudioClockClientGuid, out var audioClockClientInterface));
                     audioClockClient = new AudioClockClient((IAudioClock)audioClockClientInterface);
                 }
                 return audioClockClient;
@@ -226,8 +229,7 @@ namespace NAudio.CoreAudioApi
             {
                 if (audioRenderClient == null)
                 {
-                    var audioRenderClientGuid = new Guid("F294ACFC-3146-4483-A7BF-ADDCA7C260E2");
-                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(audioRenderClientGuid, out var audioRenderClientInterface));
+                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(AudioRenderClientGuid, out var audioRenderClientInterface));
                     audioRenderClient = new AudioRenderClient((IAudioRenderClient)audioRenderClientInterface);
                 }
                 return audioRenderClient;
@@ -243,8 +245,7 @@ namespace NAudio.CoreAudioApi
             {
                 if (audioCaptureClient == null)
                 {
-                    var audioCaptureClientGuid = new Guid("c8adbd64-e71e-48a0-a4de-185c395cd317");
-                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(audioCaptureClientGuid, out var audioCaptureClientInterface));
+                    Marshal.ThrowExceptionForHR(audioClientInterface.GetService(AudioCaptureClientGuid, out var audioCaptureClientInterface));
                     audioCaptureClient = new AudioCaptureClient((IAudioCaptureClient)audioCaptureClientInterface);
                 }
                 return audioCaptureClient;

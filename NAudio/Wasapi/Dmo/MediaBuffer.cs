@@ -33,8 +33,8 @@ namespace NAudio.Dmo
             {
                 Marshal.FreeCoTaskMem(buffer);
                 buffer = IntPtr.Zero;
-                GC.SuppressFinalize(this);
             }
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

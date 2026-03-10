@@ -87,7 +87,7 @@ namespace NAudio.Dmo.Effect
             /// <summary>
             /// DSFXCOMPRESSOR_THRESHOLD_DEFAULT
             /// </summary>
-            public const float TjresholdDefault = -20.0f;
+            public const float ThresholdDefault = -20.0f;
 
             /// <summary>
             /// DSFXCOMPRESSOR_RATIO_MIN
@@ -266,10 +266,10 @@ namespace NAudio.Dmo.Effect
         /// </summary>
         public DmoCompressor()
         {
-            var guidChorus = new Guid("EF011F79-4000-406D-87AF-BFFB3FC39D57");
+            var guidCompressor = new Guid("EF011F79-4000-406D-87AF-BFFB3FC39D57");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
-                Equals(descriptor.Clsid, guidChorus));
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
+                Equals(descriptor.Clsid, guidCompressor));
 
             if (targetDescriptor != null)
             {

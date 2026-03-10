@@ -15,6 +15,7 @@ namespace NAudio.Wave
         private readonly WaveStream inputStream;
         private readonly WaveFormat outputFormat;
         private DmoOutputDataBuffer outputBuffer;
+        private DmoOutputDataBuffer[] outputBufferArray;
         private DmoResampler dmoResampler;
         private MediaBuffer inputMediaBuffer;
         private long position;
@@ -48,6 +49,7 @@ namespace NAudio.Wave
             }
             inputMediaBuffer = new MediaBuffer(inputProvider.WaveFormat.AverageBytesPerSecond);
             outputBuffer = new DmoOutputDataBuffer(outputFormat.AverageBytesPerSecond);
+            outputBufferArray = new[] { outputBuffer };
         }
 
         /// <summary>
@@ -156,7 +158,7 @@ namespace NAudio.Wave
                     outputBuffer.StatusFlags = DmoOutputDataBufferFlags.None;
 
                     // 4. Now ask the DMO for some output data
-                    dmoResampler.MediaObject.ProcessOutput(DmoProcessOutputFlags.None, 1, new[] { outputBuffer });
+                    dmoResampler.MediaObject.ProcessOutput(DmoProcessOutputFlags.None, 1, outputBufferArray);
 
                     if (outputBuffer.Length == 0)
                     {

@@ -29,8 +29,9 @@ namespace NAudio.CoreAudioApi
     /// <summary>
     /// Property Store class, only supports reading properties at the moment.
     /// </summary>
-    public class PropertyStore
+    public class PropertyStore : IDisposable
     {
+        private bool disposed;
         private readonly IPropertyStore storeInterface;
 
         /// <summary>
@@ -158,6 +159,30 @@ namespace NAudio.CoreAudioApi
         internal PropertyStore(IPropertyStore store)
         {
             storeInterface = store;
+        }
+
+        /// <summary>
+        /// COMオブジェクトを解放する
+        /// </summary>
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                if (storeInterface != null)
+                {
+                    Marshal.ReleaseComObject(storeInterface);
+                }
+                disposed = true;
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// ファイナライザ
+        /// </summary>
+        ~PropertyStore()
+        {
+            Dispose();
         }
     }
 }

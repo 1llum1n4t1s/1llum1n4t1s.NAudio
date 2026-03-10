@@ -8,10 +8,10 @@ namespace NAudio.MediaFoundation
     /// <summary>
     /// Media Type helper class, simplifying working with IMFMediaType
     /// (will probably change in the future, to inherit from an attributes class)
-    /// Currently does not release the COM object, so you must do that yourself
     /// </summary>
-    public class MediaType
+    public class MediaType : IDisposable
     {
+        private bool disposed;
         private readonly IMFMediaType mediaType;
 
         /// <summary>
@@ -155,6 +155,30 @@ namespace NAudio.MediaFoundation
         public IMFMediaType MediaFoundationObject
         {
             get { return mediaType; }
+        }
+
+        /// <summary>
+        /// COMオブジェクトを解放する
+        /// </summary>
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                if (mediaType != null)
+                {
+                    Marshal.ReleaseComObject(mediaType);
+                }
+                disposed = true;
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// ファイナライザ
+        /// </summary>
+        ~MediaType()
+        {
+            Dispose();
         }
     }
 }

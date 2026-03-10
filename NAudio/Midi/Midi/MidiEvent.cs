@@ -363,19 +363,19 @@ namespace NAudio.Midi
             }
 
             var n = 0;
-            var buffer = new byte[4];
+            System.Span<byte> buffer = stackalloc byte[4];
             do
             {
                 buffer[n++] = (byte)(value & 0x7F);
                 value >>= 7;
             } while (value > 0);
-            
+
             while (n > 0)
             {
                 n--;
                 if(n > 0)
                     writer.Write((byte) (buffer[n] | 0x80));
-                else 
+                else
                     writer.Write(buffer[n]);
             }
         }

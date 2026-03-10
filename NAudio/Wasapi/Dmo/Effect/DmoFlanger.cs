@@ -49,7 +49,7 @@ namespace NAudio.Dmo.Effect
             /// <summary>
             /// DSFXFLANGER_WETDRYMIX_DEFAULT
             /// </summary>
-            public const float WetDrtMixDefault = 50.0f;
+            public const float WetDryMixDefault = 50.0f;
 
             /// <summary>
             /// DSFXFLANGER_DEPTH_MIN
@@ -75,7 +75,7 @@ namespace NAudio.Dmo.Effect
             /// <summary>
             /// DSFXFLANGER_FEEDBACK_DEFAULT
             /// </summary>
-            public const float FeedBaclDefault = -50.0f;
+            public const float FeedBackDefault = -50.0f;
 
             /// <summary>
             /// DSFXFLANGER_FREQUENCY_MIN

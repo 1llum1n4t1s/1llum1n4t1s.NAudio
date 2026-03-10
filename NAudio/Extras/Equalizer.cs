@@ -74,14 +74,14 @@ namespace NAudio.Extras
                 updated = false;
             }
 
+            var ch = 0;
             for (var n = 0; n < samplesRead; n++)
             {
-                var ch = n % channels; 
-                
                 for (var band = 0; band < bandCount; band++)
                 {
                     buffer[offset + n] = filters[ch, band].Transform(buffer[offset + n]);
                 }
+                if (++ch >= channels) ch = 0;
             }
             return samplesRead;
         }

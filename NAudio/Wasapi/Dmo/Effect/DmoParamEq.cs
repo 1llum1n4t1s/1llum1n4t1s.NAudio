@@ -172,7 +172,7 @@ namespace NAudio.Dmo.Effect
         {
             var guidParamEq = new Guid("120CED89-3BF4-4173-A132-3CB406CF3231");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidParamEq));
 
             if (targetDescriptor != null)

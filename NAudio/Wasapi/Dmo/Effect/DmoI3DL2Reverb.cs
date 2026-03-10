@@ -518,7 +518,7 @@ namespace NAudio.Dmo.Effect
         {
             var guidi3Dl2Reverb = new Guid("EF985E71-D5C7-42D4-BA4D-2D073E2E96F4");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidi3Dl2Reverb));
 
             if (targetDescriptor != null)

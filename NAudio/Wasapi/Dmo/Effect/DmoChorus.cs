@@ -49,7 +49,7 @@ namespace NAudio.Dmo.Effect
             /// <summary>
             /// DSFXCHORUS_WETDRYMIX_DEFAULT
             /// </summary>
-            public const float WetDrtMixDefault = 50.0f;
+            public const float WetDryMixDefault = 50.0f;
 
             /// <summary>
             /// DSFXCHORUS_DEPTH_MIN
@@ -75,7 +75,7 @@ namespace NAudio.Dmo.Effect
             /// <summary>
             /// DSFXCHORUS_FEEDBACK_DEFAULT
             /// </summary>
-            public const float FeedBaclDefault = 25.0f;
+            public const float FeedBackDefault = 25.0f;
 
             /// <summary>
             /// DSFXCHORUS_FREQUENCY_MIN
@@ -291,7 +291,7 @@ namespace NAudio.Dmo.Effect
         {
             var guidChorus = new Guid("EFE6629C-81F7-4281-BD91-C9D604A95AF6");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidChorus));
 
             if (targetDescriptor != null)

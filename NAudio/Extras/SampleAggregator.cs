@@ -34,6 +34,7 @@ namespace NAudio.Extras
 
         private readonly Complex[] fftBuffer;
         private readonly FftEventArgs fftArgs;
+        private readonly float[] hammingWindow;
         private int fftPos;
         private readonly int fftLength;
         private readonly int m;
@@ -58,6 +59,11 @@ namespace NAudio.Extras
             this.fftLength = fftLength;
             fftBuffer = new Complex[fftLength];
             fftArgs = new FftEventArgs(fftBuffer);
+            hammingWindow = new float[fftLength];
+            for (var i = 0; i < fftLength; i++)
+            {
+                hammingWindow[i] = (float)FastFourierTransform.HammingWindow(i, fftLength);
+            }
             this.source = source;
         }
 
@@ -79,7 +85,7 @@ namespace NAudio.Extras
         {
             if (PerformFFT && FftCalculated != null)
             {
-                fftBuffer[fftPos].X = (float)(value * FastFourierTransform.HammingWindow(fftPos, fftLength));
+                fftBuffer[fftPos].X = value * hammingWindow[fftPos];
                 fftBuffer[fftPos].Y = 0;
                 fftPos++;
                 if (fftPos >= fftBuffer.Length)

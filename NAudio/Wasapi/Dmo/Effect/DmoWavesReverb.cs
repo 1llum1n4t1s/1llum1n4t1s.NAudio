@@ -204,7 +204,7 @@ namespace NAudio.Dmo.Effect
         {
             var guidWavesReverb = new Guid("87FC0268-9A55-4360-95AA-004A1D9DE26C");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidWavesReverb));
 
             if (targetDescriptor != null)

@@ -236,7 +236,7 @@ namespace NAudio.Dmo.Effect
         {
             var guidDistortion = new Guid("EF114C90-CD1D-484E-96E5-09CFAF912A21");
 
-            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().First(descriptor =>
+            var targetDescriptor = DmoEnumerator.GetAudioEffectNames().FirstOrDefault(descriptor =>
                 Equals(descriptor.Clsid, guidDistortion));
 
             if (targetDescriptor != null)
