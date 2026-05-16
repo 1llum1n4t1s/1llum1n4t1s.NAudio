@@ -56,13 +56,13 @@ pink noise
 
 ```c#
 Gain = 0.2, 
-Type = SignalGeneratorType.PinkNoise
+Type = SignalGeneratorType.Pink
 ```
 white noise:
 
 ```c#
 Gain = 0.2, 
-Type = SignalGeneratorType.WhiteNoise
+Type = SignalGeneratorType.White
 ```
 
 The final type is the frequency sweep (or 'chirp'). This is a sine wave that starts at `Frequency` and smoothly ramps up to `FrequencyEnd` over the period defined in `SweepLengthSecs`. It then returns to the start frequency and repeats indefinitely

@@ -70,7 +70,7 @@ private async void StartButton_Click(object sender, RoutedEventArgs e)
    - [ ] 「パイプライン開始」など別の async 処理のあとにキャプチャを開始していて、その時点で **Current が別のコンテキストや null に切り替わっていないか**？
 
 4. **参照サンプル**
-   - このリポジトリの **MinimalProcessLoopbackWpf**（`NAudio/MinimalProcessLoopbackWpf`）は、上記を満たした最小の WPF 例です。  
+   - このリポジトリの **ProcessLoopbackCaptureTestWindow**（`Tests/Wasapi/ProcessLoopbackCaptureTestWindow.xaml.cs`）は、上記を満たした WPF テスト用ウィンドウです。  
      同じプロセスを指定してそこで実音が取れるなら、問題は呼び出し側のスレッド／コンテキストにあります。
 
 ---

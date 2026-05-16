@@ -1,10 +1,18 @@
 # publishes to NuGet
-# $apiKey needs to be already set up with NuGet publishing key
+# $apiKey を呼び出し側変数で渡すか、環境変数 NUGET_API_KEY で指定する
 Write-Host $PSScriptRoot
+
+# PowerShell の `.\publish.ps1` 起動は子スクリプトスコープを生成し、
+# 親スコープのローカル変数 $apiKey は子に伝播しない仕様。
+# よって CI (publish.yml) では `$env:NUGET_API_KEY` 経由のみが確実に届く。
+if (-not $apiKey)
+{
+    $apiKey = $env:NUGET_API_KEY
+}
 
 if (-not $apiKey)
 {
-    throw "Need to set the API key first"
+    throw "Need to set the API key first (引数 -ApiKey か 環境変数 NUGET_API_KEY で指定)"
 }
 
 # publish the unified 1llum1n4t1s.NAudio package (bin may be bin\Release or bin\x64\Release etc.)
