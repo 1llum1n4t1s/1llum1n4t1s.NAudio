@@ -91,8 +91,20 @@ enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
 
 # ASIO
 
-> 注: 本フォーク (1llum1n4t1s.NAudio) では AsioOut モジュールはレビュー議題 2 の判断により退役・削除されています。
-> 低遅延用途には WASAPI exclusive mode (`WasapiOut(... AudioClientShareMode.Exclusive ...)`) を代わりに使用してください。
+You can discover the registered ASIO drivers on your system with `AsioOut.GetDriverNames`. There is no guarantee that the associated soundcard is currently connected to the system.
+
+```c#
+foreach (var asio in AsioOut.GetDriverNames())
+{
+    Console.WriteLine(asio);
+}
+```
+
+You can then use the driver name to open the device:
+
+```c#
+new AsioOut(driverName);
+```
 
 # Management Objects
 

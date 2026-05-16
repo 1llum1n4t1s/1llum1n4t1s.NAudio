@@ -70,7 +70,8 @@ rtk dotnet build NAudio/NAudio.csproj -c Release
 | `Wasapi/CoreAudioApi/` | Core Audio APIインターフェース |
 | `Wasapi/MediaFoundation/` | Media Foundationエンコード/デコード |
 | `Wasapi/Dmo/` | DirectX Media Objects (DMOエフェクト) |
-| `WinMM/` | レガシーWindows Multimedia API (WaveOutEvent / WaveInEvent / ACM Mp3 等の主要 API を提供、保守継続) |
+| `Asio/` | ASIOドライバーサポート |
+| `WinMM/` | レガシーWindows Multimedia API |
 | `Wpf/` | WPF用GUIコンポーネント |
 
 ### テスト構成

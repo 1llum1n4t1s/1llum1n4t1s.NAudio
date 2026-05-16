@@ -77,11 +77,19 @@
   - `AsioOut.Stop` の二重実行ガード
   - `WasapiCapture`: 空 `DataAvailable` イベント発火を抑止
 
+### Reverted (議題 2 撤回)
+- **ASIO サポート復活**: 一度議題 2 (Round 1, commit 5a72ce0) で削除した
+  `NAudio/Asio/` 13 ファイルおよび `Docs/AsioPlayback.md` / `Docs/AsioRecording.md`
+  をすべて復元。プロオーディオ用途で `AsioOut` を必要とするユーザーが多い
+  ことを再評価して撤回。
+  - 復活対象: `AsioOut` / `AsioDriver` / `AsioDriverExt` / `AsioCallbacks` /
+    `AsioAudioAvailableEventArgs` / `AsioChannelInfo` / `AsioDriverCapability` /
+    `AsioError` / `AsioMessageSelector` / `AsioSampleType` / `ASIOSampleConvertor` /
+    `Asio64Bit` / `ASIOStructures` の計 13 cs ファイル
+  - Docs/OutputDeviceTypes.md / EnumerateOutputDevices.md / PlaybackStopped.md /
+    Resampling.md / CLAUDE.md の「ASIO 退役」記述も撤回し元の説明に復元
+
 ### Removed
-- **ASIO サポート全体** (`NAudio/Asio/` 13 ファイル) — 議題 2 (Round 1) の判断
-  - `AsioOut` / `AsioDriver` / `AsioDriverExt` 等
-  - 代替: WASAPI exclusive mode (`WasapiOut(... AudioClientShareMode.Exclusive ...)`)
-  - 関連ドキュメント `Docs/AsioPlayback.md` / `Docs/AsioRecording.md` も削除
 - **WPF サンプルアプリ 3 つ** — 議題 1 (Round 1) の判断
   - `NAudio/AudioFileInspector/` (516 ファイル相当)
   - `NAudio/MidiFileConverter/`

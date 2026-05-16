@@ -3,8 +3,8 @@
     <UseWPF>true</UseWPF>
     <PackageId>1llum1n4t1s.NAudio</PackageId>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Description>NAudio フォーク版。.NET 10 対応、Process Loopback Capture (プロセス別音声キャプチャ) サポートを追加、多数のバグ修正を含む。Windows x64 専用。ASIO サポートは退役済 (WASAPI exclusive mode で代替)。</Description>
-    <PackageTags>C# .NET audio sound wasapi process-loopback</PackageTags>
+    <Description>NAudio フォーク版。.NET 10 対応、Process Loopback Capture (プロセス別音声キャプチャ) サポートを追加、多数のバグ修正を含む。Windows x64 専用。WASAPI / WaveOut / ASIO / WinMM / MIDI / SoundFont 等 upstream NAudio の主要機能を保持。</Description>
+    <PackageTags>C# .NET audio sound wasapi process-loopback asio</PackageTags>
     <PackageReleaseNotes>See https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/main/RELEASE_NOTES.md for full release notes.</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>license.txt</PackageLicenseFile>
