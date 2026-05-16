@@ -8,11 +8,12 @@ namespace NAudio.CoreAudioApi
     /// <summary>
     /// Audio Part
     /// </summary>
-    public class Part
+    public class Part : IDisposable
     {
         private const int E_NOTFOUND = unchecked((int)0x80070490);
         private readonly IPart partInterface;
         private DeviceTopology deviceTopology;
+        private bool disposed;
         private static Guid IID_IAudioVolumeLevel = new Guid("7FB7B48F-531D-44A2-BCB3-5AD5A134B3DC");
         private static Guid IID_IAudioMute = new Guid("DF45AEEA-B74A-4B6B-AFAD-2366B6AA012E");
         private static Guid IID_IAudioEndpointVolume = new Guid("5CDF2C82-841E-4546-9722-0CF74078229A");
@@ -182,8 +183,41 @@ namespace NAudio.CoreAudioApi
 
         private void GetDeviceTopology()
         {
+            // 再呼び出し時の旧 deviceTopology を必ず Dispose してから差し替える
+            deviceTopology?.Dispose();
             Marshal.ThrowExceptionForHR(partInterface.GetTopologyObject(out var result));
             deviceTopology = new DeviceTopology(result as IDeviceTopology);
+        }
+
+        /// <summary>
+        /// IPart の COM 参照と保持している DeviceTopology を解放する。
+        /// 前回 /rere で DeviceTopology に IDisposable を追加したが、Part 側は
+        /// 未実装のままで DeviceTopology の COM 参照がリークしていた。
+        /// </summary>
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            deviceTopology?.Dispose();
+            deviceTopology = null;
+            if (partInterface != null)
+            {
+                try { Marshal.ReleaseComObject(partInterface); } catch { }
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// ファイナライザ。GC スレッドからの COM 解放を避けるため Dispose 漏れは警告のみ。
+        /// MediaType / PropertyStore / AudioMeterInformation / DeviceTopology と同じ方針。
+        /// </summary>
+        ~Part()
+        {
+            if (!disposed)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: Part が Dispose されずに finalize された。COM オブジェクトがリーク可能性あり。");
+            }
         }
     }
 }
