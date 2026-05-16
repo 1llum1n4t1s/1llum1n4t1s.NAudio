@@ -6,15 +6,10 @@
   <Folder Name="/Solution Items/">
     <File Path="global.json" />
     <File Path="license.txt" />
-    <File Path="naudio-logo.png" />
     <File Path="publish.ps1" />
     <File Path="README.md" />
-    <File Path="readme.txt" />
-    <File Path="RELEASE_NOTES.md" />
   </Folder>
   <Folder Name="/Solution Items/Docs/">
-    <File Path="Docs/AsioPlayback.md" />
-    <File Path="Docs/AsioRecording.md" />
     <File Path="Docs/ConcatenatingAudio.md" />
     <File Path="Docs/ConvertBetweenStereoAndMono.md" />
     <File Path="Docs/ConvertMp3ToWav.md" />

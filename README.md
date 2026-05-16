@@ -19,7 +19,17 @@
   * Windows x64 runtime support
 * Process Loopback Capture
   * Added implementation for capturing audio from specific processes, which was not merged in the original NAudio.
-  * See [ProcessLoopbackCapture.md](Docs/ProcessLoopbackCapture.md) for details.
+  * **重要 / IMPORTANT**: Process Loopback は UI スレッド (STA) + 非 null の `SynchronizationContext` 必須。`await` に `ConfigureAwait(false)` を付けてはいけません。
+    詳細・切り分けチェックリストは [ProcessLoopbackCapture.md](Docs/ProcessLoopbackCapture.md) 参照。
+
+## Breaking Changes from upstream NAudio
+
+本フォークは upstream NAudio から以下の機能を**退役・削除**しています。NAudio から移行する際は注意してください。
+
+* **ASIO サポート削除**: `AsioOut` / `AsioDriver` / `AsioDriverExt` 等は削除済み。低遅延用途は WASAPI exclusive mode (`WasapiOut(... AudioClientShareMode.Exclusive ...)`) で代替してください。
+* **WPF サンプルアプリ削除**: `AudioFileInspector` / `MidiFileConverter` / `MixDiff` の 3 つの WPF サンプルアプリは削除済み。Process Loopback の動作確認は `Tests/Wasapi/ProcessLoopbackCaptureTestWindow.xaml.cs` を参照してください。
+
+本フォークは「Windows x64 / .NET 10 環境で Process Loopback を含む実用的なオーディオ機能」に焦点を絞っており、ASIO や旧 WPF サンプルを必要とする場合は upstream の [NAudio](https://github.com/naudio/NAudio) の利用を検討してください。
 
 ## Getting Started
 
@@ -44,7 +54,7 @@ dotnet add package 1llum1n4t1s.NAudio
 
 ## Documentation
 
-For tutorials, examples, and detailed documentation, please refer to the [original NAudio documentation](https://github.com/naudio/NAudio/blob/master/README.md). The API is identical to NAudio, so all NAudio documentation and examples apply to 1llum1n4t1s.NAudio as well.
+For tutorials, examples, and detailed documentation, please refer to the [original NAudio documentation](https://github.com/naudio/NAudio/blob/master/README.md). The API is **mostly identical** to NAudio (except for the breaking changes listed above), so most NAudio documentation and examples apply to 1llum1n4t1s.NAudio as well.
 
 ## FAQ
 
@@ -54,7 +64,7 @@ For tutorials, examples, and detailed documentation, please refer to the [origin
 
 **What's the difference between 1llum1n4t1s.NAudio and NAudio?**
 
-1llum1n4t1s.NAudio is a fork of NAudio that has been updated to target .NET 10.0. The package name has been changed to 1llum1n4t1s.NAudio to distinguish it from the original NAudio package. All functionality and APIs remain the same, so you can use 1llum1n4t1s.NAudio as a drop-in replacement for NAudio in .NET 10 projects.
+1llum1n4t1s.NAudio is a fork of NAudio that has been updated to target .NET 10.0 + Windows x64. The package name has been changed to distinguish it from the original NAudio package. Process Loopback Capture (process-specific audio capture) has been added as the fork's primary differentiator. Most functionality and APIs remain compatible with upstream NAudio, **but ASIO support and the WPF sample applications have been retired** (see Breaking Changes section above). If you don't depend on those, you can use 1llum1n4t1s.NAudio as a near drop-in replacement for NAudio in .NET 10 projects.
 
 **How can I get help?**
 
