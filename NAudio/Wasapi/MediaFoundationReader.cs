@@ -187,8 +187,10 @@ namespace NAudio.Wave
             }
             finally
             {
-                Marshal.ReleaseComObject(currentMediaType.MediaFoundationObject);
-                Marshal.ReleaseComObject(partialMediaType.MediaFoundationObject);
+                // MediaType.Dispose に一元化することで、外部直叩きと finalizer 経由の
+                // 二重 ReleaseComObject を防ぐ。
+                currentMediaType.Dispose();
+                partialMediaType.Dispose();
             }
             return reader;
         }

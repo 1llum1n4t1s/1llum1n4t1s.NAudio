@@ -45,7 +45,8 @@ namespace NAudio.Wave
             }
             finally
             {
-                Marshal.ReleaseComObject(partialMediaType.MediaFoundationObject);
+                // MediaType.Dispose に一元化 (二重解放/GCスレッドCOM呼出の防止)
+                partialMediaType.Dispose();
             }
 
             return ppSourceReader;

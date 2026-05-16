@@ -240,10 +240,8 @@ namespace NAudio.Wave
                 {
                     Marshal.ReleaseComObject(writer);
                 }
-                if (inputMediaType.MediaFoundationObject != null)
-                {
-                    Marshal.ReleaseComObject(inputMediaType.MediaFoundationObject);
-                }
+                // MediaType.Dispose に一元化 (二重解放/GCスレッドCOM呼出の防止)
+                inputMediaType.Dispose();
             }
         }
 
@@ -253,9 +251,9 @@ namespace NAudio.Wave
         /// <param name="outputStream">Output stream</param>
         /// <param name="inputProvider">Input provider (should be PCM, some encoders will also allow IEEE float)</param>
         /// <param name="transcodeContainerType">One of <see cref="TranscodeContainerTypes"/></param>
-        public void Encode(Stream outputStream, IWaveProvider inputProvider, Guid transcodeContainerType) 
+        public void Encode(Stream outputStream, IWaveProvider inputProvider, Guid transcodeContainerType)
         {
-            if (inputProvider.WaveFormat.Encoding != WaveFormatEncoding.Pcm && inputProvider.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat) 
+            if (inputProvider.WaveFormat.Encoding != WaveFormatEncoding.Pcm && inputProvider.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
             {
                 throw new ArgumentException("Encode input format must be PCM or IEEE float");
             }
@@ -263,7 +261,7 @@ namespace NAudio.Wave
             var inputMediaType = new MediaType(inputProvider.WaveFormat);
 
             var writer = CreateSinkWriter(new ComStream(outputStream), transcodeContainerType);
-            try 
+            try
             {
 				writer.AddStream(outputMediaType.MediaFoundationObject, out var streamIndex);
 
@@ -271,17 +269,15 @@ namespace NAudio.Wave
 				writer.SetInputMediaType(streamIndex, inputMediaType.MediaFoundationObject, null);
 
                 PerformEncode(writer, streamIndex, inputProvider);
-            } 
-            finally 
+            }
+            finally
             {
                 if (writer != null)
                 {
                     Marshal.ReleaseComObject(writer);
                 }
-                if (inputMediaType.MediaFoundationObject != null)
-                {
-                    Marshal.ReleaseComObject(inputMediaType.MediaFoundationObject);
-                }
+                // MediaType.Dispose に一元化 (二重解放/GCスレッドCOM呼出の防止)
+                inputMediaType.Dispose();
             }
         }
 
@@ -419,10 +415,8 @@ namespace NAudio.Wave
         {
             if (disposing)
             {
-                if (outputMediaType?.MediaFoundationObject != null)
-                {
-                    Marshal.ReleaseComObject(outputMediaType.MediaFoundationObject);
-                }
+                // MediaType.Dispose に一元化 (二重解放/GCスレッドCOM呼出の防止)
+                outputMediaType?.Dispose();
             }
         }
 
