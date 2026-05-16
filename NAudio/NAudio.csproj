@@ -21,6 +21,11 @@
     <None Remove="SampleData\**" />
   </ItemGroup>
 
+  <!-- テストプロジェクトから internal シンボル (ActivateAudioInterfaceCompletionHandler 等) にアクセス可能にする -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="NAudioTests" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="..\license.txt">
       <Pack>True</Pack>
