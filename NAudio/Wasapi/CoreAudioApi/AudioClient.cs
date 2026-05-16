@@ -405,13 +405,25 @@ namespace NAudio.CoreAudioApi
 
         /// <summary>
         /// Finalizer
+        /// GC スレッド (任意の MTA スレッド) から走るため、以下を守る:
+        ///   1. DisposeSubClients は managed オブジェクトを触るので呼ばない
+        ///      (finalizer 順序が非決定的で、子オブジェクトが既に finalize 済みの可能性)。
+        ///   2. STA 取得 COM を MTA スレッドから Release すると RPC_E_WRONG_THREAD や
+        ///      AccessViolation の危険があるため、try/catch でガードする。
+        /// 利用者は IAudioClient を使い終わったら必ず Dispose() で明示解放すること。
         /// </summary>
         ~AudioClient()
         {
             if (audioClientInterface != null)
             {
-                DisposeSubClients();
-                Marshal.ReleaseComObject(audioClientInterface);
+                try
+                {
+                    Marshal.ReleaseComObject(audioClientInterface);
+                }
+                catch
+                {
+                    // finalizer で例外を伝播させない (プロセス終了時のクラッシュ防止)
+                }
                 audioClientInterface = null;
             }
         }
