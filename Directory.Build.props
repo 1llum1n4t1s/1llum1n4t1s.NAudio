@@ -19,7 +19,9 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <DefineConstants Condition="'$(Configuration)' == 'Debug'">DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
-  <Target Name="CleanBinObjBeforeRestore" BeforeTargets="Restore">
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\bin;$(MSBuildProjectDirectory)\obj" Condition="Exists('$(MSBuildProjectDirectory)\bin') or Exists('$(MSBuildProjectDirectory)\obj')" />
-  </Target>
+  <!--
+    CleanBinObjBeforeRestore (Restore 前に bin/obj を全削除) は MSBuild の
+    incremental ビルドを完全無効化していたため撤去。
+    stale obj の問題が再発する場合は `dotnet clean` を明示的に走らせる運用に。
+  -->
 </Project>

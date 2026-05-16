@@ -54,7 +54,16 @@
     </None>
   </ItemGroup>
 
-  <Target Name="GenerateIcon" BeforeTargets="Build">
+  <!--
+    アイコン生成 Target。
+    Inputs/Outputs を指定してインクリメンタルビルドを有効化し、
+    入力スクリプト/PNG が変更されたときだけ PowerShell を起動する。
+    Condition で generate_icon.ps1 が存在しない環境 (NuGet 配布物のみ持ち込み等) でも壊れないようにする。
+  -->
+  <Target Name="GenerateIcon" BeforeTargets="Build"
+          Inputs="$(ProjectDir)..\icon\generate_icon.ps1;$(ProjectDir)..\icon\app_icon.png"
+          Outputs="$(ProjectDir)..\icon\app.ico"
+          Condition="Exists('$(ProjectDir)..\icon\generate_icon.ps1')">
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)..\icon\generate_icon.ps1&quot;" />
   </Target>
 </Project>

@@ -18,11 +18,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       
-      - name: Restore dependencies
-        run: dotnet restore NAudio\NAudio.csproj
-      
       - name: Build Release
-        run: dotnet build NAudio\NAudio.csproj -c Release --no-restore
+        # Restore は dotnet build 内部で自動実行されるため明示分離は不要。
+        # 分離 + --no-restore は CleanBinObjBeforeRestore (撤去済み) との race の温床だったので統合。
+        run: dotnet build NAudio\NAudio.csproj -c Release
       
       - name: Publish to NuGet
         run: |
