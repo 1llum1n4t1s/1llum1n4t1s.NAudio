@@ -144,15 +144,16 @@ namespace NAudioTests.WaveStreams
 
         /// <summary>
         /// 問題になりがちな WAV を開いて最後まで読めることを確認する。
+        /// 環境変数 NAUDIO_TEST_WAV_DIR でフォルダ指定、未設定なら Ignore。
         /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemWavFiles()
         {
-            var testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
-            if (!Directory.Exists(testDataFolder))
+            var testDataFolder = Environment.GetEnvironmentVariable("NAUDIO_TEST_WAV_DIR");
+            if (string.IsNullOrEmpty(testDataFolder) || !Directory.Exists(testDataFolder))
             {
-                ClassicAssert.Ignore($"{testDataFolder} not found");
+                ClassicAssert.Ignore("Set NAUDIO_TEST_WAV_DIR environment variable to point to a folder containing .wav files");
             }
             foreach (var file in Directory.GetFiles(testDataFolder, "*.wav"))
             {

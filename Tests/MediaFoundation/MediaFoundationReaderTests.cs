@@ -17,12 +17,14 @@ namespace NAudioTests.MediaFoundation
     {
         /// <summary>
         /// AAC ファイルを読み取れることを確認する。
+        /// 環境変数 NAUDIO_TEST_AAC でファイルパスを指定。未設定なら Ignore。
         /// </summary>
         [Test]
         public void CanReadAnAac()
         {
-            var testFile = @"C:\Users\mheath\Downloads\NAudio\AAC\halfspeed.aac";
-            if (!File.Exists(testFile)) ClassicAssert.Ignore("Missing test file");
+            var testFile = Environment.GetEnvironmentVariable("NAUDIO_TEST_AAC");
+            if (string.IsNullOrEmpty(testFile) || !File.Exists(testFile))
+                ClassicAssert.Ignore("Set NAUDIO_TEST_AAC environment variable to point to a .aac file");
             var reader = new MediaFoundationReader(testFile);
             Console.WriteLine(reader.WaveFormat);
             var buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
@@ -49,9 +51,12 @@ namespace NAudioTests.MediaFoundation
         [Test]
         public void CanEncodeLargeGSM610FileToMp3()
         {
-            var fileInPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.wav";
-            var fileOutPath = @"C:\Users\mheath\Downloads\CH48_17002346_884_1.mp3";
-            if (!File.Exists(fileInPath)) ClassicAssert.Ignore("Missing test file"); ;
+            // 環境依存テスト: 環境変数 NAUDIO_TEST_GSM610_WAV で入力ファイルを指定。
+            // 出力は Path.GetTempPath() 配下に書く。
+            var fileInPath = Environment.GetEnvironmentVariable("NAUDIO_TEST_GSM610_WAV");
+            if (string.IsNullOrEmpty(fileInPath) || !File.Exists(fileInPath))
+                ClassicAssert.Ignore("Set NAUDIO_TEST_GSM610_WAV environment variable to point to a GSM610 .wav file");
+            var fileOutPath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(fileInPath) + ".mp3");
             var sw = Stopwatch.StartNew();
             using (var wavToConvert = new WaveFileReader(fileInPath))
             using (var converter = WaveFormatConversionStream.CreatePcmStream(wavToConvert))

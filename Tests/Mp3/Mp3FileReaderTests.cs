@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System.IO;
@@ -15,15 +16,17 @@ namespace NAudioTests.Mp3
     {
         /// <summary>
         /// 問題になりがちな MP3 ファイルを開いて最後まで読めることを確認する。
+        /// 環境変数 NAUDIO_TEST_MP3_DIR で指定されたディレクトリ内の全 .mp3 を対象。
+        /// 未設定の場合は Ignore (環境依存テスト)。
         /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void CanLoadAndReadVariousProblemMp3Files()
         {
-            var testDataFolder = @"C:\Users\Mark\Downloads\NAudio";
-            if (!Directory.Exists(testDataFolder))
+            var testDataFolder = Environment.GetEnvironmentVariable("NAUDIO_TEST_MP3_DIR");
+            if (string.IsNullOrEmpty(testDataFolder) || !Directory.Exists(testDataFolder))
             {
-                ClassicAssert.Ignore($"{testDataFolder} not found");
+                ClassicAssert.Ignore("Set NAUDIO_TEST_MP3_DIR environment variable to point to a folder containing .mp3 files");
             }
             foreach (var file in Directory.GetFiles(testDataFolder, "*.mp3"))
             {

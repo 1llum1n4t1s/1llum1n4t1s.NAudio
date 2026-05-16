@@ -67,6 +67,13 @@ namespace NAudio.SoundFont
 
         public byte[] GetData()
         {
+            // ChunkSize は uint で、攻撃 .sf2 で 0x80000000 以上を渡されると
+            // (int) キャストで負値に化けて ReadBytes が ArgumentOutOfRangeException を投げる。
+            // API 契約 (InvalidDataException) に揃えるため事前検証。
+            if (ChunkSize > int.MaxValue)
+            {
+                throw new InvalidDataException($"RIFF chunk size {ChunkSize} exceeds Int32.MaxValue");
+            }
             riffFile.BaseStream.Position = DataOffset;
             var data = riffFile.ReadBytes((int)ChunkSize);
             if (data.Length != ChunkSize)

@@ -15,15 +15,17 @@ namespace NAudioTests.Aiff
     {
         /// <summary>
         /// 指定フォルダ内の AIFF を WAV に変換できることを確認する。
+        /// 環境変数 NAUDIO_TEST_AIFF_DIR で指定されたディレクトリ内の全 .aiff が対象。
+        /// 未設定の場合は Ignore (環境依存テスト)。
         /// </summary>
         [Test]
         [Category("IntegrationTest")]
         public void ConvertAiffToWav()
         {
-            var testFolder = @"C:\Users\Mark\Downloads\NAudio";
-            if (!Directory.Exists(testFolder))
+            var testFolder = Environment.GetEnvironmentVariable("NAUDIO_TEST_AIFF_DIR");
+            if (string.IsNullOrEmpty(testFolder) || !Directory.Exists(testFolder))
             {
-                ClassicAssert.Ignore($"{testFolder} not found");
+                ClassicAssert.Ignore("Set NAUDIO_TEST_AIFF_DIR environment variable to point to a folder containing .aiff files");
             }
 
             foreach (var file in Directory.GetFiles(testFolder, "*.aiff"))
