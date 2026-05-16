@@ -24,12 +24,23 @@ namespace NAudio.Wave
         /// <returns>An array of available bitrates in average bits per second</returns>
         public static int[] GetEncodeBitrates(Guid audioSubtype, int sampleRate, int channels)
         {
-            return GetOutputMediaTypes(audioSubtype)
-                .Where(mt => mt.SampleRate == sampleRate && mt.ChannelCount == channels)
-                .Select(mt => mt.AverageBytesPerSecond*8)
-                .Distinct()
-                .OrderBy(br => br)
-                .ToArray();
+            // GetOutputMediaTypes は MediaType[] を返すが、本メソッドは Bitrate (int) しか
+            // 使わない。MediaType.finalizer は前回 /rere で「警告のみ」方針に変更されたため
+            // GC されても COM オブジェクトが解放されない仕様。よって全 MediaType を明示 Dispose する。
+            var mediaTypes = GetOutputMediaTypes(audioSubtype);
+            try
+            {
+                return mediaTypes
+                    .Where(mt => mt.SampleRate == sampleRate && mt.ChannelCount == channels)
+                    .Select(mt => mt.AverageBytesPerSecond * 8)
+                    .Distinct()
+                    .OrderBy(br => br)
+                    .ToArray();
+            }
+            finally
+            {
+                foreach (var mt in mediaTypes) mt.Dispose();
+            }
         }
 
         /// <summary>
@@ -185,12 +196,30 @@ namespace NAudio.Wave
         public static MediaType SelectMediaType(Guid audioSubtype, WaveFormat inputFormat, int desiredBitRate)
         {
             MediaFoundationApi.Startup();
-            return GetOutputMediaTypes(audioSubtype)
-                .Where(mt => mt.SampleRate == inputFormat.SampleRate && mt.ChannelCount == inputFormat.Channels)
-                .Select(mt => new { MediaType = mt, Delta = Math.Abs(desiredBitRate - mt.AverageBytesPerSecond * 8) } )
-                .OrderBy(mt => mt.Delta)
-                .Select(mt => mt.MediaType)
-                .FirstOrDefault();
+            // GetOutputMediaTypes が返した MediaType[] のうち 1 個だけ採用し、残りは Dispose する。
+            // MediaType.finalizer は前回 /rere で「警告のみ」方針 (COM 解放しない) になったため、
+            // 戻さなかった MediaType を放置すると確定リーク。
+            var mediaTypes = GetOutputMediaTypes(audioSubtype);
+            MediaType selected = null;
+            try
+            {
+                selected = mediaTypes
+                    .Where(mt => mt.SampleRate == inputFormat.SampleRate && mt.ChannelCount == inputFormat.Channels)
+                    .Select(mt => new { MediaType = mt, Delta = Math.Abs(desiredBitRate - mt.AverageBytesPerSecond * 8) })
+                    .OrderBy(mt => mt.Delta)
+                    .Select(mt => mt.MediaType)
+                    .FirstOrDefault();
+                return selected;
+            }
+            finally
+            {
+                // 採用した selected 以外を Dispose
+                foreach (var mt in mediaTypes)
+                {
+                    if (!ReferenceEquals(mt, selected))
+                        mt.Dispose();
+                }
+            }
         }
 
         /// <summary>
