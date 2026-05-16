@@ -24,18 +24,36 @@ namespace NAudio.Wasapi.CoreAudioApi
             activateOperation.GetActivateResult(out var hr, out var ptr);
             if (hr != 0)
             {
-                tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));
+                // Marshal.GetExceptionForHR は S_FALSE(1) 等の場合に null を返す仕様。
+                // null を TrySetException に渡すと ArgumentNullException が漏れて
+                // await CreateForProcessCaptureAsync(...) が永遠に hang する原因になる。
+                // COMException でフォールバックして HRESULT が必ず例外として伝搬するようにする。
+                var ex = Marshal.GetExceptionForHR(hr, new IntPtr(-1))
+                         ?? new COMException($"ActivateAudioInterfaceAsync failed (HRESULT 0x{hr:X8})", hr);
+                tcs.TrySetException(ex);
+                if (ptr != IntPtr.Zero) Marshal.Release(ptr);
                 return;
             }
-            var pAudioClient = (T)Marshal.GetObjectForIUnknown(ptr);
             try
             {
-                initializeAction(pAudioClient);
-                tcs.SetResult(pAudioClient);
+                var pAudioClient = (T)Marshal.GetObjectForIUnknown(ptr);
+                try
+                {
+                    initializeAction(pAudioClient);
+                    tcs.SetResult(pAudioClient);
+                }
+                catch (Exception ex)
+                {
+                    tcs.TrySetException(ex);
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                tcs.TrySetException(ex);
+                // GetActivateResult が返した IUnknown ptr は AddRef 済み。
+                // GetObjectForIUnknown が RCW 用にさらに AddRef するため、
+                // ここで元の ptr の参照を Release しないと COM オブジェクトがリークする。
+                // (1版 / ProcessLoopback 版は既に Release してるのに Generic 版だけ漏れていた)
+                Marshal.Release(ptr);
             }
         }
 
@@ -64,7 +82,12 @@ namespace NAudio.Wasapi.CoreAudioApi
             activateOperation.GetActivateResult(out var hr, out var ptr);
             if (hr != 0)
             {
-                tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));
+                // Marshal.GetExceptionForHR が null を返した場合の COMException フォールバック
+                // (Generic 版と同じ理由)
+                var ex = Marshal.GetExceptionForHR(hr, new IntPtr(-1))
+                         ?? new COMException($"ActivateAudioInterfaceAsync failed (HRESULT 0x{hr:X8})", hr);
+                tcs.TrySetException(ex);
+                if (ptr != IntPtr.Zero) Marshal.Release(ptr);
                 return;
             }
             try
@@ -107,7 +130,12 @@ namespace NAudio.Wasapi.CoreAudioApi
             activateOperation.GetActivateResult(out var hr, out var ptr);
             if (hr != 0)
             {
-                tcs.TrySetException(Marshal.GetExceptionForHR(hr, new IntPtr(-1)));
+                // Marshal.GetExceptionForHR が null を返した場合の COMException フォールバック。
+                // null を TrySetException に渡すと ArgumentNullException で Task hang する。
+                var ex = Marshal.GetExceptionForHR(hr, new IntPtr(-1))
+                         ?? new COMException($"ActivateAudioInterfaceAsync failed (HRESULT 0x{hr:X8})", hr);
+                tcs.TrySetException(ex);
+                if (ptr != IntPtr.Zero) Marshal.Release(ptr);
                 return;
             }
             tcs.SetResult(ptr);
