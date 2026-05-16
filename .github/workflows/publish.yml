@@ -6,27 +6,53 @@ on:
       - 'release/**'
   workflow_dispatch:
 
+# NuGet push は外部サービスへの HTTP リクエストで GITHUB_TOKEN を使わないため
+# 最小権限 (contents: read) で十分。
+permissions:
+  contents: read
+
 jobs:
   publish:
     runs-on: windows-latest
+    # 暴走防止: Process Loopback 系のテスト hang などで billable minute が
+    # 6 時間消費するのを避ける。
+    timeout-minutes: 30
+    # 同一 release ブランチへの連続 push でジョブが並走してレースを起こさないよう
+    # キャンセルせず順次実行する。
+    concurrency:
+      group: nuget-publish-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      
+
+      # NuGet パッケージキャッシュで restore 帯域・時間を削減。
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj','**/*.props','global.json') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # 壊れたコードを公開しないためのゲート。IntegrationTest (実機/デバイス依存) は除外。
+      - name: Run unit tests
+        run: dotnet test Tests\NAudioTests.csproj --filter "TestCategory!=IntegrationTest"
+
       - name: Build Release
         # Restore は dotnet build 内部で自動実行されるため明示分離は不要。
         # 分離 + --no-restore は CleanBinObjBeforeRestore (撤去済み) との race の温床だったので統合。
         run: dotnet build NAudio\NAudio.csproj -c Release
-      
+
       - name: Publish to NuGet
-        run: |
-          $apiKey = $env:NUGET_API_KEY
-          .\publish.ps1
+        # publish.ps1 側で $env:NUGET_API_KEY をフォールバック取得するため、
+        # ここでは環境変数の引き渡しだけ行う。
+        run: .\publish.ps1
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         shell: pwsh
