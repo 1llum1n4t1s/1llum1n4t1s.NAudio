@@ -61,6 +61,8 @@ namespace NAudio.CoreAudioApi
         /// <remarks>Administrative client is required for Write and ReadWrite modes.</remarks>
         public void GetPropertyInformation(StorageAccessMode stgmAccess = StorageAccessMode.Read)
         {
+            // 再呼び出し時の旧 propertyStore を必ず Dispose してから差し替える (COM リーク防止)
+            propertyStore?.Dispose();
             Marshal.ThrowExceptionForHR(deviceInterface.OpenPropertyStore(stgmAccess, out var propstore));
             propertyStore = new PropertyStore(propstore);
         }
@@ -313,12 +315,23 @@ namespace NAudio.CoreAudioApi
         {
             if (disposed) return;
             disposed = true;
-            this.audioEndpointVolume?.Dispose();
-            this.audioSessionManager?.Dispose();
+            if (disposing)
+            {
+                // managed COM ラッパー群を Dispose して COM 参照を確実に解放する。
+                // finalizer 経由 (disposing=false) では他の managed オブジェクトに触らない
+                // (finalizer 順序が非決定的なため)。
+                this.audioEndpointVolume?.Dispose();
+                this.audioSessionManager?.Dispose();
+                this.audioMeterInformation?.Dispose();
+                this.deviceTopology?.Dispose();
+                this.propertyStore?.Dispose();
+            }
             this.audioMeterInformation = null;
             this.deviceTopology = null;
             this.propertyStore = null;
-            Marshal.ReleaseComObject(deviceInterface);
+            // deviceInterface 自身は IMMDevice の COM ラッパ。
+            // finalizer 経由の Release は GC スレッドからの呼び出しになるため例外を握り潰す。
+            try { Marshal.ReleaseComObject(deviceInterface); } catch { }
         }
 
         /// <summary>

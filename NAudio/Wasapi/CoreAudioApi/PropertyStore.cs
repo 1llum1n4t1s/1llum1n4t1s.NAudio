@@ -162,27 +162,34 @@ namespace NAudio.CoreAudioApi
         }
 
         /// <summary>
-        /// COMオブジェクトを解放する
+        /// COMオブジェクトを解放する。
+        /// 二重解放を防ぐため disposed フラグを先に立て、SuppressFinalize は if 内で実行する。
         /// </summary>
         public void Dispose()
         {
-            if (!disposed)
+            if (disposed) return;
+            disposed = true;
+            if (storeInterface != null)
             {
-                if (storeInterface != null)
-                {
-                    Marshal.ReleaseComObject(storeInterface);
-                }
-                disposed = true;
+                Marshal.ReleaseComObject(storeInterface);
             }
             GC.SuppressFinalize(this);
         }
 
         /// <summary>
         /// ファイナライザ
+        /// GC スレッド (任意の MTA スレッド) から走るため、STA バインドの COM オブジェクトを
+        /// Release すると RPC_E_WRONG_THREAD や AccessViolation を引き起こす。
+        /// ここでは COM に触らず、Dispose 漏れを表面化させるための警告のみ出す。
+        /// 利用者は必ず using か Dispose() で明示解放すること。
         /// </summary>
         ~PropertyStore()
         {
-            Dispose();
+            if (!disposed)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: PropertyStore が Dispose されずに finalize された。COM オブジェクトがリーク可能性あり。using か Dispose() で明示解放してください。");
+            }
         }
     }
 }

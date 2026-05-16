@@ -1,13 +1,16 @@
-﻿using NAudio.CoreAudioApi.Interfaces;
+﻿using System;
+using System.Runtime.InteropServices;
+using NAudio.CoreAudioApi.Interfaces;
 
 namespace NAudio.CoreAudioApi
 {
     /// <summary>
     /// Windows CoreAudio DeviceTopology
     /// </summary>
-    public class DeviceTopology
+    public class DeviceTopology : IDisposable
     {
         private readonly IDeviceTopology deviceTopologyInterface;
+        private bool disposed;
 
         internal DeviceTopology(IDeviceTopology deviceTopology)
         {
@@ -47,5 +50,31 @@ namespace NAudio.CoreAudioApi
             }
         }
 
+        /// <summary>
+        /// IDeviceTopology COM オブジェクトを解放する。
+        /// MMDevice.Dispose 経由でも呼ばれる。
+        /// </summary>
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            if (deviceTopologyInterface != null)
+            {
+                Marshal.ReleaseComObject(deviceTopologyInterface);
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// ファイナライザ。GC スレッドからの COM 解放を避けるため Dispose 漏れは警告のみ。
+        /// </summary>
+        ~DeviceTopology()
+        {
+            if (!disposed)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: DeviceTopology が Dispose されずに finalize された。COM オブジェクトがリーク可能性あり。");
+            }
+        }
     }
 }

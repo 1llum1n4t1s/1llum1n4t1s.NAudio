@@ -19,6 +19,7 @@
      misrepresented as being the original source code.
   3. This notice may not be removed or altered from any source distribution.
 */
+using System;
 using System.Runtime.InteropServices;
 using NAudio.CoreAudioApi.Interfaces;
 
@@ -27,9 +28,10 @@ namespace NAudio.CoreAudioApi
     /// <summary>
     /// Audio Meter Information
     /// </summary>
-    public class AudioMeterInformation
+    public class AudioMeterInformation : IDisposable
     {
         private readonly IAudioMeterInformation audioMeterInformation;
+        private bool disposed;
 
         internal AudioMeterInformation(IAudioMeterInformation realInterface)
         {
@@ -59,6 +61,33 @@ namespace NAudio.CoreAudioApi
             {
                 Marshal.ThrowExceptionForHR(audioMeterInformation.GetPeakValue(out var result));
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// IAudioMeterInformation COM オブジェクトを解放する。
+        /// MMDevice.Dispose 経由でも呼ばれる。
+        /// </summary>
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            if (audioMeterInformation != null)
+            {
+                Marshal.ReleaseComObject(audioMeterInformation);
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// ファイナライザ。GC スレッドからの COM 解放を避けるため Dispose 漏れは警告のみ。
+        /// </summary>
+        ~AudioMeterInformation()
+        {
+            if (!disposed)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: AudioMeterInformation が Dispose されずに finalize された。COM オブジェクトがリーク可能性あり。");
             }
         }
     }
