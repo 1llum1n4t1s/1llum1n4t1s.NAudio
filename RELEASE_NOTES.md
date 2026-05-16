@@ -6,9 +6,10 @@
 
 ---
 
-## [Unreleased] — 1.0.43 候補
+## [1.0.43] — 2026-05-17
 
-> Claude Code による 2 ラウンドの `/rere` レビューで指摘された問題を修正中。
+> Claude Code による 2 ラウンドの `/rere` レビューで指摘された問題をまとめて反映。
+> WPF サンプルアプリ 3 つを退役 (議題 1)、ASIO は議題 2 を撤回して復活。
 
 ### Added
 - **Process Loopback リグレッション保護用 CI Test 追加** (`Tests/Wasapi/ActivateAudioInterfaceCompletionHandlerTests.cs`)
@@ -39,7 +40,7 @@
 - `Docs/ProcessLoopbackCapture.md`: 参照サンプル `MinimalProcessLoopbackWpf` → 実在する `Tests/Wasapi/ProcessLoopbackCaptureTestWindow.xaml.cs` に変更
 - `Docs/OutputDeviceTypes.md` / `Docs/EnumerateOutputDevices.md` / `Docs/Resampling.md`: ASIO 退役注記
 - `Tests/`: 個人パス (`C:\Users\Mark\...`, `C:\Users\mheath\...`) を環境変数指定方式 (`NAUDIO_TEST_*`) に置換
-- `Tests/NAudioTests.csproj`: `<OutputType>WinExe</OutputType>` 削除 (暗黙 Library 化)、`<IsPackable>false</IsPackable>` 追加
+- `Tests/NAudioTests.csproj`: `<IsPackable>false</IsPackable>` 追加 (テストプロジェクト自体の NuGet 化抑止)。`<OutputType>WinExe</OutputType>` は `Tests/App.xaml` の WPF ApplicationDefinition と組み合わせる関係で必須のため保持 (Library 化すると MC1002/BG1003 ビルドエラー)
 - `MixingWaveProvider32` に `[Obsolete]` 付与 (新規利用抑制)
 - `NAudio.Utils.NativeMethods` に `[EditorBrowsable(EditorBrowsableState.Never)]` 付与
 - `AudioSessionControl` / `MediaType` / `PropertyStore` / `MMDevice` / `AudioMeterInformation` / `DeviceTopology` / `AudioClient` の `Dispose` / finalizer パターン統一 (二重解放 + GC スレッド COM 呼出を構造的に解消)

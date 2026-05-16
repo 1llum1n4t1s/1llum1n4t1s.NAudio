@@ -20,3 +20,8 @@ _ReSharper*/
 # cake:
 Tools/
 *.DotSettings
+
+# Claude Code / MCP (個人開発環境 — リポジトリにコミットしない)
+.claude/
+.mcp.json
+.serena/
