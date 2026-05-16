@@ -112,13 +112,17 @@ namespace NAudioTests.WaveStreams
 
         /// <summary>
         /// 16bit ファイルに WriteSample で書き込めることを確認する。
+        /// MemoryStream に RIFF ヘッダ (44 bytes) + 1000 サンプル × 2 bytes (16bit mono) が
+        /// 書き出されることを assert することで、WriteSample が「黙って 0 バイトしか書かない」
+        /// 等の回帰を検出可能にする。
         /// </summary>
         [Test]
         public void CanUseWriteSampleToA16BitFile()
         {
             var amplitude = 0.25f;
             float frequency = 1000;
-            using (var writer = new WaveFileWriter(new MemoryStream(), new WaveFormat(16000, 16, 1)))
+            var ms = new MemoryStream();
+            using (var writer = new WaveFileWriter(new NAudio.Utils.IgnoreDisposeStream(ms), new WaveFormat(16000, 16, 1)))
             {
                 for (var n = 0; n < 1000; n++)
                 {
@@ -126,6 +130,8 @@ namespace NAudioTests.WaveStreams
                     writer.WriteSample(sample);
                 }
             }
+            // RIFF ヘッダ + 1000 sample × 2 byte = 44 + 2000 = 2044 bytes
+            ClassicAssert.AreEqual(44 + 1000 * 2, ms.Length, "RIFF ヘッダ + 16bit mono 1000 サンプル分が書き出されるはず");
         }
 
         /// <summary>

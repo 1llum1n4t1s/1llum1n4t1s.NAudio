@@ -16,13 +16,17 @@ namespace NAudioTests.WaveStreams
     {
         /// <summary>
         /// MP3 ファイルをダウンサンプルして WAV に書き出せることを確認する。
+        /// 環境依存ファイルを使うので IntegrationTest カテゴリに分類。
+        /// 入力ファイルは環境変数 NAUDIO_TEST_MP3 で指定。
         /// </summary>
         [Test]
+        [Category("IntegrationTest")]
         public void CanDownsampleAnMp3File()
         {
-            var testFile =  @"D:\Audio\Music\Coldplay\Mylo Xyloto\03 - Paradise.mp3";
-            if (!File.Exists(testFile)) ClassicAssert.Ignore(testFile);
-            var outFile = @"d:\test22.wav";
+            var testFile = Environment.GetEnvironmentVariable("NAUDIO_TEST_MP3");
+            if (string.IsNullOrEmpty(testFile) || !File.Exists(testFile))
+                ClassicAssert.Ignore("Set NAUDIO_TEST_MP3 environment variable to point to a real .mp3 file");
+            var outFile = Path.Combine(Path.GetTempPath(), "naudio-test-downsample.wav");
             using (var reader = new AudioFileReader(testFile))
             {
                 // downsample to 22kHz
@@ -40,8 +44,8 @@ namespace NAudioTests.WaveStreams
                             break;
                     }
                 }
-                //WaveFileWriter.CreateWaveFile(outFile, );
             }
+            ClassicAssert.IsTrue(File.Exists(outFile), "出力ファイルが生成されているはず");
         }
 
         /// <summary>
@@ -72,16 +76,20 @@ namespace NAudioTests.WaveStreams
             var channels = 1;
             var offset = CreateSignalGenerator(@from, channels);
             var resampler = new WdlResamplingSampleProvider(offset, to);
-            //string fileName = "From {0}"
-            //WaveFileWriter.CreateWaveFile16(;
             var buffer = new float[to * channels];
             Debug.WriteLine(String.Format("From {0} to {1}", from, to));
+            var totalRead = 0;
             for (var n = 0; n < 10; n++)
             {
                 var read = resampler.Read(buffer, 0, buffer.Length);
                 Debug.WriteLine(String.Format("read {0}", read));
+                totalRead += read;
             }
-
+            // 5 秒分の入力 (CreateSignalGenerator の TakeSamples = from * channels * 5) から
+            // to レートでリサンプルすれば概ね to * 5 サンプル前後が読めるはず。
+            // 「全く何も読めない (Read が 0 で固まる)」回帰を検出するため、
+            // 少なくとも 1 サンプル以上は読み出せていることを確認する。
+            ClassicAssert.Greater(totalRead, 0, $"Resampling {from}Hz -> {to}Hz で 1 サンプルも読めていません");
         }
 
         private static OffsetSampleProvider CreateSignalGenerator(int @from, int channels)
