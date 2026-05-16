@@ -135,6 +135,16 @@ namespace NAudio.FileFormats.Wav
                 throw new FormatException("Invalid RF64 WAV file - No ds64 chunk found");
             }
             var chunkSize = reader.ReadInt32();
+
+            // RF64 ds64 chunk は仕様上 chunkSize >= 24 (riffSize + dataChunkLength + sampleCount で 24 byte 必須)。
+            // 細工された RF64 .wav で chunkSize<24 を渡されると `reader.ReadBytes(chunkSize - 24)` が
+            // 負値で ArgumentOutOfRangeException を投げて DoS 成立。事前に検証して
+            // InvalidDataException に変換する。
+            if (chunkSize < 24)
+            {
+                throw new InvalidDataException($"Invalid ds64 chunk size: {chunkSize} (minimum 24)");
+            }
+
             this.riffSize = reader.ReadInt64();
             this.dataChunkLength = reader.ReadInt64();
             var sampleCount = reader.ReadInt64(); // replaces the value in the fact chunk

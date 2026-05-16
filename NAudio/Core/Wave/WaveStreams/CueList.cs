@@ -140,6 +140,18 @@ namespace NAudio.Wave
         internal CueList(byte[] cueChunkData, byte[] listChunkData)
         {
             var cueCount = BinaryPrimitives.ReadInt32LittleEndian(cueChunkData.AsSpan(0));
+
+            // 細工された .wav で cueCount に巨大値 (例: 0x7FFFFFFF) を仕込まれると
+            // `new int[cueCount]` で 8GB の確保要求が走り OOM の DoS が成立する。
+            // cue point 1 つあたり 24 バイトなので、chunk 残りバイト数で割って
+            // 物理的な最大数を上限として弾く。
+            var maxCuePoints = Math.Max(0, (cueChunkData.Length - 4) / 24);
+            if (cueCount < 0 || cueCount > maxCuePoints)
+            {
+                throw new InvalidDataException(
+                    $"Invalid cue chunk: cueCount ({cueCount}) exceeds chunk-size-derived limit ({maxCuePoints})");
+            }
+
             var cueIndex = new Dictionary<int, int>();
             var positions = new int[cueCount];
             var cue = 0;
@@ -157,11 +169,29 @@ namespace NAudio.Wave
             for (var p = 4; listChunkData.Length - p >= 16; p += labelLength + labelLength % 2 + 12)
             {
                 labelLength = BinaryPrimitives.ReadInt32LittleEndian(listChunkData.AsSpan(p + 4)) - 4;
+
+                // labelLength が attacker-controlled な負値だと
+                // (a) ループ進行 p += 負値 でループ後退/無限ループ
+                // (b) `Encoding.UTF8.GetString(buf, offset, length-1)` で負 length → ArgumentOutOfRangeException
+                // (c) chunk 残りバイト数を超えた値だと p+12+length が範囲外読み取り
+                // をそれぞれ防ぐためにクランプ。
+                var remaining = listChunkData.Length - (p + 12);
+                if (labelLength < 1 || labelLength > remaining)
+                {
+                    // 不正フレームは無視して走査だけ進める (寛容パースのスタンスを維持)。
+                    labelLength = 0;
+                    break;
+                }
+
                 if (BinaryPrimitives.ReadInt32LittleEndian(listChunkData.AsSpan(p)) == labelChunkId)
                 {
                     var cueId = BinaryPrimitives.ReadInt32LittleEndian(listChunkData.AsSpan(p + 8));
-                    cue = cueIndex[cueId];
-                    labels[cue] = Encoding.UTF8.GetString(listChunkData, p + 12, labelLength - 1);
+                    // cueId 未登録のとき旧実装は KeyNotFoundException が外部に漏れていた。
+                    // 該当 cue が見つからないラベルは黙ってスキップ (ベストエフォート方針)。
+                    if (cueIndex.TryGetValue(cueId, out cue))
+                    {
+                        labels[cue] = Encoding.UTF8.GetString(listChunkData, p + 12, labelLength - 1);
+                    }
                 }
             }
 
