@@ -8,6 +8,7 @@
     <File Path="license.txt" />
     <File Path="publish.ps1" />
     <File Path="README.md" />
+    <File Path="RELEASE_NOTES.md" />
   </Folder>
   <Folder Name="/Solution Items/Docs/">
     <File Path="Docs/ConcatenatingAudio.md" />
