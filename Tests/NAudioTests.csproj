@@ -1,17 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!--
-      OutputType は暗黙 Library に変更 (テストプロジェクトとして自然な姿)。
-      ProcessLoopbackCaptureTestWindow.xaml.cs が WPF Window として動作する手動テストを
-      含むため UseWPF=true は保持。IsPackable=false で NuGet 化を抑止。
+      OutputType=WinExe は意図的設計:
+      - Tests/App.xaml が WPF ApplicationDefinition で、Process Loopback の
+        手動 UI テスト (ProcessLoopbackCaptureTestWindow.xaml) のエントリーポイント
+      - <OutputType>WinExe</OutputType> を外すと Microsoft.WinFX.targets が
+        MC1002 / BG1003 を投げてビルド失敗 (Library + ApplicationDefinition は禁止)
+      - NUnit3TestAdapter は WinExe でも問題なくテスト discovery する
+      <IsPackable>false</IsPackable> で NuGet 化は抑止。
     -->
+    <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="NUnit" Version="4.4.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="6.1.0" />
+    <PackageReference Include="NUnit" Version="4.6.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
   </ItemGroup>
 
   <ItemGroup>
