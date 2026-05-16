@@ -232,17 +232,28 @@ namespace NAudio.Midi
                 MergeSort.Sort(list, comparer);
 
                 // 2. remove all End track events except one at the very end
-                var index = 0;
-                while (index < list.Count - 1)
+                //    旧実装は list.RemoveAt(index) を該当ヒット数だけ呼んでおり、
+                //    List<T>.RemoveAt は O(n) で前詰めするため最悪 O(n*k) (k = EndTrack 数)。
+                //    末尾以外を 2-pointer write-index 方式で 1 パス O(n) で詰め、
+                //    末尾の余剰要素は Count-1 削除 (O(1)) で切り詰める。
+                var lastIdx = list.Count - 1;
+                var writeIdx = 0;
+                for (var readIdx = 0; readIdx < list.Count; readIdx++)
                 {
-                    if(MidiEvent.IsEndTrack(list[index]))
+                    var evt = list[readIdx];
+                    if (MidiEvent.IsEndTrack(evt) && readIdx != lastIdx)
                     {
-                        list.RemoveAt(index);
+                        continue; // 末尾以外の EndTrack は捨てる
                     }
-                    else
+                    if (writeIdx != readIdx)
                     {
-                        index++;
+                        list[writeIdx] = evt;
                     }
+                    writeIdx++;
+                }
+                while (list.Count > writeIdx)
+                {
+                    list.RemoveAt(list.Count - 1); // 末尾削除は内部 Array.Copy 不要で O(1)
                 }
             }
 

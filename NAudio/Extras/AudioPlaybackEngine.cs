@@ -60,11 +60,15 @@ namespace NAudio.Extras
         }
 
         /// <summary>
-        /// Disposes this instance
+        /// Disposes this instance.
+        /// outputDevice と mixer の両方を Dispose する。
+        /// mixer (MixingSampleProvider) は内部で ArrayPool からバッファを Rent しているため、
+        /// Dispose されないと長時間稼働時に pool 浮遊バッファが蓄積する。
         /// </summary>
         public void Dispose()
         {
             outputDevice.Dispose();
+            (mixer as IDisposable)?.Dispose();
         }
     }
 }
