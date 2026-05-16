@@ -4,10 +4,18 @@ using System.Collections.Generic;
 namespace NAudio.Wave
 {
     /// <summary>
-    /// WaveProvider that can mix together multiple 32 bit floating point input provider
-    /// All channels must have the same number of inputs and same sample rate
-    /// n.b. Work in Progress - not tested yet
+    /// WaveProvider that can mix together multiple 32 bit floating point input provider.
+    /// All channels must have the same number of inputs and same sample rate.
     /// </summary>
+    /// <remarks>
+    /// 上流 NAudio から "Work in Progress - not tested yet" として継承された API。
+    /// テストカバレッジ無し、リポジトリ内で利用箇所も無いため新規利用は推奨しない。
+    /// 代替: <see cref="NAudio.Wave.SampleProviders.MixingSampleProvider"/> を
+    /// 利用し、必要なら <c>.ToWaveProvider()</c> で IWaveProvider に変換する方が
+    /// 安全 (テスト済み・ホットパス最適化済み)。
+    /// 後方互換のため当面は残置するが将来メジャーで削除する可能性あり。
+    /// </remarks>
+    [Obsolete("Use MixingSampleProvider (and ToWaveProvider() if IWaveProvider が必要) を推奨。テスト無しの WIP コードのため将来削除予定。")]
     public class MixingWaveProvider32 : IWaveProvider
     {
         private List<IWaveProvider> inputs;

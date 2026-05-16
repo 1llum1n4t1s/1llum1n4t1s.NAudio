@@ -433,7 +433,16 @@ namespace NAudio.CoreAudioApi
         private void RaiseRecordingStopped(Exception e)
         {
             var handler = RecordingStopped;
-            if (handler == null) return;
+            if (handler == null)
+            {
+                // 利用者が RecordingStopped を購読していないと、Process Loopback の
+                // COM 例外 (E_NOINTERFACE 等) が完全に握り潰されて「録音が止まったが理由不明」になる。
+                // Debug ビルドでは少なくとも開発者が原因にたどり着けるようログに出す。
+                if (e != null)
+                    System.Diagnostics.Debug.WriteLine(
+                        $"WasapiCapture: RecordingStopped (no handler subscribed) で例外を抑止: {e}");
+                return;
+            }
             if (syncContext == null)
             {
                 handler(this, new StoppedEventArgs(e));
