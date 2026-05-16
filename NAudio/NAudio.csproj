@@ -11,32 +11,14 @@
     <PackageIcon>app_icon.png</PackageIcon>
   </PropertyGroup>
 
+  <!--
+    WPF サンプルアプリ 3 つ (AudioFileInspector / MidiFileConverter / MixDiff) は
+    レビュー議題 1 の判断により本フォークでは退役・削除済み。
+    Demo / WpfDemo は元から存在しなかった上流互換のための Remove で、ディレクトリ実体無し。
+    SampleData/ はテスト用音声で Tests プロジェクト側から相対参照されているため Remove のみ残す。
+  -->
   <ItemGroup>
-    <Compile Remove="Demo\**" />
-    <Compile Remove="Tests\**" />
-    <Compile Remove="WpfDemo\**" />
-    <Compile Remove="AudioFileInspector\**" />
-    <Compile Remove="MidiFileConverter\**" />
-    <Compile Remove="MixDiff\**" />
-    <EmbeddedResource Remove="Demo\**" />
-    <EmbeddedResource Remove="Tests\**" />
-    <EmbeddedResource Remove="WpfDemo\**" />
-    <EmbeddedResource Remove="AudioFileInspector\**" />
-    <EmbeddedResource Remove="MidiFileConverter\**" />
-    <EmbeddedResource Remove="MixDiff\**" />
-    <None Remove="Demo\**" />
-    <None Remove="Tests\**" />
-    <None Remove="WpfDemo\**" />
-    <None Remove="AudioFileInspector\**" />
-    <None Remove="MidiFileConverter\**" />
-    <None Remove="MixDiff\**" />
     <None Remove="SampleData\**" />
-    <Page Remove="AudioFileInspector\**\*.xaml" />
-    <Page Remove="MidiFileConverter\**\*.xaml" />
-    <Page Remove="MixDiff\**\*.xaml" />
-    <ApplicationDefinition Remove="AudioFileInspector\**\App.xaml" />
-    <ApplicationDefinition Remove="MidiFileConverter\**\App.xaml" />
-    <ApplicationDefinition Remove="MixDiff\**\App.xaml" />
   </ItemGroup>
 
   <ItemGroup>

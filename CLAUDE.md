@@ -30,7 +30,10 @@ rtk dotnet build NAudio/NAudio.csproj -c Release
 - **NAudio.slnx** — ソリューションファイル（XML形式）
 - **NAudio/NAudio.csproj** — メインライブラリ（NuGetパッケージ: `1llum1n4t1s.NAudio`）
 - **Tests/NAudioTests.csproj** — テスト（NUnit 4.4 + Moq）
-- **NAudio/AudioFileInspector**, **MidiFileConverter**, **MixDiff** — WPFサンプルアプリ
+
+> 旧サンプル WPF アプリ (AudioFileInspector / MidiFileConverter / MixDiff) は
+> レビュー議題 1 の判断により本フォークでは退役。コアライブラリと Process Loopback
+> 機能に注力するためコードベースを最小化した。
 
 ## ビルド環境
 
