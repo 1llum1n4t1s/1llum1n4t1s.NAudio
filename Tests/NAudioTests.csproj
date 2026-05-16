@@ -1,7 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <!--
+      OutputType は暗黙 Library に変更 (テストプロジェクトとして自然な姿)。
+      ProcessLoopbackCaptureTestWindow.xaml.cs が WPF Window として動作する手動テストを
+      含むため UseWPF=true は保持。IsPackable=false で NuGet 化を抑止。
+    -->
     <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Moq" Version="4.20.72" />
