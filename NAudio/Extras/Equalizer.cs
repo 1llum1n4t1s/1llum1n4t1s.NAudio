@@ -14,7 +14,10 @@ namespace NAudio.Extras
     {
         private readonly ISampleProvider sourceProvider;
         private readonly EqualizerBand[] bands;
-        private readonly BiQuadFilter[,] filters;
+        // 2 次元配列 BiQuadFilter[,] は JIT 境界 check 二重発火 + 仮想呼出のオーバヘッド大。
+        // jagged 配列 BiQuadFilter[][] にして、ホットループでチャンネル別配列を
+        // ローカル変数にキャッシュできるよう変更 (波形は完全に同じ計算順序)。
+        private readonly BiQuadFilter[][] filters;
         private readonly int channels;
         private readonly int bandCount;
         private volatile bool updated;
@@ -29,7 +32,11 @@ namespace NAudio.Extras
             if (bands.Length == 0) throw new ArgumentException("Must provide at least one equalizer band", nameof(bands));
             channels = sourceProvider.WaveFormat.Channels;
             bandCount = bands.Length;
-            filters = new BiQuadFilter[channels,bands.Length];
+            filters = new BiQuadFilter[channels][];
+            for (var c = 0; c < channels; c++)
+            {
+                filters[c] = new BiQuadFilter[bandCount];
+            }
             CreateFilters();
         }
 
@@ -40,10 +47,10 @@ namespace NAudio.Extras
                 var band = bands[bandIndex];
                 for (var n = 0; n < channels; n++)
                 {
-                    if (filters[n, bandIndex] == null)
-                        filters[n, bandIndex] = BiQuadFilter.PeakingEQ(sourceProvider.WaveFormat.SampleRate, band.Frequency, band.Bandwidth, band.Gain);
+                    if (filters[n][bandIndex] == null)
+                        filters[n][bandIndex] = BiQuadFilter.PeakingEQ(sourceProvider.WaveFormat.SampleRate, band.Frequency, band.Bandwidth, band.Gain);
                     else
-                        filters[n, bandIndex].SetPeakingEq(sourceProvider.WaveFormat.SampleRate, band.Frequency, band.Bandwidth, band.Gain);
+                        filters[n][bandIndex].SetPeakingEq(sourceProvider.WaveFormat.SampleRate, band.Frequency, band.Bandwidth, band.Gain);
                 }
             }
         }
@@ -77,10 +84,15 @@ namespace NAudio.Extras
             var ch = 0;
             for (var n = 0; n < samplesRead; n++)
             {
+                // チャンネル別フィルタ配列をローカル変数にキャッシュして
+                // jagged の 1 次元 bound check 1 回 + サンプル値レジスタ保持に最適化。
+                var chFilters = filters[ch];
+                var sample = buffer[offset + n];
                 for (var band = 0; band < bandCount; band++)
                 {
-                    buffer[offset + n] = filters[ch, band].Transform(buffer[offset + n]);
+                    sample = chFilters[band].Transform(sample);
                 }
+                buffer[offset + n] = sample;
                 if (++ch >= channels) ch = 0;
             }
             return samplesRead;

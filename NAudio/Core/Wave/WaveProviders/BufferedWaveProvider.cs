@@ -95,15 +95,29 @@ namespace NAudio.Wave
         /// <summary>
         /// Adds samples from a ReadOnlySpan. Takes a copy of data, so that the source can be reused if necessary
         /// </summary>
+        // 複数 producer (ネットワーク受信 + マイク等) からの AddSamples 同時呼び出しで
+        // circularBuffer の lazy init が race する問題を防ぐためのロック。
+        private readonly object initLock = new object();
+
         public void AddSamples(ReadOnlySpan<byte> data)
         {
             // create buffer here to allow user to customise buffer length
-            if (circularBuffer == null)
+            // double-checked locking で初回のみ lock を取得する形に変更。
+            var buf = circularBuffer;
+            if (buf == null)
             {
-                circularBuffer = new CircularBuffer(BufferLength);
+                lock (initLock)
+                {
+                    buf = circularBuffer;
+                    if (buf == null)
+                    {
+                        buf = new CircularBuffer(BufferLength);
+                        circularBuffer = buf;
+                    }
+                }
             }
 
-            var written = circularBuffer.Write(data);
+            var written = buf.Write(data);
             if (written < data.Length && !DiscardOnBufferOverflow)
             {
                 throw new InvalidOperationException("Buffer full");

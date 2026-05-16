@@ -180,6 +180,10 @@ namespace NAudio.Wave
             catch (Exception e)
             {
                 exception = e;
+                // 例外パスでも playbackState を Stopped に揃える。
+                // PlaybackStopped イベントを受けた利用者が wo.PlaybackState を確認したときに
+                // 「Playing のままで PlaybackStopped が来ている」状態の整合性破綻を防ぐ。
+                playbackState = PlaybackState.Stopped;
             }
             finally
             {

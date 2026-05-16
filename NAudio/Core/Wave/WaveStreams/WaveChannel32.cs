@@ -156,6 +156,10 @@ namespace NAudio.Wave
                     float left, right;
 
                     var outIndex = (offset/4) + bytesWritten/4;
+                    // Sample event をホットループ内で毎サンプル null チェックすると
+                    // 44.1kHz stereo で約 88,200 回/sec のフィールドアクセスになる。
+                    // ループ前にローカル変数にキャプチャして JIT 最適化を効きやすくする。
+                    var sampleHandler = Sample;
                     while (this.sampleProvider.GetNextSample(out left, out right) && bytesWritten < numBytes)
                     {
                         // implement better panning laws.
@@ -166,7 +170,7 @@ namespace NAudio.Wave
                         destWaveBuffer.FloatBuffer[outIndex++] = left;
                         destWaveBuffer.FloatBuffer[outIndex++] = right;
                         bytesWritten += 8;
-                        if (Sample != null) RaiseSample(left, right);
+                        if (sampleHandler != null) RaiseSample(left, right);
                     }
                 }
                 // 3. Fill out with zeroes

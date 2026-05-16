@@ -486,7 +486,12 @@ namespace NAudio.CoreAudioApi
                 capture.ReleaseBuffer(framesAvailable);
                 packetSize = capture.GetNextPacketSize();
             }
-            DataAvailable?.Invoke(this, new WaveInEventArgs(recordBuffer, recordBufferOffset));
+            // packetSize=0 で while を一度も実行しなかった場合 (無音区間連続など) でも
+            // 旧実装は bytesRecorded=0 のイベントを毎ループ発火していた。
+            // ユーザーが「データが来た」と誤認してファイル書き込み等を行うと
+            // ゴミデータ混入の原因になるため、空の場合はイベントを発火しない。
+            if (recordBufferOffset > 0)
+                DataAvailable?.Invoke(this, new WaveInEventArgs(recordBuffer, recordBufferOffset));
         }
 
         /// <summary>

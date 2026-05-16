@@ -100,7 +100,11 @@ namespace NAudio.Wave
             {
                 if (playbackState != PlaybackState.Stopped)
                 {
-                    driver.Stop();
+                    // driver.Stop() を直接呼ぶと PlaybackStopped イベントが発火せず、
+                    // IWavePlayer の契約 (再生終了/Stop 時には必ず PlaybackStopped が発火)
+                    // が破られて、利用者の Stopped 待ちが永久 hang する。
+                    // Stop() 経由に統一して WasapiOut / WaveOutEvent と挙動を揃える。
+                    Stop();
                 }
                 driver.ResetRequestCallback = null;
                 driver.ReleaseDriver();
@@ -208,6 +212,10 @@ namespace NAudio.Wave
         /// </summary>
         public void Stop()
         {
+            // 二重実行ガード: AutoStop=true の場合 driver_BufferUpdate (リアルタイムスレッド) と
+            // 外部 (UI) からの Stop() が race することがあり、driver.Stop() の二重呼び出しで
+            // ドライバが不正状態になる / PlaybackStopped イベントが 2 回発火する。
+            if (playbackState == PlaybackState.Stopped) return;
             playbackState = PlaybackState.Stopped;
             driver.Stop();
             HasReachedEnd = false;
