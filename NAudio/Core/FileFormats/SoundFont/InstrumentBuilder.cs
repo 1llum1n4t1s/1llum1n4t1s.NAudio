@@ -23,6 +23,13 @@ namespace NAudio.SoundFont
             i.startInstrumentZoneIndex = br.ReadUInt16();
             if (lastInstrument != null)
             {
+                // 細工された .sf2 で startInstrumentZoneIndex が単調増加でない場合、
+                // (ushort)(start-1) が 65535 にラップして、後段 LoadZones で巨大配列確保。
+                if (i.startInstrumentZoneIndex < lastInstrument.startInstrumentZoneIndex)
+                {
+                    throw new InvalidDataException(
+                        $"SoundFont Instrument の startInstrumentZoneIndex が単調増加していません ({lastInstrument.startInstrumentZoneIndex} → {i.startInstrumentZoneIndex})");
+                }
                 lastInstrument.endInstrumentZoneIndex = (ushort)(i.startInstrumentZoneIndex - 1);
             }
             data.Add(i);
@@ -38,6 +45,9 @@ namespace NAudio.SoundFont
 
         public void LoadZones(Zone[] zones)
         {
+            // 細工された .sf2 で INST チャンクが空のときの RemoveAt(-1) を防ぐ
+            if (data.Count == 0)
+                throw new InvalidDataException("SoundFont INST チャンクに EOI 番兵がありません");
             // don't do the last preset, which is simply EOP
             for (var instrument = 0; instrument < data.Count - 1; instrument++)
             {

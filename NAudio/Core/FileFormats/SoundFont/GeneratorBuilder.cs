@@ -29,6 +29,13 @@ namespace NAudio.SoundFont
             {
                 if (g.GeneratorType == GeneratorEnum.Instrument)
                 {
+                    // 細工された .sf2 で UInt16Amount (最大 65535) が
+                    // instruments 配列長を超えていると IndexOutOfRangeException
+                    if (g.UInt16Amount >= instruments.Length)
+                    {
+                        throw new System.IO.InvalidDataException(
+                            $"SoundFont Generator の Instrument リンク先 ({g.UInt16Amount}) が範囲外です (Instrument 数: {instruments.Length})");
+                    }
                     g.Instrument = instruments[g.UInt16Amount];
                 }
             }
@@ -40,6 +47,12 @@ namespace NAudio.SoundFont
             {
                 if (g.GeneratorType == GeneratorEnum.SampleID)
                 {
+                    // 同上 (SampleID リンク先のレンジチェック)
+                    if (g.UInt16Amount >= sampleHeaders.Length)
+                    {
+                        throw new System.IO.InvalidDataException(
+                            $"SoundFont Generator の SampleHeader リンク先 ({g.UInt16Amount}) が範囲外です (SampleHeader 数: {sampleHeaders.Length})");
+                    }
                     g.SampleHeader = sampleHeaders[g.UInt16Amount];
                 }
             }

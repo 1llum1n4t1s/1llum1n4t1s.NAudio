@@ -78,6 +78,10 @@ namespace NAudio.Wave
                 // throw new FormatException("Unsupported MPEG Version");
             }
 
+            // 細工された MP3 で frame.RawData が極端に短い場合の境界違反を防ぐため、
+            // 各 offset 進行のたびにバッファ末尾に達していないかを確認する。
+            // 境界違反が起きた時点で null を返し、Xing/Info 解析失敗とする。
+            if (offset + 4 > frame.RawData.Length) return null;
             if ((frame.RawData[offset + 0] == 'X') &&
                 (frame.RawData[offset + 1] == 'i') &&
                 (frame.RawData[offset + 2] == 'n') &&
@@ -99,26 +103,31 @@ namespace NAudio.Wave
                 return null;
             }
 
+            if (offset + 4 > frame.RawData.Length) return null;
             var flags = (XingHeaderOptions)ReadBigEndian(frame.RawData, offset);
             offset += 4;
 
             if ((flags & XingHeaderOptions.Frames) != 0)
             {
+                if (offset + 4 > frame.RawData.Length) return null;
                 xingHeader.framesOffset = offset;
                 offset += 4;
             }
             if ((flags & XingHeaderOptions.Bytes) != 0)
             {
+                if (offset + 4 > frame.RawData.Length) return null;
                 xingHeader.bytesOffset = offset;
                 offset += 4;
             }
             if ((flags & XingHeaderOptions.Toc) != 0)
             {
+                if (offset + 100 > frame.RawData.Length) return null;
                 xingHeader.tocOffset = offset;
                 offset += 100;
             }
             if ((flags & XingHeaderOptions.VbrScale) != 0)
             {
+                if (offset + 4 > frame.RawData.Length) return null;
                 xingHeader.vbrScale = ReadBigEndian(frame.RawData, offset);
                 offset += 4;
             }

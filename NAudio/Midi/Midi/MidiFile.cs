@@ -121,7 +121,7 @@ namespace NAudio.Midi
                     }
                     MidiEvent me = null;
                     var outstandingNoteOns = new List<NoteOnEvent>();
-                    while(br.BaseStream.Position < startPos + chunkSize) 
+                    while(br.BaseStream.Position < startPos + chunkSize)
                     {
                         try
                         {
@@ -136,6 +136,16 @@ namespace NAudio.Midi
                         {
                             if (strictChecking) throw;
                             continue;
+                        }
+
+                        // 細工された .mid で Sysex の 0xF7 終端が省略され、隣接 MTrk チャンクを
+                        // 読み越してしまう場合の早期検出。
+                        // 旧実装は外側の `Read too far` チェックまで気付かず、次のループ反復で
+                        // 別 MTrk のヘッダを MIDI イベントとして解釈してさらに壊れる経路があった。
+                        if (br.BaseStream.Position > endPos)
+                        {
+                            throw new FormatException(
+                                $"Track {track} の MIDI イベント (例: Sysex の F7 終端欠落) がチャンク境界 ({endPos}) を {br.BaseStream.Position - endPos} バイト超えました");
                         }
 
                         absoluteTime += me.DeltaTime;

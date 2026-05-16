@@ -24,7 +24,17 @@ namespace NAudio.SoundFont
             p.genre = br.ReadUInt32();
             p.morphology = br.ReadUInt32();
             if (lastPreset != null)
+            {
+                // 細工された .sf2 で startPresetZoneIndex が単調増加でない場合、
+                // (ushort)(start-1) が 65535 にラップして、後段 LoadZones で
+                // new Zone[65536] や Array.Copy で巨大配列確保 / ArgumentException 発生。
+                if (p.startPresetZoneIndex < lastPreset.startPresetZoneIndex)
+                {
+                    throw new InvalidDataException(
+                        $"SoundFont Preset の startPresetZoneIndex が単調増加していません ({lastPreset.startPresetZoneIndex} → {p.startPresetZoneIndex})");
+                }
                 lastPreset.endPresetZoneIndex = (ushort)(p.startPresetZoneIndex - 1);
+            }
             data.Add(p);
             lastPreset = p;
             return p;
@@ -38,6 +48,9 @@ namespace NAudio.SoundFont
 
         public void LoadZones(Zone[] presetZones)
         {
+            // 細工された .sf2 で PHDR チャンクが空のときの RemoveAt(-1) を防ぐ
+            if (data.Count == 0)
+                throw new InvalidDataException("SoundFont PHDR チャンクに EOP 番兵がありません");
             // don't do the last preset, which is simply EOP
             for (var preset = 0; preset < data.Count - 1; preset++)
             {

@@ -29,6 +29,9 @@ namespace NAudio.SoundFont
 
         public void Load(Modulator[] modulators, Generator[] generators)
         {
+            // 細工された .sf2 で zone 0 件のときの RemoveAt(-1) を防ぐ
+            if (data.Count == 0)
+                throw new InvalidDataException("SoundFont Zone リストに EOZ 番兵がありません");
             // don't do the last zone, which is simply EOZ
             for (var zone = 0; zone < data.Count - 1; zone++)
             {

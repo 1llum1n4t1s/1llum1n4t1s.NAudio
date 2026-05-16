@@ -201,11 +201,22 @@ namespace NAudio.Wave
                     extendedHeaderLength += extendedHeader[3];
                 }
 
-                // synchsafe
+                // synchsafe (最大 0x0FFFFFFF ≒ 256MB)
                 var dataLength = headerBytes[6] * (1 << 21);
                 dataLength += headerBytes[7] * (1 << 14);
                 dataLength += headerBytes[8] * (1 << 7);
                 dataLength += headerBytes[9];
+
+                // 細工された ID3v2 タグで dataLength が現実のファイルサイズを大幅に
+                // 上回るケースで、ReadBytes(dataLength) が巨大バッファ (最大 256MB) を
+                // LOH に確保し OOM を引き起こすのを防ぐ。
+                // 残りストリーム長と突き合わせ、無理な要求は早期に弾く。
+                var remaining = input.Length - input.Position;
+                if (dataLength < 0 || dataLength > remaining)
+                {
+                    throw new InvalidDataException(
+                        $"ID3v2 dataLength ({dataLength}) が残りストリーム長 ({remaining}) を超えています");
+                }
                 var tagData = reader.ReadBytes(dataLength);
 
                 if ((headerBytes[5] & 0x10) == 0x10)

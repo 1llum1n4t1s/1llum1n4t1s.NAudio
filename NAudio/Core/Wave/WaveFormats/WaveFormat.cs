@@ -216,6 +216,21 @@ namespace NAudio.Wave
             averageBytesPerSecond = br.ReadInt32();
             blockAlign = br.ReadInt16();
             bitsPerSample = br.ReadInt16();
+
+            // 細工された fmt チャンクで blockAlign=0 を仕込まれると、
+            // WaveFileReader.Read / Position setter / SampleCount の % BlockAlign や
+            // / BlockAlign で DivideByZeroException が発生し DoS になる。
+            // 同様に channels / sampleRate / bitsPerSample が 0/負値だと後続処理が破綻するため
+            // ロード時点で sanity check して InvalidDataException に変換する。
+            if (channels <= 0)
+                throw new InvalidDataException($"Invalid WaveFormat: channels={channels}");
+            if (sampleRate <= 0)
+                throw new InvalidDataException($"Invalid WaveFormat: sampleRate={sampleRate}");
+            if (blockAlign <= 0)
+                throw new InvalidDataException($"Invalid WaveFormat: blockAlign={blockAlign}");
+            if (bitsPerSample < 0)
+                throw new InvalidDataException($"Invalid WaveFormat: bitsPerSample={bitsPerSample}");
+
             if (formatChunkLength > 16)
             {
                 extraSize = br.ReadInt16();

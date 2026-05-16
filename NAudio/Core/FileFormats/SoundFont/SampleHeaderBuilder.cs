@@ -32,6 +32,11 @@ namespace NAudio.SoundFont
 
         internal void RemoveEOS()
         {
+            // 細工された .sf2 で SHDR チャンクが空 (=末尾 EOS センチネル無し) のとき
+            // RemoveAt(-1) で ArgumentOutOfRangeException が漏れるのを防ぎ、
+            // 解析失敗として API 契約 (InvalidDataException) に揃える。
+            if (data.Count == 0)
+                throw new InvalidDataException("SoundFont SHDR チャンクに EOS 番兵がありません");
             data.RemoveAt(data.Count - 1);
         }
 

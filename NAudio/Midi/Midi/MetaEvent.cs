@@ -52,11 +52,21 @@ namespace NAudio.Midi
         /// </summary>
         /// <param name="br">A binary reader based on the stream of MIDI data</param>
         /// <returns>A new MetaEvent object</returns>
-        public static MetaEvent ReadMetaEvent(BinaryReader br) 
+        public static MetaEvent ReadMetaEvent(BinaryReader br)
         {
             var metaEvent = (MetaEventType) br.ReadByte();
             var length = ReadVarInt(br);
-            
+
+            // ReadVarInt は最大 0x0FFFFFFF ≒ 256MB を返しうる。
+            // 細工された .mid で巨大 length を宣言されると、後段 ReadBytes(length) で
+            // 256MB の LOH 確保 → OOM/GC 圧迫の DoS が発生する。
+            // ストリーム残り長と突き合わせ、無理な要求は早期に弾く。
+            if (length < 0 || length > br.BaseStream.Length - br.BaseStream.Position)
+            {
+                throw new InvalidDataException(
+                    $"MIDI MetaEvent length ({length}) が残りストリーム長を超えています");
+            }
+
             var me = new MetaEvent();
             switch(metaEvent) 
             {
