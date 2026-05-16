@@ -38,7 +38,10 @@ namespace NAudio.CoreAudioApi
         #region IDisposable Members
 
         /// <summary>
-        /// Dispose
+        /// Dispose.
+        /// 子 COM ラッパー (AudioMeterInformation / SimpleAudioVolume) も同時に解放する。
+        /// 前回 /rere で AudioMeterInformation に IDisposable を追加したが、
+        /// 本クラスはそれを呼んでおらず COM 参照リークしていた。
         /// </summary>
         public void Dispose()
         {
@@ -49,16 +52,30 @@ namespace NAudio.CoreAudioApi
                 audioSessionControlInterface.UnregisterAudioSessionNotification(audioSessionEventCallback);
                 audioSessionEventCallback = null;
             }
-            Marshal.ReleaseComObject(audioSessionControlInterface);
+            // 子 COM ラッパーの Dispose を先に実行 (managed パスからのみ)
+            AudioMeterInformation?.Dispose();
+            // SimpleAudioVolume は IDisposable 未実装のため将来対応。当面は親 COM 解放で対処。
+            if (audioSessionControlInterface != null)
+            {
+                Marshal.ReleaseComObject(audioSessionControlInterface);
+            }
             GC.SuppressFinalize(this);
         }
 
         /// <summary>
-        /// Finalizer
+        /// ファイナライザ。
+        /// GC スレッド (任意の MTA スレッド) から走るため、STA バインドの COM オブジェクトを
+        /// Release すると RPC_E_WRONG_THREAD や AccessViolation を引き起こす。
+        /// MediaType / PropertyStore と同じ「警告のみ」方針に統一し、COM オブジェクトに触らず
+        /// Dispose 漏れを表面化させる。利用者は必ず using か Dispose() で明示解放すること。
         /// </summary>
         ~AudioSessionControl()
         {
-            Dispose();
+            if (!disposed)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: AudioSessionControl が Dispose されずに finalize された。COM オブジェクトがリーク可能性あり。using か Dispose() で明示解放してください。");
+            }
         }
 
         #endregion
