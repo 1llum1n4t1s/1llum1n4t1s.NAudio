@@ -76,5 +76,18 @@ namespace NAudio.CoreAudioApi
                 GC.SuppressFinalize(this);
             }
         }
+
+        /// <summary>
+        /// ファイナライザ。AudioClient を Dispose し忘れた場合に sub-client が
+        /// 解放されない経路を検知する警告ログを出す。詳細は AudioRenderClient.cs 参照。
+        /// </summary>
+        ~AudioCaptureClient()
+        {
+            if (audioCaptureClientInterface != null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: AudioCaptureClient が Dispose されずに finalize された。AudioClient を using か Dispose() で明示解放してください。");
+            }
+        }
     }
 }

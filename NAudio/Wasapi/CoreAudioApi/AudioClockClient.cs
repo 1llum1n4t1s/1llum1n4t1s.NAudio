@@ -107,11 +107,24 @@ namespace NAudio.CoreAudioApi
         {
             if (audioClockClientInterface != null)
             {
-                // althugh GC would do this for us, we want it done now
+                // although GC would do this for us, we want it done now
                 // to let us reopen WASAPI
                 Marshal.ReleaseComObject(audioClockClientInterface);
                 audioClockClientInterface = null;
                 GC.SuppressFinalize(this);
+            }
+        }
+
+        /// <summary>
+        /// ファイナライザ。AudioClient を Dispose し忘れた場合に sub-client が
+        /// 解放されない経路を検知する警告ログを出す。詳細は AudioRenderClient.cs 参照。
+        /// </summary>
+        ~AudioClockClient()
+        {
+            if (audioClockClientInterface != null)
+            {
+                Debug.WriteLine(
+                    "WARNING: AudioClockClient が Dispose されずに finalize された。AudioClient を using か Dispose() で明示解放してください。");
             }
         }
 

@@ -157,6 +157,19 @@ namespace NAudio.CoreAudioApi
             }
         }
 
+        /// <summary>
+        /// ファイナライザ。AudioClient を Dispose し忘れた場合に sub-client が
+        /// 解放されない経路を検知する警告ログを出す。詳細は AudioRenderClient.cs 参照。
+        /// </summary>
+        ~AudioStreamVolume()
+        {
+            if (audioStreamVolumeInterface != null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: AudioStreamVolume が Dispose されずに finalize された。AudioClient を using か Dispose() で明示解放してください。");
+            }
+        }
+
         #endregion
     }
 }

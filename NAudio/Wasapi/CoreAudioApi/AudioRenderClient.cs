@@ -44,11 +44,28 @@ namespace NAudio.CoreAudioApi
         {
             if (audioRenderClientInterface != null)
             {
-                // althugh GC would do this for us, we want it done now
+                // although GC would do this for us, we want it done now
                 // to let us reopen WASAPI
                 Marshal.ReleaseComObject(audioRenderClientInterface);
                 audioRenderClientInterface = null;
                 GC.SuppressFinalize(this);
+            }
+        }
+
+        /// <summary>
+        /// ファイナライザ。
+        /// 前回 /rere で AudioClient finalizer から DisposeSubClients を削除した影響で、
+        /// AudioClient を Dispose し忘れた場合に sub-client (本クラス) の COM オブジェクトが
+        /// 解放されない経路ができていた。MediaType / PropertyStore と同じく「警告のみ」方針で
+        /// Dispose 漏れを開発者に通知する。CLR の RCW 内部 finalizer による最終解放には
+        /// 引き続き依存。
+        /// </summary>
+        ~AudioRenderClient()
+        {
+            if (audioRenderClientInterface != null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "WARNING: AudioRenderClient が Dispose されずに finalize された。AudioClient を using か Dispose() で明示解放してください。");
             }
         }
     }
