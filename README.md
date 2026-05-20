@@ -21,6 +21,7 @@
   * Added implementation for capturing audio from specific processes, which was not merged in the original NAudio.
   * **重要 / IMPORTANT**: Process Loopback は UI スレッド (STA) + 非 null の `SynchronizationContext` 必須。`await` に `ConfigureAwait(false)` を付けてはいけません。
     詳細・切り分けチェックリストは [ProcessLoopbackCapture.md](Docs/ProcessLoopbackCapture.md) 参照。
+  * **挙動修正 (v1.0.44)**: `CreateForProcessCaptureAsync(processId, includeProcessTree)` の `includeProcessTree` が旧バージョン (〜1.0.43) で反転していたバグを修正しました。`true` = 対象プロセスとその子プロセスを**含める**、`false` = 含めない、が正しい挙動です。旧挙動に依存していたコードは真偽の入れ替えが必要です (詳細は [RELEASE_NOTES.md](RELEASE_NOTES.md))。
 
 ## Breaking Changes from upstream NAudio
 
@@ -48,7 +49,7 @@ dotnet add package 1llum1n4t1s.NAudio
 
 **PackageReference:**
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.43" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.44" />
 ```
 
 ## Documentation

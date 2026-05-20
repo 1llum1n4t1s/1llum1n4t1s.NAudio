@@ -6,6 +6,18 @@
 
 ---
 
+## [1.0.44] — 2026-05-21
+
+### Fixed
+- **Process Loopback の `includeProcessTree` 挙動反転バグを修正** (`NAudio/Wasapi/CoreAudioApi/AudioClientStreamFlags.cs`)
+  - `ProcessLoopbackMode` enum の値が Windows 公式 SDK と逆定義 (`Exclude=0` / `Include=1`) になっていた。公式 `PROCESS_LOOPBACK_MODE` は宣言順で **`INCLUDE_TARGET_PROCESS_TREE=0` / `EXCLUDE_TARGET_PROCESS_TREE=1`**。
+  - `AudioClientProcessLoopbackParams` は blittable 構造体で enum 値が生のままネイティブへ渡るため、`CreateForProcessCaptureAsync(processId, includeProcessTree)` の指定が **反転** していた (`includeProcessTree: true` でツリーを除外、`false` で包含してしまう)。
+  - 子プロセスを持つ対象 (Chrome / マルチプロセス構成のゲーム等) のキャプチャで意図と逆の音声が録れる症状を解消。
+  - enum を公式準拠の値へ修正し、再発防止のため値の意味と「変更時は呼び出し側とセットで見直す」旨を XML コメントに明記。
+  - ⚠️ **挙動変更の注意**: 本フォークの旧バージョン (〜1.0.43) で `includeProcessTree` の反転挙動に依存していたコードは、本修正後に `includeProcessTree` の真偽を入れ替える必要があります。
+
+---
+
 ## [1.0.43] — 2026-05-17
 
 > Claude Code による 2 ラウンドの `/rere` レビューで指摘された問題をまとめて反映。

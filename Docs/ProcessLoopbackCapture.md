@@ -5,6 +5,15 @@ WASAPI の Process Loopback を使うと、特定プロセスが再生する音�
 
 **重要**: Process Loopback は COM が STA（通常は UI スレッド）にバインドされている必要があります。スレッドや SynchronizationContext を誤ると、`E_NOINTERFACE` や「実音が取れず -1/0/1 だけのプレースホルダー」になります。
 
+## `includeProcessTree` の意味
+
+| 値 | 挙動 (Windows 公式 `PROCESS_LOOPBACK_MODE` 準拠) |
+|----|----|
+| `true` | 対象プロセス**とその子プロセス**の再生音をキャプチャ (`INCLUDE_TARGET_PROCESS_TREE`) |
+| `false` | 対象プロセスのみ (子プロセスは除外、`EXCLUDE_TARGET_PROCESS_TREE`) |
+
+> ⚠️ 本フォークの旧バージョン (〜1.0.43) では `ProcessLoopbackMode` enum の値が公式 SDK と逆定義になっており、この `includeProcessTree` の指定が**反転**していました (v1.0.44 で修正済み)。Chrome やマルチプロセス構成のゲームなど、子プロセスで音を出すアプリを対象にする場合は本値の指定に注意してください。
+
 ---
 
 ## スレッドと SynchronizationContext の要件

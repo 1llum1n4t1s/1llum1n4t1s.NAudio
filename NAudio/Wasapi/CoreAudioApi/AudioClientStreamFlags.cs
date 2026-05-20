@@ -94,19 +94,23 @@ namespace NAudio.CoreAudioApi
     /// <summary>
     /// PROCESS_LOOPBACK_MODE
     /// https://docs.microsoft.com/en-us/windows/win32/api/audioclientactivationparams/ne-audioclientactivationparams-process_loopback_mode
+    /// ⚠️ 値は Windows 公式 SDK 準拠 (INCLUDE=0 / EXCLUDE=1)。 AudioClientProcessLoopbackParams は
+    ///    blittable 構造体で、 この enum 値が生のままネイティブへ渡る。 値を変えると呼び出し側
+    ///    (CreateForProcessCaptureAsync の includeProcessTree) の意味が反転するため、 変更時は
+    ///    必ず呼び出し側とセットで見直すこと (過去に値が逆定義されていてプロセス指定が反転していた)。
     /// </summary>
     public enum ProcessLoopbackMode
     {
         /// <summary>
-        /// PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE (0)
-        /// Render streams from the specified process and its child processes are excluded from the activated process loopback stream.
-        /// </summary>
-        ExcludeTargetProcessTree = 0,
-        /// <summary>
-        /// PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE (1)
+        /// PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE (0)
         /// Render streams from the specified process and its child processes are included in the activated process loopback stream.
         /// </summary>
-        IncludeTargetProcessTree = 1
+        IncludeTargetProcessTree = 0,
+        /// <summary>
+        /// PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE (1)
+        /// Render streams from the specified process and its child processes are excluded from the activated process loopback stream.
+        /// </summary>
+        ExcludeTargetProcessTree = 1
     }
 
     /// <summary>
