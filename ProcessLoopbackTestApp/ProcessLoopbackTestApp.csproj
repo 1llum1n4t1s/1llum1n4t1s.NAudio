@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      Process Loopback の手動 UI 動作確認用 WPF アプリ。
+      旧 Tests プロジェクトに App.xaml ごと同居していたが、WPF ApplicationDefinition が生成する
+      Main と Microsoft.NET.Test.Sdk が生成する Main が衝突 (CS0017) し、Test.Sdk を入れられず
+      dotnet test が機能しなかったため、UI アプリだけをこのプロジェクトへ分離した。
+      TFM / Platform / x64 等は Directory.Build.props から継承する。
+    -->
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <!-- App.xaml / Window の x:Class が NAudioTests.* のため RootNamespace を合わせる -->
+    <RootNamespace>NAudioTests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NAudio\NAudio.csproj" />
+  </ItemGroup>
+</Project>

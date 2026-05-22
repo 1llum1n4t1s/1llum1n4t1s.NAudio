@@ -38,20 +38,22 @@ namespace NAudio.SoundFont
                         throw new InvalidDataException($"Not a SoundFont ({formHeader})");
                     }
                     var list = riff.GetNextSubChunk();
-                    if (list.ChunkID == "LIST")
+                    if (list != null && list.ChunkID == "LIST")
                     {
                         //RiffChunk r = list.GetNextSubChunk();
                         info = new InfoChunk(list);
 
                         var r = riff.GetNextSubChunk();
+                        if (r == null) throw new InvalidDataException("SoundFont: sdta チャンクが見つかりません (予期しない EOF)");
                         sampleData = new SampleDataChunk(r);
 
                         r = riff.GetNextSubChunk();
+                        if (r == null) throw new InvalidDataException("SoundFont: pdta チャンクが見つかりません (予期しない EOF)");
                         presetsChunk = new PresetsChunk(r);
                     }
                     else
                     {
-                        throw new InvalidDataException($"Not info list found ({list.ChunkID})");
+                        throw new InvalidDataException($"Not info list found ({list?.ChunkID})");
                     }
                 }
                 else

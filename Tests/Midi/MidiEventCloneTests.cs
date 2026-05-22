@@ -76,7 +76,7 @@ namespace NAudioTests.Midi
             new SequencerSpecificEvent(new byte[0], 0),
             new SmpteOffsetEvent(1, 1, 1, 1, 1),
             new SysexEvent(),
-            new TempoEvent(0, 0),
+            new TempoEvent(1, 0),
             new TextEvent(string.Empty, MetaEventType.Copyright, 0),
             new TimeSignatureEvent(0, 1, 1, 1, 1),
             new TrackSequenceNumberEvent(1)

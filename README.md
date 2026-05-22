@@ -1,6 +1,6 @@
 # 1llum1n4t1s.NAudio
 
-[![GitHub](https://img.shields.io/github/license/naudio/NAudio)](https://github.com/naudio/NAudio/blob/master/license.txt) [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio)](https://www.nuget.org/packages/1llum1n4t1s.NAudio/)
+[![GitHub](https://img.shields.io/github/license/1llum1n4t1s/1llum1n4t1s.NAudio)](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/main/license.txt) [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio)](https://www.nuget.org/packages/1llum1n4t1s.NAudio/)
 
 > **これはNAudioのフォークです。**  
 > 1llum1n4t1s.NAudioは[NAudio](https://github.com/naudio/NAudio)をベースに、.NET 10対応、パッケージ名の変更、および本家でマージされていなかったプロセスループバックキャプチャの実装の追加を行ったフォーク版です。  
@@ -15,8 +15,8 @@
 
 **1llum1n4t1s.NAudio-specific features:**
 * .NET 10 support
-  * Updated to target .NET 10.0 (net10.0 and net10.0-windows)
-  * Windows x64 runtime support
+  * Targets .NET 10.0 for Windows (`net10.0-windows10.0.20348.0`)
+  * Windows x64 only
 * Process Loopback Capture
   * Added implementation for capturing audio from specific processes, which was not merged in the original NAudio.
   * **重要 / IMPORTANT**: Process Loopback は UI スレッド (STA) + 非 null の `SynchronizationContext` 必須。`await` に `ConfigureAwait(false)` を付けてはいけません。
@@ -27,7 +27,7 @@
 
 本フォークは upstream NAudio から以下を**退役・削除**しています。NAudio から移行する際は注意してください。
 
-* **WPF サンプルアプリ削除**: `AudioFileInspector` / `MidiFileConverter` / `MixDiff` の 3 つの WPF サンプルアプリは削除済み。Process Loopback の動作確認は `Tests/Wasapi/ProcessLoopbackCaptureTestWindow.xaml.cs` を参照してください。
+* **WPF サンプルアプリ削除**: `AudioFileInspector` / `MidiFileConverter` / `MixDiff` の 3 つの WPF サンプルアプリは削除済み。Process Loopback の動作確認は `ProcessLoopbackTestApp/ProcessLoopbackCaptureTestWindow.xaml.cs` を参照してください。
 
 WPF サンプル以外の主要機能 (WASAPI / WaveOut / Process Loopback / **ASIO** / WinMM / MIDI / SoundFont 等) は upstream NAudio と互換です。
 
@@ -49,7 +49,7 @@ dotnet add package 1llum1n4t1s.NAudio
 
 **PackageReference:**
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.44" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="1.0.45" />
 ```
 
 ## Documentation

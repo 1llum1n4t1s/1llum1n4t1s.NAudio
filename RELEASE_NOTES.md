@@ -6,6 +6,31 @@
 
 ---
 
+## [1.0.45] — 2026-05-23
+
+### Fixed
+- **テスト基盤の修復**: `Tests/NAudioTests.csproj` に `Microsoft.NET.Test.Sdk` が無く `dotnet test` がテストを 1 件も実行していなかった問題を修正。WPF 手動 UI テスト (`App.xaml` / `ProcessLoopbackCaptureTestWindow`) を `ProcessLoopbackTestApp` プロジェクトへ分離し、`Tests` を通常のテストプロジェクト (Library + Test.Sdk) 化。これまで 0 件だったテストが 202 件実行され全 pass するようになった。
+- **Process Loopback 停止時のデッドロック修正** (`NAudio/Wasapi/WasapiCapture.cs`): UI スレッドからの `Dispose()` で `captureThread.Join()` と `CaptureThread` finally の `syncContext.Send(client.Stop())` が相互待ちしてハングする問題を解消 (Stop を Dispose 側へ委譲)。`captureThread` の競合による NRE も修正。
+- **AudioSessionManager のファイナライザ方針違反を修正**: GC スレッドから STA-COM (`UnregisterSessionNotification` / `ReleaseComObject`) を実行していたのを `Dispose(disposing)` パターンに統一 (COM Lifecycle 統一方針に準拠)。
+- **入力検証の追加** (悪意ある / 破損ファイルでのクラッシュ防止): AIFF COMM チャンクの `sampleSize`/`channels` 検証 (DivideByZero 防止)、SoundFont `ZoneBuilder` の Array.Copy 境界検証、`GetNextSubChunk` の null チェック。
+- **WaveCallbackWindowSubclass のリーク修正**: finalizer が無く static Dictionary 経由で WaveOut チェーンが残留する問題に finalizer を追加。
+- F-004 の HRESULT→例外フォールバックを 3 クラスから共通ヘルパー `ActivateAudioInterfaceResult.ToException` へ集約 (分散コピペ解消)。
+- 既存テストの誤りを修正 (`MidiEventCloneTests` の不正な `TempoEvent(0,0)`、`WaveFileWriterTests` の WAV サイズ期待値)。
+
+### Added
+- `WasapiCapture` に診断プロパティ `SilentPacketCount` / `TotalPacketCount` を追加 (Process Loopback の無音原因の切り分け用)。
+- `WasapiCapture.CreateForProcessCaptureAsync` に `CancellationToken` オーバーロードを追加 (COM 活性化のタイムアウト/キャンセル対応、キャンセル後の ptr リーク対策込み)。
+- `ProcessLoopbackTestApp` プロジェクト (Process Loopback 手動 UI 動作確認用 WPF アプリ) を分離追加。
+- `Tests/Wasapi/ProcessLoopbackDeadlockTests.cs` (デッドロック回帰テスト)。
+
+### Changed
+- `SmbPitchShifter` の Hann 窓を `fftFrameSize` 単位でキャッシュし、毎フレームの `MathF.Cos` 再計算を排除 (リアルタイムピッチシフトの CPU 削減)。
+- `MultiplexingSampleProvider.Read` のチャンネル逆引きを出力ch基準に変更 (O(in×out)→O(out)、挙動は等価)。
+- CI (`publish.yml`) の GitHub Actions を commit SHA でピン留め (サプライチェーン対策)。
+- 未使用の `ActivateAudioInterfaceCompletionHandler1` (dead code) を削除。
+
+---
+
 ## [1.0.44] — 2026-05-21
 
 ### Fixed

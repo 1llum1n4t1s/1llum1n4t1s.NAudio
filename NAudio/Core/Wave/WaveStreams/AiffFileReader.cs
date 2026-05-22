@@ -104,6 +104,11 @@ namespace NAudio.Wave
                     var sampleSize = ConvertShort(br.ReadBytes(2));
                     var sampleRate = IEEE.ConvertFromIeeeExtended(br.ReadBytes(10));
 
+                    // 細工された AIFF (bits=0 等) で WaveFormat の blockAlign が 0 になり、
+                    // Position setter / Read の (value % BlockAlign) で DivideByZeroException になるのを防ぐ
+                    if (numChannels <= 0 || sampleSize <= 0 || sampleSize > 64 || sampleRate <= 0)
+                        throw new InvalidDataException($"Invalid AIFF COMM chunk (channels={numChannels}, sampleSize={sampleSize}, sampleRate={sampleRate})");
+
                     format = new WaveFormat((int)sampleRate, (int)sampleSize, (int)numChannels);
 
                     if (nextChunk.ChunkLength > 18 && formType == "AIFC")

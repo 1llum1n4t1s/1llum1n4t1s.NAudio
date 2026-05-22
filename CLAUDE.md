@@ -40,9 +40,10 @@ rtk dotnet test Tests/NAudioTests.csproj --filter "FullyQualifiedName~ActivateAu
 
 - `NAudio.slnx` — Solution (XML 形式)
 - `NAudio/NAudio.csproj` — メインライブラリ (NuGet `1llum1n4t1s.NAudio`)
-- `Tests/NAudioTests.csproj` — テスト (NUnit 4.6 + Moq 4.20、`InternalsVisibleTo("NAudioTests")` 付与済)
+- `Tests/NAudioTests.csproj` — 単体テスト (`Microsoft.NET.Test.Sdk` + NUnit 4.6 + NUnit3TestAdapter + Moq 4.20)。`dotnet test` で実行する通常のテストプロジェクト (Library)。
+- `ProcessLoopbackTestApp/ProcessLoopbackTestApp.csproj` — Process Loopback 手動 UI 動作確認用の WPF アプリ (WinExe)。`App.xaml` + `ProcessLoopbackCaptureTestWindow.xaml(.cs)`。
 
-> WPF サンプルアプリ (旧 AudioFileInspector / MidiFileConverter / MixDiff) は議題 1 採用で退役済。Process Loopback の動作確認用 UI は `Tests/Wasapi/ProcessLoopbackCaptureTestWindow.xaml(.cs)` を参照。
+> WPF サンプルアプリ (旧 AudioFileInspector / MidiFileConverter / MixDiff) は議題 1 採用で退役済。Process Loopback の動作確認用 UI は `ProcessLoopbackTestApp/ProcessLoopbackCaptureTestWindow.xaml(.cs)` を参照。
 
 ## ビルド環境
 
@@ -82,6 +83,7 @@ WASAPI / MediaFoundation / DMO の COM ラッパークラスは、以下の方�
 - `MediaType` / `PropertyStore` / `MMDevice` / `AudioMeterInformation` / `DeviceTopology`
 - `AudioSessionControl` / `AudioClient` / `Part`
 - `AudioRenderClient` / `AudioCaptureClient` / `AudioClockClient` / `AudioStreamVolume` (警告 finalizer のみ追加)
+- `AudioSessionManager` (COM 操作は `Dispose(disposing=true)` 経由のみ、finalizer は警告のみ。元は finalizer から `UnregisterSessionNotification` / `ReleaseComObject` を直接呼ぶ方針違反だったが統一済)
 
 ### Process Loopback Capture (フォーク独自機能)
 
@@ -92,8 +94,9 @@ WASAPI / MediaFoundation / DMO の COM ラッパークラスは、以下の方�
 - `ConfigureAwait(false)` を**付けてはいけない**
 - `StartRecording()` は `await` 継続と同じスレッドから呼ぶ
 - 違反すると `E_NOINTERFACE` / 無音 / `-1/0/1` のプレースホルダー値だけが返る症状になる
+- `ProcessLoopbackMode` enum は Windows 公式 `PROCESS_LOOPBACK_MODE` 準拠で **`IncludeTargetProcessTree=0` / `ExcludeTargetProcessTree=1`**。`AudioClientProcessLoopbackParams` が blittable 構造体で enum 値が生のままネイティブへ渡るため、値を入れ替えると `includeProcessTree` の意味が反転する (v1.0.44 で逆定義バグを修正済)
 
-CI でリグレッション検知するため `Tests/Wasapi/ActivateAudioInterfaceCompletionHandlerTests.cs` で Mock test を回している (F-004 リグレッション保護: `Marshal.GetExceptionForHR(S_FALSE)` が null を返す前提、COMException フォールバックの動作確認)。
+CI でリグレッション検知するため `Tests/Wasapi/ActivateAudioInterfaceCompletionHandlerTests.cs` で Mock test を回している (F-004 リグレッション保護: `Marshal.GetExceptionForHR(S_FALSE)` が null を返す前提、COMException フォールバックの動作確認)。HRESULT→例外変換は 3 つの CompletionHandler 実装 (`ActivateAudioInterfaceCompletionHandler<T>` / `...Handler1` / `ProcessLoopbackActivateCompletionHandler`) で `ActivateAudioInterfaceResult.ToException(hr)` に集約済。分散コピペに戻さないこと (`GetExceptionForHR(S_FALSE)` の null を `TrySetException` に渡すと hang するため COMException フォールバックが必須)。
 
 ### ディレクトリ構成 (NAudio/ 配下)
 
@@ -120,7 +123,9 @@ CI でリグレッション検知するため `Tests/Wasapi/ActivateAudioInterfa
 - 場所: `Tests/` 配下、サブフォルダで分類
 - フレームワーク: NUnit 4.6 + Moq 4.20
 - カテゴリ: `[Category("IntegrationTest")]` でオーディオデバイス / 環境依存ファイルを要するテストを分離 (CI 除外)
-- `Tests/App.xaml` は **WPF Application のエントリーポイント**で、Process Loopback の手動 UI テスト用。これがあるため `Tests/NAudioTests.csproj` は `<OutputType>WinExe</OutputType>` が必須 (Library 化すると `MC1002: Library project file cannot specify ApplicationDefinition element` でビルド失敗する)
+- **`Tests/NAudioTests.csproj` は `Microsoft.NET.Test.Sdk` を持つ通常テストプロジェクト (Library)**。これが無いと `dotnet test` は VSTest ターゲットを持たず、テストを 1 件も実行せず exit 0 で終わる (NUnit3TestAdapter だけでは不十分)。
+- WPF 手動 UI テスト (`App.xaml` + `ProcessLoopbackCaptureTestWindow`) は **`ProcessLoopbackTestApp` プロジェクトへ分離済み**。同居させると WPF `ApplicationDefinition` の Main と `Microsoft.NET.Test.Sdk` の Main が衝突 (`CS0017`) し、Test.Sdk を入れられず `dotnet test` が機能しなくなるため。
+- `UseWPF=true` は `ProcessLoopbackDeadlockTests` が WPF `Dispatcher` を使うため Tests でも有効 (ただし `ApplicationDefinition` を持たないので Main 衝突は起きない)。
 
 ## コーディング規約
 
@@ -142,13 +147,16 @@ CI でリグレッション検知するため `Tests/Wasapi/ActivateAudioInterfa
 
 過去の `/rere` レビュー & 修正セッションで判明した、機械的に触ると壊れる箇所:
 
-1. **`Tests/NAudioTests.csproj` の `<OutputType>WinExe</OutputType>` は撤去禁止** — `Tests/App.xaml` が ApplicationDefinition のため、Library 化すると MC1002 / BG1003 でビルド失敗
+1. **テストプロジェクトと WPF 手動 UI テストは分離して維持する** — `Tests/NAudioTests.csproj` は `Microsoft.NET.Test.Sdk` を持つ通常テストプロジェクト (Library)、WPF UI (`App.xaml` 等) は `ProcessLoopbackTestApp` (WinExe)。両者を 1 プロジェクトに同居させると `ApplicationDefinition` の Main と Test.Sdk の Main が衝突 (`CS0017`) し、Test.Sdk を外す→`dotnet test` が 0 件実行 (テスト未実行) に陥る。過去にこの状態でテストが一切走っていなかった事故がある (分離して 202 件が走るよう修復済み)
 2. **ASIO は退役しない** — 過去に議題 2 採用で `NAudio/Asio/` を一度削除したが、プロオーディオ層を保護するため復活させた経緯がある (RELEASE_NOTES.md の `[Reverted]` 参照)
 3. **MediaType / PropertyStore 等の finalizer に COM 解放を戻さない** — 過去の commit で警告のみ方針に統一済。逆に「ファイナライザで `Marshal.ReleaseComObject` を呼ぶ」コードを見つけても、それは STA-COM 違反 / 二重解放のバグなので元に戻すこと
 4. **`Directory.Build.props` の `CleanBinObjBeforeRestore` は復活させない** — MSBuild incremental を破壊する。stale `obj/` が問題なら `dotnet clean` を明示呼出
 5. **`GenerateIcon` Target の `Inputs/Outputs` は外さない** — 外すと毎ビルド `powershell.exe` 起動で incremental が効かなくなる
 6. **`UseWPF=true` をライブラリから外さない** — `NAudio/Wpf/Gui/` が WPF コントロールを持っており、外すとビルド失敗
 7. **「機能を削る」「公開済みを引き下げる」修正はユーザー判断必須** — レビュー時は `business-call` 判定で議題提示のみに留め、勝手に削除しない
+8. **`ProcessLoopbackMode` enum の値を入れ替えない** — 公式 `PROCESS_LOOPBACK_MODE` 準拠で `IncludeTargetProcessTree=0` / `ExcludeTargetProcessTree=1`。blittable 構造体で生値がネイティブへ渡るため、値を反転させると `CreateForProcessCaptureAsync` の `includeProcessTree` 指定が逆転する (v1.0.44 で修正、再発防止コメントを `Wasapi/CoreAudioApi/AudioClientStreamFlags.cs` に記載済)
+9. **`gh` コマンドは origin を既定にしてから使う** — このリポジトリは `upstream` (naudio/NAudio) remote を持つフォークなので、デフォルト未設定だと `gh` が upstream を誤参照して run/PR が空や `404 naudio/NAudio` になる。`gh repo set-default 1llum1n4t1s/1llum1n4t1s.NAudio` で origin を既定に固定する (`.git/config` にローカル保存されるが、別マシンへ clone した直後は再設定が必要)
+10. **利用者向け診断ログは `Trace.WriteLine` を使う (`Debug.WriteLine` / `#if DEBUG` は NuGet 配布物で消える)** — NuGet パッケージは `dotnet build -c Release` で生成されるため、`#if DEBUG` ブロックや `[Conditional("DEBUG")]` が付く `Debug.WriteLine` は利用者の手元で完全に消える。Process Loopback の STA / `SynchronizationContext` 違反警告のように利用者が本番で見るべき診断は `System.Diagnostics.Trace.WriteLine` を使う。一方、COM ラッパー finalizer の「Dispose 漏れ」警告は開発者向けなので `Debug.WriteLine` のままでよい
 
 ## 関連ドキュメント
 

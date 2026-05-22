@@ -32,6 +32,8 @@ namespace NAudio.CoreAudioApi
         private readonly int audioBufferMillisecondsLength;
         private AudioClientStreamFlags audioClientStreamFlags;
         private readonly bool isProcessLoopback;
+        private long silentPacketCount;
+        private long totalPacketCount;
 
         /// <summary>
         /// Indicates recorded data is available 
@@ -50,9 +52,22 @@ namespace NAudio.CoreAudioApi
         public event EventHandler<WasapiCapturePacketEventArgs> CapturePacketReceived;
 
         /// <summary>
+        /// 診断用。これまでに受信したキャプチャパケットの総数。
+        /// </summary>
+        public long TotalPacketCount => Interlocked.Read(ref totalPacketCount);
+
+        /// <summary>
+        /// 診断用。これまでに受信した SILENT フラグ付きパケット数。
+        /// Process Loopback で <see cref="TotalPacketCount"/> に対しこの値が増え続ける場合、
+        /// OS が SILENT を返している（対象プロセスが無音 / PID・プロセスツリー指定ミス）可能性が高い。
+        /// イベント購読なしでもポーリングで無音原因を切り分けられる。
+        /// </summary>
+        public long SilentPacketCount => Interlocked.Read(ref silentPacketCount);
+
+        /// <summary>
         /// Initialises a new instance of the WASAPI capture class
         /// </summary>
-        public WasapiCapture() : 
+        public WasapiCapture() :
             this(GetDefaultCaptureDevice())
         {
         }
@@ -98,10 +113,11 @@ namespace NAudio.CoreAudioApi
         private WasapiCapture(AudioClient audioClient, bool useEventSync, int audioBufferMillisecondsLength, bool isProcessLoopback)
         {
             syncContext = SynchronizationContext.Current;
-#if DEBUG
+            // NuGet 配布物は Release ビルドのため、#if DEBUG + Debug.WriteLine だと
+            // この最重要の初期化失敗診断が利用者の手元で完全に消える。
+            // Release でも残る Trace.WriteLine を使い、STA/SynchronizationContext 違反を検知可能にする。
             if (isProcessLoopback && syncContext == null)
-                System.Diagnostics.Debug.WriteLine("WasapiCapture (Process Loopback): SynchronizationContext.Current is null. Call CreateForProcessCaptureAsync and StartRecording from an STA thread (e.g. UI thread) with a synchronization context to avoid COM errors or invalid audio.");
-#endif
+                System.Diagnostics.Trace.WriteLine("WasapiCapture (Process Loopback): SynchronizationContext.Current is null. Call CreateForProcessCaptureAsync and StartRecording from an STA thread (e.g. UI thread) with a synchronization context to avoid COM errors or invalid audio.");
             this.audioClient = audioClient;
             ShareMode = AudioClientShareMode.Shared;
             isUsingEventSync = useEventSync;
@@ -129,7 +145,15 @@ namespace NAudio.CoreAudioApi
         /// from a thread with no SynchronizationContext (e.g. thread pool), Process Loopback may fail with E_NOINTERFACE
         /// or return invalid/placeholder audio.
         /// </remarks>
-        public static async Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree)
+        public static Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree)
+            => CreateForProcessCaptureAsync(processId, includeProcessTree, CancellationToken.None);
+
+        /// <summary>
+        /// 2 引数版 <c>CreateForProcessCaptureAsync(processId, includeProcessTree)</c> の CancellationToken 対応版。
+        /// COM 活性化のコールバック (ActivateCompleted) が来ない経路 (OS 非対応 SKU・対象プロセス消滅等) で
+        /// 待機を打ち切れる。STA 制約は同じ (await 継続と同じ UI スレッドで使うこと)。
+        /// </summary>
+        public static async Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree, CancellationToken cancellationToken)
         {
             // https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/ApplicationLoopback/cpp/LoopbackCapture.cpp
             // 公式: GetActivateResult は IAudioClient のみを返す。IAudioClient2/3 へのキャストは E_NOINTERFACE の可能性あり。
@@ -164,7 +188,8 @@ namespace NAudio.CoreAudioApi
                     NativeMethods.ActivateAudioInterfaceAsync(VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, typeof(IAudioClient).GUID, hActivateParams.AddrOfPinnedObject(), icbh, out var activationOperation);
                     try
                     {
-                        var ptr = await icbh;
+                        using var ctReg = cancellationToken.Register(() => icbh.Cancel());
+                        var ptr = await icbh.Task.WaitAsync(cancellationToken);
                         try
                         {
                             var ac = (IAudioClient)Marshal.GetTypedObjectForIUnknown(ptr, typeof(IAudioClient));
@@ -283,15 +308,10 @@ namespace NAudio.CoreAudioApi
 
             if (bufferSize < 1)
             {
-                var fallbackSize = FALLBACK_BUFFER_LENGTH * bytesPerFrame;
-                // System.Diagnostics.Debug.WriteLine("Buffer Size is faulted, The size is {0}, using fallback size instead {1}", bufferSize, fallbackSize);
-                // Console.WriteLine("[!] Playback Buffer is Faulted");
-                bufferSize = fallbackSize;
+                bufferSize = FALLBACK_BUFFER_LENGTH * bytesPerFrame;
             }
-            
+
             recordBuffer = new byte[bufferSize];
-            
-            //Debug.WriteLine(string.Format("record buffer size = {0}", this.recordBuffer.Length));
 
             initialized = true;
         }
@@ -308,8 +328,8 @@ namespace NAudio.CoreAudioApi
         /// Start Capturing
         /// </summary>
         /// <remarks>
-        /// For Process Loopback instances (created via <see cref="CreateForProcessCaptureAsync"/>), call this method
-        /// from the same thread that awaited <see cref="CreateForProcessCaptureAsync"/> (typically the UI thread).
+        /// For Process Loopback instances (created via <c>CreateForProcessCaptureAsync</c>), call this method
+        /// from the same thread that awaited <c>CreateForProcessCaptureAsync</c> (typically the UI thread).
         /// Do not call from a background or thread-pool thread.
         /// </remarks>
         public void StartRecording()
@@ -349,18 +369,12 @@ namespace NAudio.CoreAudioApi
             }
             finally
             {
-                if (isProcessLoopback && syncContext != null)
-                {
-                    try
-                    {
-                        syncContext.Send(_ => client.Stop(), null);
-                    }
-                    catch (Exception stopEx)
-                    {
-                        exception = exception ?? stopEx;
-                    }
-                }
-                else
+                // Process Loopback の client.Stop() は STA(UI スレッド)からしか呼べないが、
+                // ここ(CaptureThread)から syncContext.Send で同期実行すると、UI スレッドが
+                // Dispose の captureThread.Join() でブロック中の場合に相互デッドロックする。
+                // よって Process Loopback の Stop は Dispose(UI スレッド)側へ委譲し、ここでは行わない。
+                // 通常 WASAPI キャプチャ(!isProcessLoopback)は従来どおりこのスレッドで Stop する。
+                if (!(isProcessLoopback && syncContext != null))
                 {
                     try
                     {
@@ -372,7 +386,8 @@ namespace NAudio.CoreAudioApi
                     }
                 }
             }
-            captureThread = null;
+            // captureThread の null 化は所有者(Dispose)に集約する。CaptureThread 自身が
+            // null を書くと、Dispose 側の「!=null 判定 → Join」の間で null になり NRE になる競合があった。
             captureState = CaptureState.Stopped;
             RaiseRecordingStopped(exception);
         }
@@ -462,6 +477,9 @@ namespace NAudio.CoreAudioApi
             while (packetSize != 0)
             {
                 var buffer = capture.GetBuffer(out var framesAvailable, out var flags);
+                totalPacketCount++;
+                if ((flags & AudioClientBufferFlags.Silent) == AudioClientBufferFlags.Silent)
+                    silentPacketCount++;
                 CapturePacketReceived?.Invoke(this, new WasapiCapturePacketEventArgs(flags, framesAvailable));
 
                 var bytesAvailable = framesAvailable * bytesPerFrame;
@@ -512,10 +530,21 @@ namespace NAudio.CoreAudioApi
                 return; // already disposed
 
             StopRecording();
-            if (captureThread != null)
+            // captureThread をローカルへ退避してから Join する (CaptureThread 側の自己 null 化を
+            // やめたので、ここで null チェックと Join の間に他スレッドが介入する競合は無い)。
+            var threadToJoin = captureThread;
+            if (threadToJoin != null)
             {
-                captureThread.Join();
+                threadToJoin.Join();
                 captureThread = null;
+            }
+            // Process Loopback の Stop は CaptureThread から委譲され、ここ(Dispose を呼んだ UI スレッド)で実行する
+            // (CaptureThread から syncContext.Send で Stop すると Join とデッドロックするため)。
+            // Stop は STA 必須なので Dispose も Process Loopback では UI スレッドから呼ぶこと。
+            if (isProcessLoopback && syncContext != null && audioClient != null)
+            {
+                try { audioClient.Stop(); }
+                catch { /* 既に停止/解放済みでも無視 (後続の Dispose で COM 解放される) */ }
             }
             if (audioClient != null)
             {

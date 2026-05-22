@@ -96,23 +96,22 @@ namespace NAudio.Wave.SampleProviders
                 var samplesRead = input.Read(inputBuffer, 0, samplesRequired);
                 sampleFramesRead = Math.Max(sampleFramesRead, samplesRead / input.WaveFormat.Channels);
 
-                for (var n = 0; n < input.WaveFormat.Channels; n++)
+                // 各出力チャンネルについて、マップ元がこの入力プロバイダの範囲内なら一括コピーする。
+                // 旧実装は入力ch×出力chの二重ループで mappings を逆引きしていたが、出力ch基準にして
+                // 入力ch側の線形スキャンを除去した (O(inputCh×outputCh) → O(outputCh))。挙動は等価。
+                var inputChannels = input.WaveFormat.Channels;
+                for (var outputIndex = 0; outputIndex < outputChannelCount; outputIndex++)
                 {
-                    var inputIndex = inputOffset + n;
-                    for (var outputIndex = 0; outputIndex < outputChannelCount; outputIndex++)
+                    var globalInputIndex = mappings[outputIndex];
+                    if (globalInputIndex < inputOffset || globalInputIndex >= inputOffset + inputChannels)
+                        continue;
+                    var inputBufferOffset = globalInputIndex - inputOffset;
+                    var outputBufferOffset = offset + outputIndex;
+                    while (inputBufferOffset < samplesRead)
                     {
-                        if (mappings[outputIndex] == inputIndex)
-                        {
-                            var inputBufferOffset = n;
-                            var outputBufferOffset = offset + outputIndex;
-                            var inputChannels = input.WaveFormat.Channels;
-                            while (inputBufferOffset < samplesRead)
-                            {
-                                buffer[outputBufferOffset] = inputBuffer[inputBufferOffset];
-                                outputBufferOffset += outputChannelCount;
-                                inputBufferOffset += inputChannels;
-                            }
-                        }
+                        buffer[outputBufferOffset] = inputBuffer[inputBufferOffset];
+                        outputBufferOffset += outputChannelCount;
+                        inputBufferOffset += inputChannels;
                     }
                 }
                 inputOffset += input.WaveFormat.Channels;

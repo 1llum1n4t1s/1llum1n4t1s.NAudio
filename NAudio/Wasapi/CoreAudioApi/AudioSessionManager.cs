@@ -112,11 +112,23 @@ namespace NAudio.CoreAudioApi
         /// </summary>
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
             if (disposed) return;
             disposed = true;
-            UnregisterNotifications();
-            Marshal.ReleaseComObject(audioSessionInterface);
-            GC.SuppressFinalize(this);
+            // COM 操作は明示 Dispose 経由 (disposing=true) のみ実行する。
+            // ファイナライザ (disposing=false) から STA バインド COM を
+            // GC スレッド (MTA) で UnregisterSessionNotification / ReleaseComObject すると
+            // RPC_E_WRONG_THREAD / AccessViolation になるため触らない (COM Lifecycle 統一方針)。
+            if (disposing)
+            {
+                UnregisterNotifications();
+                Marshal.ReleaseComObject(audioSessionInterface);
+            }
         }
 
         private void UnregisterNotifications()
@@ -131,11 +143,13 @@ namespace NAudio.CoreAudioApi
         }
 
         /// <summary>
-        /// Finalizer.
+        /// Finalizer. COM オブジェクトには触れず、Dispose 漏れの警告のみ出す。
+        /// GC スレッドからの STA-COM 操作を避けるため、最終解放は CLR の RCW に委ねる
+        /// (MediaType / PropertyStore / MMDevice 等と同じ統一方針)。
         /// </summary>
         ~AudioSessionManager()
         {
-            Dispose();
+            System.Diagnostics.Debug.WriteLine("AudioSessionManager: Dispose() が呼ばれていません。ファイナライザでは COM を解放しません (cross-thread COM 回避)。");
         }
     }
 }

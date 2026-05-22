@@ -36,8 +36,14 @@ namespace NAudio.SoundFont
             for (var zone = 0; zone < data.Count - 1; zone++)
             {
                 var z = (Zone)data[zone];
+                // 細工された .sf2 で generator/modulator インデックスが配列長を超えると
+                // Array.Copy が ArgumentException を投げるため、事前に境界を検証する
+                if (z.generatorIndex + z.generatorCount > generators.Length)
+                    throw new InvalidDataException("SoundFont zone の generator インデックスが範囲外です");
                 z.Generators = new Generator[z.generatorCount];
                 Array.Copy(generators, z.generatorIndex, z.Generators, 0, z.generatorCount);
+                if (z.modulatorIndex + z.modulatorCount > modulators.Length)
+                    throw new InvalidDataException("SoundFont zone の modulator インデックスが範囲外です");
                 z.Modulators = new Modulator[z.modulatorCount];
                 Array.Copy(modulators, z.modulatorIndex, z.Modulators, 0, z.modulatorCount);
             }

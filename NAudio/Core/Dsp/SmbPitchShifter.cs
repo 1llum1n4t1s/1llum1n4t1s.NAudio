@@ -67,9 +67,13 @@ namespace NAudio.Dsp
         private float[] gSynFreq = new float[MAX_FRAME_LENGTH];
         private float[] gSynMagn = new float[MAX_FRAME_LENGTH];
         private long gRover;
+        // Hann 窓は fftFrameSize が固定なら定数配列になる。STFT の解析/合成で毎フレーム
+        // MathF.Cos を 2N 回再計算していたのを避けるため、fftFrameSize 単位でキャッシュする。
+        private readonly float[] gWindow = new float[MAX_FRAME_LENGTH];
+        private long gWindowFrameSize = -1;
 
         /// <summary>
-        /// Pitch Shift 
+        /// Pitch Shift
         /// </summary>
         public void PitchShift(float pitchShift, long numSampsToProcess,
             float sampleRate, float[] indata)
@@ -105,6 +109,14 @@ namespace NAudio.Dsp
             inFifoLatency = fftFrameSize - stepSize;
             if (gRover == 0) gRover = inFifoLatency;
 
+            /* Hann 窓を fftFrameSize 単位でキャッシュ (毎フレームの MathF.Cos 再計算を回避) */
+            if (gWindowFrameSize != fftFrameSize)
+            {
+                for (k = 0; k < fftFrameSize; k++)
+                    gWindow[k] = -0.5f * MathF.Cos(2.0f * MathF.PI * k / fftFrameSize) + 0.5f;
+                gWindowFrameSize = fftFrameSize;
+            }
+
 
             /* main processing loop */
             for (i = 0; i < numSampsToProcess; i++)
@@ -123,7 +135,7 @@ namespace NAudio.Dsp
                     /* do windowing and re,im interleave */
                     for (k = 0; k < fftFrameSize; k++)
                     {
-                        window = -0.5f * MathF.Cos(2.0f * MathF.PI * k / fftFrameSize) + 0.5f;
+                        window = gWindow[k];
                         gFFTworksp[2*k] = gInFIFO[k] * window;
                         gFFTworksp[2*k + 1] = 0.0F;
                     }
@@ -224,7 +236,7 @@ namespace NAudio.Dsp
                     /* do windowing and add to output accumulator */
                     for (k = 0; k < fftFrameSize; k++)
                     {
-                        window = -0.5f * MathF.Cos(2.0f * MathF.PI * k / fftFrameSize) + 0.5f;
+                        window = gWindow[k];
                         gOutputAccum[k] += 2.0f * window * gFFTworksp[2*k] / (fftFrameSize2 * osamp);
                     }
                     for (k = 0; k < stepSize; k++) gOutFIFO[k] = gOutputAccum[k];

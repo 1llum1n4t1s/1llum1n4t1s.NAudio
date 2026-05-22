@@ -1,19 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!--
-      OutputType=WinExe は意図的設計:
-      - Tests/App.xaml が WPF ApplicationDefinition で、Process Loopback の
-        手動 UI テスト (ProcessLoopbackCaptureTestWindow.xaml) のエントリーポイント
-      - <OutputType>WinExe</OutputType> を外すと Microsoft.WinFX.targets が
-        MC1002 / BG1003 を投げてビルド失敗 (Library + ApplicationDefinition は禁止)
-      - NUnit3TestAdapter は WinExe でも問題なくテスト discovery する
+      通常の単体テストプロジェクト。Microsoft.NET.Test.Sdk + NUnit3TestAdapter により
+      `dotnet test` が VSTest ターゲット経由でテストを実行できる。
+      かつては App.xaml (WPF 手動 UI テスト) を同居させるため OutputType=WinExe にしていたが、
+      ApplicationDefinition の Main が Test.Sdk の Main と衝突 (CS0017) し、Test.Sdk を入れられず
+      dotnet test が 0 件実行 (テスト未実行) になっていた。UI アプリは ProcessLoopbackTestApp へ分離済み。
+      UseWPF は ProcessLoopbackDeadlockTests が WPF Dispatcher を使うため有効化している
+      (ApplicationDefinition は持たないので Main 衝突は起きない)。
       <IsPackable>false</IsPackable> で NuGet 化は抑止。
     -->
-    <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="NUnit" Version="4.6.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />

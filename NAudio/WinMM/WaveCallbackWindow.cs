@@ -274,4 +274,22 @@ internal sealed class WaveCallbackWindowSubclass : IDisposable
         _disposed = true;
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// Dispose 漏れ時の保険。static Subclasses Dictionary が Instance を強参照したまま残ると
+    /// WaveOut チェーン全体が GC ルート化して永久リークするため、自己参照のみ除去する。
+    /// WndProc 復元 (SetWindowLongPtr) は別 hwnd のサブクラス順序を壊す恐れがあるため finalizer では行わない。
+    /// </summary>
+    ~WaveCallbackWindowSubclass()
+    {
+        if (_hwnd != IntPtr.Zero)
+        {
+            lock (SubclassLock)
+            {
+                if (Subclasses.TryGetValue(_hwnd, out var pair) && ReferenceEquals(pair.Instance, this))
+                    Subclasses.Remove(_hwnd);
+            }
+        }
+        System.Diagnostics.Debug.Assert(false, "WaveCallbackWindowSubclass was not disposed");
+    }
 }

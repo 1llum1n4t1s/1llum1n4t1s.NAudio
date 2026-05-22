@@ -46,4 +46,7 @@
   <Project Path="Tests/NAudioTests.csproj">
     <Platform Project="x64" />
   </Project>
+  <Project Path="ProcessLoopbackTestApp/ProcessLoopbackTestApp.csproj">
+    <Platform Project="x64" />
+  </Project>
 </Solution>

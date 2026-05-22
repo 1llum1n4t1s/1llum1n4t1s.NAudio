@@ -130,8 +130,10 @@ namespace NAudioTests.WaveStreams
                     writer.WriteSample(sample);
                 }
             }
-            // RIFF ヘッダ + 1000 sample × 2 byte = 44 + 2000 = 2044 bytes
-            ClassicAssert.AreEqual(44 + 1000 * 2, ms.Length, "RIFF ヘッダ + 16bit mono 1000 サンプル分が書き出されるはず");
+            // ヘッダ = RIFF(12) + fmt チャンク(8 + 18) + data ヘッダ(8) = 46 バイト。
+            // NAudio の WaveFormat.Serialize は PCM でも cbSize を含む 18 バイトの fmt を書くため fmt 本体は 18 バイト。
+            // + 1000 sample × 2 byte = 46 + 2000 = 2046 bytes
+            ClassicAssert.AreEqual(46 + 1000 * 2, ms.Length, "RIFF ヘッダ + 16bit mono 1000 サンプル分が書き出されるはず");
         }
 
         /// <summary>
