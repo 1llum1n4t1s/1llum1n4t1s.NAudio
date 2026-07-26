@@ -6,6 +6,13 @@
 
 ---
 
+## [1.0.49] — 2026-07-27
+
+### Changed
+- CI ワークフローの GitHub Actions を更新: `actions/checkout` v4 → v7.0.1、`actions/setup-dotnet` v4 → v6.0.0、`actions/cache` v4 → v6.1.0 (ビルド環境専用の更新。ライブラリ本体の公開 API・動作・配布物 `1llum1n4t1s.NAudio.dll` に変更はありません)。
+
+---
+
 ## [1.0.48] — 2026-07-26
 
 ### Changed
