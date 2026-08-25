@@ -12,6 +12,12 @@ public class AudioCaptureClient : IDisposable
 {
     private IAudioCaptureClient audioCaptureClientInterface;
 
+    internal AudioCaptureClient(IAudioCaptureClient audioCaptureClientInterface)
+    {
+        this.audioCaptureClientInterface = audioCaptureClientInterface ??
+            throw new ArgumentNullException(nameof(audioCaptureClientInterface));
+    }
+
     internal AudioCaptureClient(IntPtr nativePointer)
     {
         try

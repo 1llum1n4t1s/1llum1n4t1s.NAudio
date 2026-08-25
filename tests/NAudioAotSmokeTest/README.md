@@ -48,9 +48,10 @@ dotnet publish NAudioAotSmokeTest/NAudioAotSmokeTest.csproj -c Release
 ```
 
 Then run the produced `NAudioAotSmokeTest.exe` from the publish directory.
-Expect output ending with `CCW dispatch under PublishAot: OK` and a clean
-exit. A `0xC0000005` access violation, a fast-fail message, or
-`zero callbacks fired` indicates a regression in the Phase 2f migration.
+Expect successful process-loopback activation, Core Audio callback dispatch,
+Media Foundation MP3/resampling and Unicode-path M4A file decoding, followed by
+DirectSound playback and a clean exit. A `0xC0000005` access violation, a
+fast-fail message, or `zero callbacks fired` indicates a COM interop regression.
 
 ## Why the runtime test isn't in CI
 

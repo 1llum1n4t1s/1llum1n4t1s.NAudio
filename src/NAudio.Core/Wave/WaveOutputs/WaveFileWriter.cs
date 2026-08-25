@@ -377,8 +377,7 @@ public class WaveFileWriter : Stream
     {
         ThrowIfDisposed();
         EnsureHeaderFinalized();
-        if (!enableRf64 && dataChunkSize + count > UInt32.MaxValue)
-            throw new ArgumentException("WAV file too large - enable RF64 for files larger than 4 GB", nameof(count));
+        EnsureDataCanBeWritten(count, nameof(count));
         outStream.Write(data, offset, count);
         dataChunkSize += count;
     }
@@ -391,8 +390,7 @@ public class WaveFileWriter : Stream
     {
         ThrowIfDisposed();
         EnsureHeaderFinalized();
-        if (!enableRf64 && dataChunkSize + data.Length > UInt32.MaxValue)
-            throw new ArgumentException("WAV file too large - enable RF64 for files larger than 4 GB");
+        EnsureDataCanBeWritten(data.Length);
         outStream.Write(data);
         dataChunkSize += data.Length;
     }
@@ -409,11 +407,13 @@ public class WaveFileWriter : Stream
         EnsureHeaderFinalized();
         if (WaveFormat.BitsPerSample == 16)
         {
+            EnsureDataCanBeWritten(2);
             writer.Write((Int16)(Int16.MaxValue * sample));
             dataChunkSize += 2;
         }
         else if (WaveFormat.BitsPerSample == 24)
         {
+            EnsureDataCanBeWritten(3);
             var value = BitConverter.GetBytes((Int32)(Int32.MaxValue * sample));
             value24[0] = value[1];
             value24[1] = value[2];
@@ -423,6 +423,7 @@ public class WaveFileWriter : Stream
         }
         else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == WaveFormatEncoding.Extensible)
         {
+            EnsureDataCanBeWritten(4);
             // A 32-bit WAVE_FORMAT_EXTENSIBLE can be either integer PCM or IEEE float,
             // distinguished by its SubFormat GUID (NAudio defaults 32-bit extensible to IEEE
             // float). AsStandardWaveFormat resolves the subformat for both WaveFormatExtensible
@@ -439,6 +440,7 @@ public class WaveFileWriter : Stream
         }
         else if (WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
         {
+            EnsureDataCanBeWritten(4);
             writer.Write(sample);
             dataChunkSize += 4;
         }
@@ -476,6 +478,7 @@ public class WaveFileWriter : Stream
         // 16 bit PCM data
         if (WaveFormat.BitsPerSample == 16)
         {
+            EnsureDataCanBeWritten((long)count * 2, nameof(count));
             for (int sample = 0; sample < count; sample++)
             {
                 writer.Write(samples[sample + offset]);
@@ -485,6 +488,7 @@ public class WaveFileWriter : Stream
         // 24 bit PCM data
         else if (WaveFormat.BitsPerSample == 24)
         {
+            EnsureDataCanBeWritten((long)count * 3, nameof(count));
             for (int sample = 0; sample < count; sample++)
             {
                 var value = BitConverter.GetBytes(UInt16.MaxValue * samples[sample + offset]);
@@ -498,6 +502,7 @@ public class WaveFileWriter : Stream
         // 32 bit PCM or IEEE float data
         else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == WaveFormatEncoding.Extensible)
         {
+            EnsureDataCanBeWritten((long)count * 4, nameof(count));
             // As in WriteSample, a 32-bit extensible format may carry an IEEE-float subformat,
             // in which case the 16-bit samples must be normalised to float rather than written
             // as integer PCM (which would leave float-declared data unreadable).
@@ -520,6 +525,7 @@ public class WaveFileWriter : Stream
         // IEEE float data
         else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
         {
+            EnsureDataCanBeWritten((long)count * 4, nameof(count));
             for (int sample = 0; sample < count; sample++)
             {
                 writer.Write(samples[sample + offset] / (float)(Int16.MaxValue + 1));
@@ -684,6 +690,19 @@ public class WaveFileWriter : Stream
                 outStream.Position = factSampleCountPos;
                 writer.Write((int)((dataChunkSize * 8) / bitsPerSample));
             }
+        }
+    }
+
+    private void EnsureDataCanBeWritten(long byteCount, string parameterName = null)
+    {
+        if (byteCount < 0)
+            throw new ArgumentOutOfRangeException(parameterName ?? nameof(byteCount));
+        if (!enableRf64 && dataChunkSize > UInt32.MaxValue - byteCount)
+        {
+            const string message = "WAV file too large - enable RF64 for files larger than 4 GB";
+            throw parameterName == null
+                ? new ArgumentException(message)
+                : new ArgumentException(message, parameterName);
         }
     }
 

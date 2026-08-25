@@ -1,6 +1,6 @@
 # NAudio.SoundFile
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.SoundFile)](https://www.nuget.org/packages/NAudio.SoundFile/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.SoundFile)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.SoundFile/)
 
 Cross-platform audio file reading and writing for NAudio, backed by
 [libsndfile](https://libsndfile.github.io/libsndfile/).

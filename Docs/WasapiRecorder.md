@@ -154,7 +154,7 @@ Routing is standard shared mode only, so don't combine it with `WithDevice`, `Wi
 ```c#
 await using var recorder = await new WasapiRecorderBuilder()
     .WithProcessLoopback((uint)targetProcessId, ProcessLoopbackMode.IncludeTargetProcessTree)
-    .BuildAsync();
+    .BuildAsync(cancellationToken);
 
 recorder.DataAvailable += (buffer, flags, _, _) => { /* buffer is the process's rendered audio */ };
 recorder.StartRecording();
@@ -163,6 +163,29 @@ recorder.StartRecording();
 The virtual loopback device does not expose a mix format, so the recorder captures at the format you request via `WithFormat(...)`, defaulting to 44.1 kHz stereo IEEE float. Use `ProcessLoopbackMode.ExcludeTargetProcessTree` to capture everything *except* the target process. As with all WASAPI loopback, no buffers are delivered while the target renders no audio.
 
 For system-wide loopback (everything the device is playing) use `WithLoopbackCapture()` instead.
+
+### Compatibility with 1llum1n4t1s.NAudio 1.x
+
+Existing callers can continue to use the fork's original factory while migrating:
+
+```c#
+using var capture = await WasapiCapture.CreateForProcessCaptureAsync(
+    targetProcessId,
+    includeProcessTree: true,
+    cancellationToken);
+```
+
+The compatibility factory keeps its original 48 kHz, 16-bit stereo format and maps
+`includeProcessTree` to the Windows `PROCESS_LOOPBACK_MODE` values. Its implementation now uses
+NAudio 3's source-generated COM interop, so it is Native AOT compatible and does not require an STA
+thread or a non-null `SynchronizationContext`. Prefer `WasapiRecorderBuilder` in new code because it
+supports format selection and the modern zero-copy recorder API.
+
+The fork's legacy packet diagnostics are also retained: `CapturePacketReceived` reports the
+`AudioClientBufferFlags` and frame count for every native packet, while `TotalPacketCount` and
+`SilentPacketCount` expose cumulative counts. These members help distinguish silence marked by
+Windows from silence introduced later in an application's processing pipeline. New
+`WasapiRecorder` code receives the same flags directly in its `DataAvailable` callback.
 
 ## Acoustic echo cancellation reference
 

@@ -8,7 +8,7 @@ using NAudio.MediaFoundation;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-// AOT smoke app. Exercises three directions of the source-generated COM bridging:
+// AOT smoke app. Exercises the source-generated COM bridging in four areas:
 //
 // (1) RCW direction — IPropertyStore + PropVariant (Phase 2d) and the
 //     CoCreateInstance / GetOrCreateObjectForComInstance projection path
@@ -45,6 +45,60 @@ using NAudio.Wave.SampleProviders;
 //     under PublishTrimmed (StubHelpers.InterfaceMarshaler stripped) is
 //     precisely this path; if the migration regressed it, this section would
 //     AV before reporting OK.
+
+Console.WriteLine("=== 1llum1n4t1s compatibility: cancellable process loopback ===\n");
+
+using (var cancelled = new CancellationTokenSource())
+{
+    cancelled.Cancel();
+
+    try
+    {
+#pragma warning disable CS0618 // Native AOT roots the 1.x compatibility API intentionally.
+        await WasapiCapture.CreateForProcessCaptureAsync(1, includeProcessTree: true, cancelled.Token);
+#pragma warning restore CS0618
+        throw new InvalidOperationException("The compatibility factory ignored cancellation.");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("  WasapiCapture compatibility factory cancellation: OK");
+    }
+
+    try
+    {
+        await new WasapiRecorderBuilder()
+            .WithProcessLoopback(1, ProcessLoopbackMode.IncludeTargetProcessTree)
+            .BuildAsync(cancelled.Token);
+        throw new InvalidOperationException("WasapiRecorderBuilder ignored cancellation.");
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("  WasapiRecorderBuilder cancellation: OK");
+    }
+}
+
+#pragma warning disable CS0618 // Exercise the 1.x compatibility factory under Native AOT.
+using (var processCapture = await WasapiCapture.CreateForProcessCaptureAsync(
+           Environment.ProcessId,
+           includeProcessTree: true))
+#pragma warning restore CS0618
+{
+    processCapture.StartRecording();
+    Thread.Sleep(100);
+    processCapture.StopRecording();
+    Console.WriteLine("  WasapiCapture process-loopback activation + start/stop: OK");
+}
+
+await using (var processRecorder = await new WasapiRecorderBuilder()
+                 .WithProcessLoopback((uint)Environment.ProcessId,
+                     ProcessLoopbackMode.IncludeTargetProcessTree)
+                 .BuildAsync())
+{
+    processRecorder.StartRecording();
+    Thread.Sleep(100);
+    processRecorder.StopRecording();
+    Console.WriteLine("  WasapiRecorder process-loopback activation + start/stop: OK");
+}
 
 Console.WriteLine("=== Phase 2d / 2e: RCW direction (property reads) ===\n");
 
@@ -168,6 +222,42 @@ try
     Console.WriteLine(total > 0 && resampleTotal > 0
         ? "  MediaFoundation under PublishAot: OK"
         : "  MediaFoundation under PublishAot: FAIL");
+
+    // Sonireva's exact failure mode was the URL-based MediaFoundationReader path for an
+    // M4A file from a Native-AOT application. Exercise a non-ASCII file name as well so
+    // source-generated UTF-16 string marshalling is covered by the smoke test.
+    string m4aDirectory = Path.Combine(Path.GetTempPath(),
+        $"1llum1n4t1s.NAudio-AOT-{Guid.NewGuid():N}");
+    string mp4Path = Path.Combine(m4aDirectory, "M4A 一時コンテナ.mp4");
+    string m4aPath = Path.Combine(m4aDirectory, "日本語 M4A 入力.m4a");
+    string decodedPath = Path.Combine(m4aDirectory, "日本語 M4A 出力.wav");
+    Directory.CreateDirectory(m4aDirectory);
+    try
+    {
+        var aacSignal = new SignalGenerator(44100, 2) { Frequency = 523.25, Gain = 0.2 }
+            .Take(TimeSpan.FromSeconds(1));
+        MediaFoundationEncoder.EncodeToAac(aacSignal.ToWaveProvider(), mp4Path, 128000);
+        File.Move(mp4Path, m4aPath);
+
+        using (var m4aReader = new MediaFoundationReader(m4aPath))
+        using (var decodedWriter = new WaveFileWriter(decodedPath, m4aReader.WaveFormat))
+        {
+            m4aReader.CopyTo(decodedWriter);
+        }
+
+        using var decodedReader = new WaveFileReader(decodedPath);
+        if (decodedReader.Length <= 0)
+        {
+            throw new InvalidOperationException("MediaFoundationReader produced an empty WAV from M4A.");
+        }
+
+        Console.WriteLine($"  MediaFoundationReader M4A file with Unicode path: {decodedReader.Length} PCM bytes");
+        Console.WriteLine("  M4A decode under PublishAot: OK");
+    }
+    finally
+    {
+        Directory.Delete(m4aDirectory, recursive: true);
+    }
 }
 finally
 {

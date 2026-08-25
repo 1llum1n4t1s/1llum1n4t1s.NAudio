@@ -245,7 +245,8 @@ public class MidiEventTests
         var bytes = new byte[] { 0x00, 0x3C, 0x40 };
         using var ms = new MemoryStream(bytes);
         using var br = new BinaryReader(ms);
-        Assert.Throws<NullReferenceException>(() => MidiEvent.ReadNextEvent(br, null));
+        var exception = Assert.Throws<FormatException>(() => MidiEvent.ReadNextEvent(br, null));
+        Assert.That(exception.Message, Does.Contain("running status"));
     }
 
     [Test]

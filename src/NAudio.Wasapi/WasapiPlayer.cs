@@ -226,11 +226,13 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
     }
 
     internal static async Task<WasapiPlayer> CreateDefaultDeviceRoutingAsync(bool useEventSync,
-        int latencyMilliseconds, AudioStreamCategory? audioCategory, string mmcssTaskName, bool useRawMode)
+        int latencyMilliseconds, AudioStreamCategory? audioCategory, string mmcssTaskName, bool useRawMode,
+        CancellationToken cancellationToken)
     {
         // Automatic stream routing follows the default render device, re-routing transparently when
         // the default changes. Activation is asynchronous, hence the async factory.
-        var activatedClient = await AudioClient.ActivateDefaultDeviceAsync(DataFlow.Render).ConfigureAwait(false);
+        var activatedClient = await AudioClient.ActivateDefaultDeviceAsync(DataFlow.Render, cancellationToken)
+            .ConfigureAwait(false);
         return new WasapiPlayer(activatedClient, useEventSync, latencyMilliseconds, audioCategory, mmcssTaskName, useRawMode);
     }
 
@@ -725,8 +727,10 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
         {
             playbackState = PlaybackState.Stopped;
             stopEvent.Set();
-            playThread?.Join();
-            playThread = null;
+            var thread = playThread;
+            if (thread != null && thread != Thread.CurrentThread)
+                thread.Join();
+            Interlocked.CompareExchange(ref playThread, null, thread);
         }
     }
 
@@ -808,9 +812,17 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
         }
         finally
         {
+            playbackState = PlaybackState.Stopped;
             if (mmcssHandle != IntPtr.Zero)
                 NativeMethods.AvRevertMmThreadCharacteristics(mmcssHandle);
-            RaisePlaybackStopped(exception);
+            try
+            {
+                RaisePlaybackStopped(exception);
+            }
+            finally
+            {
+                Interlocked.CompareExchange(ref playThread, null, Thread.CurrentThread);
+            }
         }
     }
 
@@ -875,11 +887,12 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
         {
             playbackState = PlaybackState.Stopped;
             stopEvent.Set();
-            if (playThread != null)
+            var thread = playThread;
+            if (thread != null && thread != Thread.CurrentThread)
             {
-                await Task.Run(() => playThread.Join());
+                await Task.Run(thread.Join);
             }
-            playThread = null;
+            Interlocked.CompareExchange(ref playThread, null, thread);
         }
         DisposeCore();
         GC.SuppressFinalize(this);

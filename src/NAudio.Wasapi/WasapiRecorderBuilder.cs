@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NAudio.Wave;
@@ -43,7 +44,7 @@ public class WasapiRecorderBuilder
     /// seamlessly transfers capture to the new default device with no application code.
     /// </summary>
     /// <remarks>
-    /// Activation is asynchronous, so the recorder must be created via <see cref="BuildAsync"/> rather
+    /// Activation is asynchronous, so the recorder must be created via <see cref="BuildAsync()"/> rather
     /// than <see cref="Build"/>. Routing is standard shared mode only: do not combine it with
     /// <see cref="WithDevice"/>, <see cref="WithExclusiveMode"/>, <see cref="WithLowLatency"/>,
     /// <see cref="WithLoopbackCapture"/>, or <see cref="WithProcessLoopback"/>.
@@ -242,7 +243,7 @@ public class WasapiRecorderBuilder
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// Thrown when <see cref="WithProcessLoopback"/> was configured — process loopback is
-    /// activated asynchronously, so <see cref="BuildAsync"/> must be used instead.
+    /// activated asynchronously, so <see cref="BuildAsync()"/> must be used instead.
     /// </exception>
     public WasapiRecorder Build()
     {
@@ -287,6 +288,18 @@ public class WasapiRecorderBuilder
     /// </summary>
     public Task<WasapiRecorder> BuildAsync()
     {
+        return BuildAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Builds the configured recorder asynchronously and allows the activation wait to be canceled.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels asynchronous WASAPI activation.</param>
+    /// <returns>The configured recorder.</returns>
+    public Task<WasapiRecorder> BuildAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (processLoopbackId.HasValue)
         {
             if (configureEchoCancellationReference || useCommunicationsMode)
@@ -312,7 +325,7 @@ public class WasapiRecorderBuilder
                 "Process loopback requires Windows 10 2004 (build 19041) or later.");
             return WasapiRecorder.CreateProcessLoopbackAsync(
                 processLoopbackId.Value, processLoopbackMode,
-                useEventSync, bufferMilliseconds, requestedFormat, mmcssTaskName);
+                useEventSync, bufferMilliseconds, requestedFormat, mmcssTaskName, cancellationToken);
         }
 
         if (useDefaultDeviceRouting)
@@ -333,7 +346,7 @@ public class WasapiRecorderBuilder
             ValidateRawMode();
 
             return WasapiRecorder.CreateDefaultDeviceRoutingAsync(
-                useEventSync, bufferMilliseconds, requestedFormat, mmcssTaskName, useRawMode);
+                useEventSync, bufferMilliseconds, requestedFormat, mmcssTaskName, useRawMode, cancellationToken);
         }
 
         return Task.FromResult(Build());

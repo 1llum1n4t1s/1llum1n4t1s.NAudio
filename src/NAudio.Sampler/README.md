@@ -1,6 +1,6 @@
 # NAudio.Sampler
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Sampler)](https://www.nuget.org/packages/NAudio.Sampler/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Sampler)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Sampler/)
 
 A cross-platform software sampler for [NAudio](https://github.com/naudio/NAudio). Play MIDI through SoundFont (`.sf2`) and SFZ instruments, or a single sample mapped across the keyboard. Truly cross-platform — `net9.0`, no `[SupportedOSPlatform]`.
 

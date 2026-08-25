@@ -1,5 +1,6 @@
 ﻿using NAudio.CoreAudioApi;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NAudio.Wave;
@@ -35,7 +36,7 @@ public class WasapiPlayerBuilder
     /// seamlessly transfers playback to the new default device with no application code.
     /// </summary>
     /// <remarks>
-    /// Activation is asynchronous, so the player must be created via <see cref="BuildAsync"/> rather
+    /// Activation is asynchronous, so the player must be created via <see cref="BuildAsync()"/> rather
     /// than <see cref="Build"/>. Routing is standard shared mode only: do not combine it with
     /// <see cref="WithDevice"/>, <see cref="WithExclusiveMode"/>, or <see cref="WithLowLatency"/>.
     /// Because there is no fixed endpoint, <see cref="WasapiPlayer.DeviceVolume"/> is unavailable
@@ -157,7 +158,7 @@ public class WasapiPlayerBuilder
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// Thrown when <see cref="WithDefaultDeviceStreamRouting"/> was configured — automatic stream
-    /// routing is activated asynchronously, so <see cref="BuildAsync"/> must be used instead.
+    /// routing is activated asynchronously, so <see cref="BuildAsync()"/> must be used instead.
     /// </exception>
     public WasapiPlayer Build()
     {
@@ -179,6 +180,18 @@ public class WasapiPlayerBuilder
     /// </summary>
     public Task<WasapiPlayer> BuildAsync()
     {
+        return BuildAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Builds the configured player asynchronously and allows the activation wait to be canceled.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels asynchronous WASAPI activation.</param>
+    /// <returns>The configured player.</returns>
+    public Task<WasapiPlayer> BuildAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (useDefaultDeviceRouting)
         {
             if (device != null)
@@ -192,7 +205,7 @@ public class WasapiPlayerBuilder
                     "IAudioClient3 low latency is not supported with automatic stream routing.");
 
             return WasapiPlayer.CreateDefaultDeviceRoutingAsync(
-                useEventSync, latencyMilliseconds, audioCategory, mmcssTaskName, useRawMode);
+                useEventSync, latencyMilliseconds, audioCategory, mmcssTaskName, useRawMode, cancellationToken);
         }
 
         return Task.FromResult(Build());

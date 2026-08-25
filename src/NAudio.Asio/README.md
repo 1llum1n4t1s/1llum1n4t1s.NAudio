@@ -1,6 +1,6 @@
 # NAudio.Asio
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Asio)](https://www.nuget.org/packages/NAudio.Asio/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Asio)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Asio/)
 
 ASIO driver support for [NAudio](https://github.com/naudio/NAudio). Windows-only (`net9.0-windows`).
 
@@ -13,7 +13,7 @@ ASIO driver support for [NAudio](https://github.com/naudio/NAudio). Windows-only
 
 ## When to use it
 
-ASIO is the right choice when you need very low round-trip latency — typical in pro-audio, virtual instruments, and multi-channel recording scenarios — and the user has a working ASIO driver installed (manufacturer-supplied, ASIO4ALL, FlexASIO, etc.). For general-purpose playback/capture prefer [NAudio.Wasapi](https://www.nuget.org/packages/NAudio.Wasapi/) or [NAudio.WinMM](https://www.nuget.org/packages/NAudio.WinMM/).
+ASIO is the right choice when you need very low round-trip latency — typical in pro-audio, virtual instruments, and multi-channel recording scenarios — and the user has a working ASIO driver installed (manufacturer-supplied, ASIO4ALL, FlexASIO, etc.). For general-purpose playback/capture prefer [NAudio.Wasapi](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Wasapi/) or [NAudio.WinMM](https://www.nuget.org/packages/1llum1n4t1s.NAudio.WinMM/).
 
 See the [NAudio documentation site](https://naudio.github.io/NAudio/) for tutorials and the full API reference, or the [GitHub repository](https://github.com/naudio/NAudio) for full documentation and tutorials, including `AsioPlayback.md` and `AsioRecording.md`.
 ## License

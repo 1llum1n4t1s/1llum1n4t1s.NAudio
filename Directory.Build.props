@@ -17,8 +17,8 @@
     <!-- Common NuGet package metadata. Per-package csprojs override
          individual properties when needed (e.g. the NAudio meta-package
          sets its own <Authors>Mark Heath &amp; Contributors</Authors>). -->
-    <Authors>Mark Heath</Authors>
-    <Copyright>© Mark Heath 2026</Copyright>
+    <Authors>Mark Heath, Contributors, ゆろち</Authors>
+    <Copyright>© Mark Heath and contributors; fork © ゆろち 2026</Copyright>
     <!-- NuGet has no "documentation URL" field — the nuspec schema has no such
          element, and setting a PackageDocumentationUrl property is silently a
          no-op. <projectUrl> is the only clickable metadata link on the package
@@ -26,9 +26,9 @@
          still renders a "Source repository" link to GitHub from the <repository>
          element that RepositoryUrl + PublishRepositoryUrl emit below. Each
          package's README (packed via Directory.Build.targets) links both too. -->
-    <PackageProjectUrl>https://naudio.github.io/NAudio/</PackageProjectUrl>
-    <PackageTags>C# .NET audio sound</PackageTags>
-    <RepositoryUrl>https://github.com/naudio/NAudio</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio</PackageProjectUrl>
+    <PackageTags>C# .NET audio sound native-aot process-loopback</PackageTags>
+    <RepositoryUrl>https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>naudio-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

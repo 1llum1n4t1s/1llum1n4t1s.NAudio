@@ -173,7 +173,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     }
 
     // Private constructor for process loopback (audioClient created externally via ActivateAudioInterfaceAsync)
-    private WasapiRecorder(AudioClient audioClient, bool useEventSync,
+    internal WasapiRecorder(AudioClient audioClient, bool useEventSync,
         int bufferMilliseconds, WaveFormat requestedFormat, string mmcssTaskName)
     {
         syncContext = SynchronizationContext.Current;
@@ -191,11 +191,13 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
 
     [SupportedOSPlatform("windows10.0.19041.0")]
     internal static async Task<WasapiRecorder> CreateProcessLoopbackAsync(uint processId, ProcessLoopbackMode mode,
-        bool useEventSync, int bufferMilliseconds, WaveFormat requestedFormat, string mmcssTaskName)
+        bool useEventSync, int bufferMilliseconds, WaveFormat requestedFormat, string mmcssTaskName,
+        CancellationToken cancellationToken)
     {
         // Process loopback uses ActivateAudioInterfaceAsync with AUDIOCLIENT_ACTIVATION_PARAMS —
         // an inherently asynchronous activation, hence the async factory.
-        var audioClient = await AudioClient.ActivateProcessLoopbackAsync(processId, mode).ConfigureAwait(false);
+        var audioClient = await AudioClient.ActivateProcessLoopbackAsync(processId, mode, cancellationToken)
+            .ConfigureAwait(false);
         return new WasapiRecorder(audioClient, useEventSync, bufferMilliseconds, requestedFormat, mmcssTaskName);
     }
 
@@ -218,11 +220,13 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     }
 
     internal static async Task<WasapiRecorder> CreateDefaultDeviceRoutingAsync(
-        bool useEventSync, int bufferMilliseconds, WaveFormat requestedFormat, string mmcssTaskName, bool useRawMode)
+        bool useEventSync, int bufferMilliseconds, WaveFormat requestedFormat, string mmcssTaskName, bool useRawMode,
+        CancellationToken cancellationToken)
     {
         // Automatic stream routing follows the default capture device, re-routing transparently when
         // the default changes. Activation is asynchronous, hence the async factory.
-        var audioClient = await AudioClient.ActivateDefaultDeviceAsync(DataFlow.Capture).ConfigureAwait(false);
+        var audioClient = await AudioClient.ActivateDefaultDeviceAsync(DataFlow.Capture, cancellationToken)
+            .ConfigureAwait(false);
         return new WasapiRecorder(audioClient, useEventSync, bufferMilliseconds, requestedFormat, mmcssTaskName,
             isDefaultDeviceRouting: true, useRawMode: useRawMode);
     }
@@ -236,9 +240,19 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             throw new InvalidOperationException("Already recording");
 
         captureState = CaptureState.Starting;
-        InitializeAudioClient();
-        captureThread = new Thread(CaptureThread) { IsBackground = true, Name = "NAudio WasapiRecorder Capture" };
-        captureThread.Start();
+        try
+        {
+            InitializeAudioClient();
+            captureThread = new Thread(CaptureThread) { IsBackground = true, Name = "NAudio WasapiRecorder Capture" };
+            captureThread.Start();
+        }
+        catch
+        {
+            captureThread = null;
+            SafeStopAndReset();
+            captureState = CaptureState.Stopped;
+            throw;
+        }
     }
 
     /// <summary>
@@ -262,11 +276,12 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             throw new InvalidOperationException("Already recording");
 
         captureState = CaptureState.Starting;
-        InitializeAudioClient();
 
         IntPtr mmcssHandle = IntPtr.Zero;
         try
         {
+            InitializeAudioClient();
+
             if (mmcssTaskName != null)
             {
                 uint taskIndex = 0;
@@ -296,20 +311,30 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
                 {
                     var bufferPtr = capture.GetBuffer(out var framesRead, out var flags,
                         out var devicePosition, out var qpcPosition);
+                    AudioBuffer packet = default;
+                    bool hasPacket = false;
                     try
                     {
-                        if ((flags & AudioClientBufferFlags.Silent) == 0 && framesRead > 0)
+                        if (framesRead > 0)
                         {
                             int byteCount = framesRead * bytesPerFrame;
                             var data = new byte[byteCount];
-                            Marshal.Copy(bufferPtr, data, 0, byteCount);
-                            yield return new AudioBuffer(data, flags, devicePosition, qpcPosition);
+                            if ((flags & AudioClientBufferFlags.Silent) == 0)
+                                Marshal.Copy(bufferPtr, data, 0, byteCount);
+                            packet = new AudioBuffer(data, flags, devicePosition, qpcPosition);
+                            hasPacket = true;
                         }
                     }
                     finally
                     {
                         capture.ReleaseBuffer(framesRead);
                     }
+
+                    // Never suspend the async iterator while WASAPI still owns an outstanding
+                    // GetBuffer lease. Holding it across yield risks packet loss and violates the
+                    // requirement to release within the same engine processing period.
+                    if (hasPacket)
+                        yield return packet;
 
                     packetSize = capture.GetNextPacketSize();
                 }
@@ -555,7 +580,14 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             captureState = CaptureState.Stopped;
             if (mmcssHandle != IntPtr.Zero)
                 NativeMethods.AvRevertMmThreadCharacteristics(mmcssHandle);
-            RaiseRecordingStopped(exception);
+            try
+            {
+                RaiseRecordingStopped(exception);
+            }
+            finally
+            {
+                Interlocked.CompareExchange(ref captureThread, null, Thread.CurrentThread);
+            }
         }
     }
 
@@ -614,7 +646,9 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     public void Dispose()
     {
         StopRecording();
-        captureThread?.Join();
+        var thread = captureThread;
+        if (thread != null && thread != Thread.CurrentThread)
+            thread.Join();
         audioClient?.Dispose();
         audioClient = null;
         frameEvent?.Dispose();
@@ -627,8 +661,9 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     public async ValueTask DisposeAsync()
     {
         StopRecording();
-        if (captureThread != null)
-            await Task.Run(() => captureThread.Join());
+        var thread = captureThread;
+        if (thread != null && thread != Thread.CurrentThread)
+            await Task.Run(thread.Join);
         audioClient?.Dispose();
         audioClient = null;
         frameEvent?.Dispose();

@@ -12,11 +12,12 @@ namespace NAudio.Wave;
 /// </summary>
 public class WaveIn : IWaveIn, IWaveLatency
 {
-    private readonly AutoResetEvent callbackEvent;
+    private AutoResetEvent callbackEvent;
     private readonly SynchronizationContext syncContext;
     private IntPtr waveInHandle;
     private volatile CaptureState captureState;
     private WaveInBuffer[] buffers;
+    private Thread captureThread;
     private bool isDisposed;
     // Stopwatch ticks of the most recently delivered buffer. long.MinValue = none yet.
     private long lastBufferDeliveredTimestamp = long.MinValue;
@@ -110,16 +111,28 @@ public class WaveIn : IWaveIn, IWaveLatency
     {
         if (captureState != CaptureState.Stopped)
             throw new InvalidOperationException("Already recording");
+        WaitForCaptureThread();
         OpenWaveInDevice();
         MmException.Try(WaveInterop.waveInStart(waveInHandle), "waveInStart");
         captureState = CaptureState.Starting;
-        var recordThread = new Thread(RecordThread)
+        var thread = new Thread(RecordThread)
         {
             IsBackground = true,
             Name = "NAudio WaveIn Recording",
             Priority = ThreadPriority.AboveNormal
         };
-        recordThread.Start();
+        captureThread = thread;
+        try
+        {
+            thread.Start();
+        }
+        catch
+        {
+            Interlocked.CompareExchange(ref captureThread, null, thread);
+            captureState = CaptureState.Stopped;
+            WaveInterop.waveInReset(waveInHandle);
+            throw;
+        }
     }
 
     private void RecordThread()
@@ -136,7 +149,16 @@ public class WaveIn : IWaveIn, IWaveLatency
         finally
         {
             captureState = CaptureState.Stopped;
-            RaiseRecordingStoppedEvent(exception);
+            try
+            {
+                RaiseRecordingStoppedEvent(exception);
+            }
+            finally
+            {
+                if (isDisposed)
+                    DisposeResources();
+                Interlocked.CompareExchange(ref captureThread, null, Thread.CurrentThread);
+            }
         }
     }
 
@@ -271,15 +293,34 @@ public class WaveIn : IWaveIn, IWaveLatency
             if (captureState != CaptureState.Stopped)
                 StopRecording();
 
-            CloseWaveInDevice();
-            callbackEvent?.Dispose();
+            var thread = captureThread;
+            if (thread == Thread.CurrentThread)
+                return;
+
+            thread?.Join();
+            DisposeResources();
         }
+    }
+
+    private void WaitForCaptureThread()
+    {
+        var thread = captureThread;
+        if (thread != null && thread != Thread.CurrentThread)
+            thread.Join();
+    }
+
+    private void DisposeResources()
+    {
+        CloseWaveInDevice();
+        callbackEvent?.Dispose();
+        callbackEvent = null;
     }
 
     private void CloseWaveInDevice()
     {
         // Some drivers need the reset to properly release buffers
-        WaveInterop.waveInReset(waveInHandle);
+        if (waveInHandle != IntPtr.Zero)
+            WaveInterop.waveInReset(waveInHandle);
         if (buffers != null)
         {
             for (int n = 0; n < buffers.Length; n++)
@@ -288,8 +329,11 @@ public class WaveIn : IWaveIn, IWaveLatency
             }
             buffers = null;
         }
-        WaveInterop.waveInClose(waveInHandle);
-        waveInHandle = IntPtr.Zero;
+        if (waveInHandle != IntPtr.Zero)
+        {
+            WaveInterop.waveInClose(waveInHandle);
+            waveInHandle = IntPtr.Zero;
+        }
     }
 
     /// <summary>

@@ -1,6 +1,6 @@
 # NAudio.Vst3
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Vst3)](https://www.nuget.org/packages/NAudio.Vst3/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Vst3)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Vst3/)
 
 VST 3® plug-in hosting for [NAudio](https://github.com/naudio/NAudio). Discover, load, and host VST 3 audio effects and instruments. Windows-only (`net9.0-windows`).
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using NAudio.Utils;
 using NAudio.Wave;
@@ -16,6 +17,12 @@ public class WaveFileWriterRf64Tests
     private static string ReadFourCc(byte[] bytes, int offset)
         => Encoding.ASCII.GetString(bytes, offset, 4);
 
+    private static void SetDataChunkSize(WaveFileWriter writer, long size)
+    {
+        typeof(WaveFileWriter).GetField("dataChunkSize", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(writer, size);
+    }
+
     [Test]
     public void Rf64NotEnabledProducesPlainRiff()
     {
@@ -30,19 +37,35 @@ public class WaveFileWriterRf64Tests
     [Test]
     public void Rf64NotEnabledRejectsFilesLargerThan4Gb()
     {
-        // We can't actually allocate > 4 GB in a test, but we can prove the pre-flight
-        // range check still triggers at the internal boundary.
         var ms = new MemoryStream();
         using var w = new WaveFileWriter(new IgnoreDisposeStream(ms), Format,
             new WaveFileWriterOptions { EnableRf64 = false, Rf64PromotionThreshold = 50 });
-        // Even with a low threshold, EnableRf64 is false so the 4 GB cap still applies.
-        // With our modest data the check doesn't fire, but we can at least verify the writer
-        // writes RIFF format:
-        w.Write(new byte[100], 0, 100);
-        // Close and check magic — this asserts the low-threshold override doesn't promote
-        // when EnableRf64 is false.
-        w.Dispose();
-        Assert.That(ReadFourCc(ms.ToArray(), 0), Is.EqualTo("RIFF"));
+        SetDataChunkSize(w, UInt32.MaxValue - 50L);
+
+        Assert.Throws<ArgumentException>(() => w.Write(new byte[100], 0, 100));
+        SetDataChunkSize(w, 0);
+    }
+
+    [Test]
+    public void Rf64NotEnabledRejectsWriteSampleBeyond4Gb()
+    {
+        var ms = new MemoryStream();
+        using var w = new WaveFileWriter(new IgnoreDisposeStream(ms), Format);
+        SetDataChunkSize(w, UInt32.MaxValue - 1L);
+
+        Assert.Throws<ArgumentException>(() => w.WriteSample(0.5f));
+        SetDataChunkSize(w, 0);
+    }
+
+    [Test]
+    public void Rf64NotEnabledRejectsShortSamplesBeyond4Gb()
+    {
+        var ms = new MemoryStream();
+        using var w = new WaveFileWriter(new IgnoreDisposeStream(ms), Format);
+        SetDataChunkSize(w, UInt32.MaxValue - 1L);
+
+        Assert.Throws<ArgumentException>(() => w.WriteSamples(new short[] { 1 }, 0, 1));
+        SetDataChunkSize(w, 0);
     }
 
     [Test]

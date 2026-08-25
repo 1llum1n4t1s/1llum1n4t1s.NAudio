@@ -1,83 +1,102 @@
-# Release instructions
+# 1llum1n4t1s.NAudio release instructions
 
-Quick reminder card for cutting NAudio releases. Full design rationale and history is in [Docs/Architecture/ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md).
+fork の preview / final package を GitHub Actions から公開する手順です。公開操作は maintainer が
+明示的に release を開始した場合だけ実行します。upstream の設計経緯は
+[Docs/Architecture/ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md) に残しています。
 
-Prerequisites: `gh` CLI authenticated, working directory inside the repo, on `main` for the local-clone steps.
+## 前提
 
-## 1. Auto-numbered preview
+- GitHub CLI `gh` が `1llum1n4t1s/1llum1n4t1s.NAudio` へ認証済み
+- repository secret `NUGET_API_KEY` に fork package だけを公開できる scoped key を設定済み
+- `main` の build / test が成功している
+- `Directory.Build.props` の `VersionPrefix` と [CHANGELOG.md](CHANGELOG.md) が同期している
 
-```sh
-gh workflow run release.yml
+## Preview
+
+連番 preview を作る場合:
+
+```powershell
+gh workflow run release.yml --repo 1llum1n4t1s/1llum1n4t1s.NAudio
 ```
 
-Produces `<VersionPrefix>-preview.<run_number>` — e.g. `3.0.0-preview.5`. Watch in the [Actions tab](https://github.com/naudio/NAudio/actions/workflows/release.yml). On success, all 13 packages (`.nupkg` + `.snupkg`) appear on NuGet within a few minutes.
+`<VersionPrefix>-preview.<run_number>` が生成されます。named milestone は `milestone` を渡します。
 
-The 13 packed packages are `NAudio.Core`, `NAudio.Midi`, `NAudio.WinMM`, `NAudio.Wasapi`, `NAudio.Asio`, `NAudio.Dmo`, `NAudio.WinForms`, `NAudio.Vst3`, `NAudio.Alsa`, `NAudio.SoundFile`, `NAudio.Sampler`, `NAudio.Extras` and the `NAudio` meta-package. The list lives in the `Pack` step of [release.yml](.github/workflows/release.yml) — a new package must be added there or it silently won't ship.
-
-## 2. Named pre-release milestone
-
-Override the suffix via the `milestone` input. Use for alpha / beta / rc progression:
-
-```sh
-gh workflow run release.yml -f milestone=rc.1
+```powershell
+gh workflow run release.yml `
+  --repo 1llum1n4t1s/1llum1n4t1s.NAudio `
+  -f milestone=rc.1
 ```
 
-Suffix ordering on NuGet: `alpha.N < beta.N < preview.N < rc.N < (final)`. Always use the **dotted** form (`rc.1`, not `rc1`) so the trailing integer compares numerically — `rc.10 > rc.9` only works with the dot.
+結果は [fork の Actions](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/actions/workflows/release.yml)
+で確認します。
 
-## 3. Full release
+## Final release
 
-### a. Pre-flight PR
+### 1. Pre-flight
 
-1. Bump `<VersionPrefix>` in [Directory.Build.props](Directory.Build.props) to the target version (e.g. `3.0.0`).
-2. In [RELEASE_NOTES.md](RELEASE_NOTES.md): rename `### Unreleased` → `### 3.0.0 (DD MMM YYYY)`, curate the bullets, add PR numbers where useful.
-3. Add a fresh empty `### Unreleased` section above the renamed one so post-release contributors have a place to land bullets.
+1. `Directory.Build.props` の `VersionPrefix` を release version にします。
+2. `CHANGELOG.md` の `## [Unreleased]` を `## [x.y.z] - YYYY-MM-DD` に変更します。
+3. その上へ新しい空の `## [Unreleased]` section を追加します。
+4. Release build、非 Integration test、Native AOT smoke、13 package の pack を確認します。
+5. 通常の protected-branch flow で `main` へ取り込みます。
 
-Merge via the usual protected-branch flow.
+### 2. Tag
 
-### b. Tag and push
+`main` を同期し、`VersionPrefix` と同じ tag を push します。
 
-From local `main` synced to the merge commit:
-
-```sh
+```powershell
 git fetch origin
-git checkout main
+git switch main
 git pull --ff-only
-git tag v3.0.0
-git push origin v3.0.0
+git tag v3.0.2
+git push origin v3.0.2
 ```
 
-The tag push triggers `release.yml`, which:
+release workflow は次を実行します。
 
-- Validates the tag matches `<VersionPrefix>` in `Directory.Build.props`.
-- Validates `RELEASE_NOTES.md` has a matching `### 3.0.0` section, and that it fits NuGet's 35,000-character `PackageReleaseNotes` limit.
-- Packs all 13 NAudio packages (+ matching `.snupkg` symbol packages).
-- Pushes everything to NuGet via trusted publishing.
-- Creates a GitHub Release titled `NAudio 3.0.0` with body extracted from the `RELEASE_NOTES.md` section.
+- tag と `VersionPrefix` の一致を検証
+- `CHANGELOG.md` の matching version section と35,000文字上限を検証
+- `1llum1n4t1s.NAudio.*` の13 package と symbol package を生成
+- `NUGET_API_KEY` で NuGet.org へ公開
+- `1llum1n4t1s.NAudio x.y.z` の GitHub Release を作成
 
-No further action required for the publish itself. Both validations are fail-fast — if `VersionPrefix` or release notes don't match the tag, the workflow errors before packing.
+### 3. 次 version
 
-### c. Post-release version bump PR
+release 後は `VersionPrefix` を次の development version へ進め、`CHANGELOG.md` の
+`## [Unreleased]` へ以後の変更を記録します。
 
-Open a small follow-up PR bumping `<VersionPrefix>` in `Directory.Build.props` to the next development version (e.g. `3.0.1` or `3.1.0`). Without this, the next preview dispatch produces a version *lower* than the just-shipped final (since `3.0.0-preview.N < 3.0.0`).
+## Package 一覧
 
-### d. Announce
+release workflow が公開する project は次の13個です。
 
-GitHub Release + NuGet are the canonical channels. Optionally:
+- `NAudio.Core`
+- `NAudio.Midi`
+- `NAudio.WinMM`
+- `NAudio.Wasapi`
+- `NAudio.Asio`
+- `NAudio.Dmo`
+- `NAudio.WinForms`
+- `NAudio.Vst3`
+- `NAudio.Alsa`
+- `NAudio.SoundFile`
+- `NAudio.Sampler`
+- `NAudio.Extras`
+- `NAudio` meta-package
 
-- Blog post on markheath.net
-- Social media
-- Pin a GitHub Discussion for major-version announcements
+NuGet 上ではすべて `1llum1n4t1s.` prefix が付きます。project を追加した場合は
+[release workflow](.github/workflows/release.yml) の `Pack` list も同じ変更で更新します。
 
 ## Troubleshooting
 
-- **`gh workflow run` returns "workflow not found":** the workflow file must exist on the default branch. After Phase 8 the default is `main`; should always work.
-- **NuGet push fails with auth error:** the trusted-publisher policy on NuGet.org has a 7-day temporarily-active window. After a successful publish it becomes permanent, but if no publish happens for 7 days it goes inactive. Re-activate at NuGet.org → username → Trusted Publishing.
-- **`Tag v3.0.0 does not match VersionPrefix 3.0.0-alpha`** (or similar): you're tagging a commit whose `Directory.Build.props` doesn't have `<VersionPrefix>3.0.0</VersionPrefix>`. Either retag after the pre-flight PR merges, or push a fixup commit and tag that.
-- **`RELEASE_NOTES.md has no '### 3.0.0' section`:** the pre-flight PR didn't rename `### Unreleased`. Push a fix to `main` and delete + re-create the tag.
-- **`Release notes section is N chars, over NuGet's 35,000 limit`:** the notes section is too long to embed as `PackageReleaseNotes`. NuGet.org would otherwise reject the push *after* a successful pack, so the workflow fails fast instead. Trim the section — keep headline features and breaking changes, and let the auto-generated PR list on the GitHub Release carry the per-commit detail.
+- **`CHANGELOG.md has no ... section`**: tag version と同じ `## [x.y.z] - YYYY-MM-DD` を追加します
+- **tag と `VersionPrefix` が不一致**: version を修正した commit に tag を作り直します
+- **NuGet authentication error**: repository secret `NUGET_API_KEY` の期限、scope、package ownership を確認します
+- **package が不足する**: workflow の `Pack` list と `artifacts/*.nupkg` を照合します
+- **35,000文字超過**: changelog は利用者向け要点へ絞り、詳細は commit / PR へ残します
 
-## See also
+## 関連ファイル
 
-- Full release strategy and decision rationale: [Docs/Architecture/ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md)
-- Release workflow file: [.github/workflows/release.yml](.github/workflows/release.yml)
-- Build workflow file: [.github/workflows/build.yml](.github/workflows/build.yml)
+- [CHANGELOG.md](CHANGELOG.md)
+- [.github/workflows/release.yml](.github/workflows/release.yml)
+- [.github/workflows/build.yml](.github/workflows/build.yml)
+- [Docs/Architecture/ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md)

@@ -1,8 +1,8 @@
 # NAudio.Wasapi
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Wasapi)](https://www.nuget.org/packages/NAudio.Wasapi/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Wasapi)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Wasapi/)
 
-WASAPI and Media Foundation support for [NAudio](https://github.com/naudio/NAudio). Targets `net9.0` and is Windows-only at runtime (guarded by `[SupportedOSPlatform("windows")]`), so cross-platform apps can reference it and build on any OS without `EnableWindowsTargeting`. Live WinRT MIDI moved to the [NAudio.Midi](https://www.nuget.org/packages/NAudio.Midi/) package.
+WASAPI and Media Foundation support for [NAudio](https://github.com/naudio/NAudio). Targets `net9.0` and is Windows-only at runtime (guarded by `[SupportedOSPlatform("windows")]`), so cross-platform apps can reference it and build on any OS without `EnableWindowsTargeting`. Live WinRT MIDI moved to the [NAudio.Midi](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Midi/) package.
 
 ## What's included
 
@@ -12,7 +12,7 @@ WASAPI and Media Foundation support for [NAudio](https://github.com/naudio/NAudi
 - **Media Foundation** — `MediaFoundationReader` and `MediaFoundationEncoder` for MP3, AAC/MP4, WMA and any installed MFT codec; `MediaFoundationResampler`
 - **Audio Session API** — per-session volume, mute, and metering
 
-For DMO effects (echo, chorus, reverb, etc.), the DMO MP3 decoder, the DMO resampler, and `DirectSoundOut`, see the separate [`NAudio.Dmo`](https://www.nuget.org/packages/NAudio.Dmo/) package.
+For DMO effects (echo, chorus, reverb, etc.), the DMO MP3 decoder, the DMO resampler, and `DirectSoundOut`, see the separate [`NAudio.Dmo`](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Dmo/) package.
 
 ## When to use it
 

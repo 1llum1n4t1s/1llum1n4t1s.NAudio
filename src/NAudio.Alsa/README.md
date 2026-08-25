@@ -1,6 +1,6 @@
 # NAudio.Alsa
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Alsa)](https://www.nuget.org/packages/NAudio.Alsa/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Alsa)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Alsa/)
 
 ALSA playback and capture for NAudio on **Linux**.
 

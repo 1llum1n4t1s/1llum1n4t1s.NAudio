@@ -18,6 +18,7 @@ public class WaveOut : IWavePlayer, IWavePosition, IWaveLatency
     private IWaveProvider waveStream;
     private volatile PlaybackState playbackState;
     private AutoResetEvent callbackEvent;
+    private Thread playbackThread;
     private bool isDisposed;
 
     /// <summary>
@@ -84,6 +85,7 @@ public class WaveOut : IWavePlayer, IWavePosition, IWaveLatency
         {
             throw new InvalidOperationException("Can't re-initialize during playback");
         }
+        WaitForPlaybackThread();
         if (hWaveOut != IntPtr.Zero)
         {
             // normally we don't allow calling Init twice, but as experiment, see if we can clean up and go again
@@ -126,13 +128,23 @@ public class WaveOut : IWavePlayer, IWavePosition, IWaveLatency
         {
             playbackState = PlaybackState.Playing;
             callbackEvent.Set(); // give the thread a kick
-            var playbackThread = new Thread(PlaybackThread)
+            var thread = new Thread(PlaybackThread)
             {
                 IsBackground = true,
                 Name = "NAudio WaveOut Playback",
                 Priority = ThreadPriority.AboveNormal
             };
-            playbackThread.Start();
+            playbackThread = thread;
+            try
+            {
+                thread.Start();
+            }
+            catch
+            {
+                Interlocked.CompareExchange(ref playbackThread, null, thread);
+                playbackState = PlaybackState.Stopped;
+                throw;
+            }
         }
         else if (playbackState == PlaybackState.Paused)
         {
@@ -155,8 +167,15 @@ public class WaveOut : IWavePlayer, IWavePosition, IWaveLatency
         finally
         {
             playbackState = PlaybackState.Stopped;
-            // we're exiting our background thread
-            RaisePlaybackStoppedEvent(exception);
+            try
+            {
+                // we're exiting our background thread
+                RaisePlaybackStoppedEvent(exception);
+            }
+            finally
+            {
+                Interlocked.CompareExchange(ref playbackThread, null, Thread.CurrentThread);
+            }
         }
     }
 
@@ -341,10 +360,18 @@ public class WaveOut : IWavePlayer, IWavePosition, IWaveLatency
         if (disposing)
         {
             Stop();
+            WaitForPlaybackThread();
             DisposeBuffers();
         }
 
         CloseWaveOut();
+    }
+
+    private void WaitForPlaybackThread()
+    {
+        var thread = playbackThread;
+        if (thread != null && thread != Thread.CurrentThread)
+            thread.Join();
     }
 
     private void CloseWaveOut()

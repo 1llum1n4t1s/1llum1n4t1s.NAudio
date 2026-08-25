@@ -68,6 +68,17 @@ public class AudioClient : IDisposable
     /// </remarks>
     public static Task<AudioClient> ActivateDefaultDeviceAsync(DataFlow dataFlow)
     {
+        return ActivateDefaultDeviceAsync(dataFlow, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Asynchronously activates an audio client that follows the current default endpoint.
+    /// </summary>
+    /// <param name="dataFlow">Whether to follow the default render or capture endpoint.</param>
+    /// <param name="cancellationToken">Cancels the managed activation wait.</param>
+    /// <returns>The activated audio client.</returns>
+    public static Task<AudioClient> ActivateDefaultDeviceAsync(DataFlow dataFlow, CancellationToken cancellationToken)
+    {
         var deviceInterface = dataFlow == DataFlow.Capture ? DEVINTERFACE_AUDIO_CAPTURE : DEVINTERFACE_AUDIO_RENDER;
         // StringFromIID yields the registry-format braced GUID (e.g. "{E6327CAD-...}"); Guid's "B"
         // format produces the same string the API expects (device-interface paths are case-insensitive).
@@ -76,13 +87,26 @@ public class AudioClient : IDisposable
         // Activate against the base IAudioClient (with null activation params): render+IAudioClient
         // is one of the activations Windows documents as not requiring the UI thread, and the
         // AudioClient constructor still cross-casts to IAudioClient2/3 where the device supports them.
-        return ActivateAudioInterfaceAsync(deviceInterfacePath, IID_IAudioClient, IntPtr.Zero, _ => { });
+        return ActivateAudioInterfaceAsync(deviceInterfacePath, IID_IAudioClient, IntPtr.Zero, _ => { }, cancellationToken);
     }
 
     /// <summary>
     /// Activate Async
     /// </summary>
     public static Task<AudioClient> ActivateAsync(string deviceInterfacePath, AudioClientProperties? audioClientProperties)
+    {
+        return ActivateAsync(deviceInterfacePath, audioClientProperties, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Asynchronously activates an audio client for a device interface path.
+    /// </summary>
+    /// <param name="deviceInterfacePath">The device interface path to activate.</param>
+    /// <param name="audioClientProperties">Optional properties applied before the client is returned.</param>
+    /// <param name="cancellationToken">Cancels the managed activation wait.</param>
+    /// <returns>The activated audio client.</returns>
+    public static Task<AudioClient> ActivateAsync(string deviceInterfacePath,
+        AudioClientProperties? audioClientProperties, CancellationToken cancellationToken)
     {
         return ActivateAudioInterfaceAsync(deviceInterfacePath, IID_IAudioClient2, IntPtr.Zero,
             client =>
@@ -100,7 +124,7 @@ public class AudioClient : IDisposable
                         Marshal.FreeHGlobal(p);
                     }
                 }
-            });
+            }, cancellationToken);
     }
 
     /// <summary>
@@ -111,9 +135,25 @@ public class AudioClient : IDisposable
     /// <param name="processId">The target process id.</param>
     /// <param name="mode">Whether to include or exclude the target process tree.</param>
     [SupportedOSPlatform("windows10.0.19041.0")]
-    public static async Task<AudioClient> ActivateProcessLoopbackAsync(uint processId,
+    public static Task<AudioClient> ActivateProcessLoopbackAsync(uint processId,
         ProcessLoopbackMode mode = ProcessLoopbackMode.IncludeTargetProcessTree)
     {
+        return ActivateProcessLoopbackAsync(processId, mode, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Activates a process-specific loopback audio client asynchronously.
+    /// </summary>
+    /// <param name="processId">The target process identifier.</param>
+    /// <param name="mode">Whether to include or exclude the target process tree.</param>
+    /// <param name="cancellationToken">Cancels the managed activation wait.</param>
+    /// <returns>The activated process-loopback audio client.</returns>
+    [SupportedOSPlatform("windows10.0.19041.0")]
+    public static async Task<AudioClient> ActivateProcessLoopbackAsync(uint processId,
+        ProcessLoopbackMode mode, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var activationParams = new AudioClientActivationParams
         {
             ActivationType = AudioClientActivationType.ProcessLoopback,
@@ -142,7 +182,8 @@ public class AudioClient : IDisposable
             Marshal.StructureToPtr(pv, pvPtr, false);
 
             // The process-loopback virtual device only supports the base IAudioClient interface.
-            return await ActivateAudioInterfaceAsync(VirtualAudioDeviceProcessLoopback, IID_IAudioClient, pvPtr, _ => { })
+            return await ActivateAudioInterfaceAsync(VirtualAudioDeviceProcessLoopback, IID_IAudioClient, pvPtr, _ => { },
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
         finally
@@ -153,8 +194,11 @@ public class AudioClient : IDisposable
     }
 
     private static async Task<AudioClient> ActivateAudioInterfaceAsync(string deviceInterfacePath,
-        Guid riid, IntPtr activationParams, Action<IAudioClient> initializeAction)
+        Guid riid, IntPtr activationParams, Action<IAudioClient> initializeAction,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var icbh = new ActivateAudioInterfaceCompletionHandler(initializeAction);
         // Multi-vtable CCW hazard: GetOrCreateComInterfaceForObject returns the IUnknown
         // vtable pointer; the WASAPI runtime expects an IActivateAudioInterfaceCompletionHandler
@@ -178,8 +222,22 @@ public class AudioClient : IDisposable
         {
             Marshal.Release(unknownPtr);
         }
+        using var cancellationRegistration = cancellationToken.Register(() => icbh.Cancel(cancellationToken));
         var audioClientInterface = await icbh.Completion.ConfigureAwait(false);
-        return new AudioClient(audioClientInterface);
+        try
+        {
+            return new AudioClient(audioClientInterface);
+        }
+        catch
+        {
+            // The constructor normally takes ownership. If its interface probing fails, no owner
+            // exists and the generated COM wrapper must be released here.
+            if ((object)audioClientInterface is ComObject audioClientComObject)
+            {
+                audioClientComObject.FinalRelease();
+            }
+            throw;
+        }
     }
 
     /// <summary>
@@ -206,6 +264,12 @@ public class AudioClient : IDisposable
         this.audioClientInterface = audioClientInterface;
         audioClientInterface2 = audioClientInterface as IAudioClient2;
         audioClientInterface3 = audioClientInterface as IAudioClient3;
+    }
+
+    internal AudioClient(IAudioClient audioClientInterface, IAudioCaptureClient audioCaptureClientInterface)
+        : this(audioClientInterface)
+    {
+        audioCaptureClient = new AudioCaptureClient(audioCaptureClientInterface);
     }
 
     /// <summary>

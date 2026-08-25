@@ -101,6 +101,8 @@ public class MidiEvent
         if ((b & 0x80) == 0)
         {
             // a running command - command & channel are same as previous
+            if (previous == null)
+                throw new FormatException("MIDI running status encountered before any channel status byte");
             commandCode = previous.CommandCode;
             channel = previous.Channel;
             br.BaseStream.Position--; // need to push this back

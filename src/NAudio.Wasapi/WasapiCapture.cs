@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
 using NAudio.Wave;
 
 // for consistency this should be in NAudio.Wave namespace, but left as it is for backwards compatibility
@@ -24,8 +26,11 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     private bool initialized;
     private readonly SynchronizationContext syncContext;
     private readonly bool isUsingEventSync;
+    private readonly bool isProcessLoopback;
     private EventWaitHandle frameEventWaitHandle;
     private readonly int audioBufferMillisecondsLength;
+    private long totalPacketCount;
+    private long silentPacketCount;
 
     /// <summary>
     /// Indicates recorded data is available 
@@ -36,6 +41,30 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// Indicates that all recorded data has now been received.
     /// </summary>
     public event EventHandler<StoppedEventArgs> RecordingStopped;
+
+    /// <summary>
+    /// Raised for every packet returned by <c>IAudioCaptureClient.GetBuffer</c>.
+    /// </summary>
+    /// <remarks>
+    /// This diagnostic event exposes packet flags such as
+    /// <see cref="AudioClientBufferFlags.Silent"/> before the packet is copied into the
+    /// managed <see cref="DataAvailable"/> buffer. It is especially useful for distinguishing
+    /// process-loopback silence returned by Windows from silence introduced later in an audio
+    /// processing pipeline. New code using <see cref="WasapiRecorder"/> can inspect the flags
+    /// supplied to its <c>DataAvailable</c> callback directly.
+    /// </remarks>
+    public event EventHandler<WasapiCapturePacketEventArgs> CapturePacketReceived;
+
+    /// <summary>
+    /// Gets the cumulative number of capture packets received by this instance.
+    /// </summary>
+    public long TotalPacketCount => Interlocked.Read(ref totalPacketCount);
+
+    /// <summary>
+    /// Gets the cumulative number of packets marked with
+    /// <see cref="AudioClientBufferFlags.Silent"/>.
+    /// </summary>
+    public long SilentPacketCount => Interlocked.Read(ref silentPacketCount);
 
     /// <summary>
     /// Initialises a new instance of the WASAPI capture class
@@ -81,6 +110,74 @@ public class WasapiCapture : IWaveIn, IWaveLatency
 
         waveFormat = audioClient.MixFormat;
 
+    }
+
+    internal WasapiCapture(AudioClient audioClient, bool useEventSync, int audioBufferMillisecondsLength,
+        bool isProcessLoopback)
+    {
+        syncContext = SynchronizationContext.Current;
+        this.audioClient = audioClient ?? throw new ArgumentNullException(nameof(audioClient));
+        ShareMode = AudioClientShareMode.Shared;
+        isUsingEventSync = useEventSync;
+        this.audioBufferMillisecondsLength = audioBufferMillisecondsLength;
+        this.isProcessLoopback = isProcessLoopback;
+
+        // The process-loopback virtual endpoint does not expose a mix format. Keep the format used
+        // by the 1llum1n4t1s.NAudio 1.x compatibility API; callers may replace it before starting.
+        waveFormat = new WaveFormat(48000, 16, 2);
+    }
+
+    /// <summary>
+    /// Creates a legacy <see cref="WasapiCapture"/> for process-specific loopback capture.
+    /// </summary>
+    /// <param name="processId">The target process identifier.</param>
+    /// <param name="includeProcessTree">Whether to include the target process and its descendants.</param>
+    /// <returns>A process-loopback capture instance.</returns>
+    /// <remarks>
+    /// This compatibility API now uses source-generated COM interop and does not require an STA
+    /// synchronization context. New code should use <see cref="WasapiRecorderBuilder.WithProcessLoopback"/>.
+    /// </remarks>
+    [SupportedOSPlatform("windows10.0.19041.0")]
+    public static Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree)
+    {
+        return CreateForProcessCaptureAsync(processId, includeProcessTree, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Creates a legacy <see cref="WasapiCapture"/> for process-specific loopback capture and
+    /// allows the asynchronous activation wait to be canceled.
+    /// </summary>
+    /// <param name="processId">The target process identifier.</param>
+    /// <param name="includeProcessTree">Whether to include the target process and its descendants.</param>
+    /// <param name="cancellationToken">Cancels asynchronous WASAPI activation.</param>
+    /// <returns>A process-loopback capture instance.</returns>
+    [SupportedOSPlatform("windows10.0.19041.0")]
+    public static async Task<WasapiCapture> CreateForProcessCaptureAsync(int processId, bool includeProcessTree,
+        CancellationToken cancellationToken)
+    {
+        if (processId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(processId), processId,
+                "A process identifier must be greater than zero.");
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var mode = includeProcessTree
+            ? ProcessLoopbackMode.IncludeTargetProcessTree
+            : ProcessLoopbackMode.ExcludeTargetProcessTree;
+        var client = await AudioClient.ActivateProcessLoopbackAsync((uint)processId, mode, cancellationToken)
+            .ConfigureAwait(false);
+        try
+        {
+            const int processLoopbackBufferMilliseconds = 20;
+            return new WasapiCapture(client, useEventSync: true, processLoopbackBufferMilliseconds,
+                isProcessLoopback: true);
+        }
+        catch
+        {
+            client.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -206,6 +303,12 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// </summary>
     protected virtual AudioClientStreamFlags GetAudioClientStreamFlags()
     {
+        if (isProcessLoopback)
+        {
+            // The virtual process endpoint accepts LOOPBACK with an explicit PCM format. It does
+            // not support the automatic conversion flags used by ordinary shared-mode endpoints.
+            return AudioClientStreamFlags.Loopback;
+        }
         if (ShareMode == AudioClientShareMode.Shared)
         {
             // enable auto-convert PCM
@@ -227,13 +330,23 @@ public class WasapiCapture : IWaveIn, IWaveLatency
             throw new InvalidOperationException("Previous recording still in progress");
         }
         captureState = CaptureState.Starting;
-        InitializeCaptureDevice();
-        captureThread = new Thread(() => CaptureThread(audioClient))
+        try
         {
-            IsBackground = true,
-            Name = "NAudio WasapiCapture Recording",
-        };
-        captureThread.Start();
+            InitializeCaptureDevice();
+            captureThread = new Thread(() => CaptureThread(audioClient))
+            {
+                IsBackground = true,
+                Name = "NAudio WasapiCapture Recording",
+            };
+            captureThread.Start();
+        }
+        catch
+        {
+            captureThread = null;
+            try { audioClient?.Stop(); } catch { /* initialization may not have completed */ }
+            captureState = CaptureState.Stopped;
+            throw;
+        }
     }
 
     /// <summary>
@@ -338,6 +451,13 @@ public class WasapiCapture : IWaveIn, IWaveLatency
 
             try
             {
+                Interlocked.Increment(ref totalPacketCount);
+                if ((flags & AudioClientBufferFlags.Silent) != 0)
+                {
+                    Interlocked.Increment(ref silentPacketCount);
+                }
+                CapturePacketReceived?.Invoke(this, new WasapiCapturePacketEventArgs(flags, framesAvailable));
+
                 var packetBuffer = new byte[bytesAvailable];
                 if ((flags & AudioClientBufferFlags.Silent) != AudioClientBufferFlags.Silent)
                 {
@@ -366,5 +486,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         captureThread = null;
         audioClient?.Dispose();
         audioClient = null;
+        frameEventWaitHandle?.Dispose();
+        frameEventWaitHandle = null;
     }
 }

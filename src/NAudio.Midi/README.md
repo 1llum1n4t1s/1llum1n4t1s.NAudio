@@ -1,6 +1,6 @@
 # NAudio.Midi
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Midi)](https://www.nuget.org/packages/NAudio.Midi/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Midi)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Midi/)
 
 MIDI support for [NAudio](https://github.com/naudio/NAudio). Dual-targets `net9.0` (cross-platform: the MIDI event model and file reader/writer) and `net9.0-windows10.0.19041.0` (adds WinRT live MIDI I/O on Windows).
 
@@ -14,7 +14,7 @@ MIDI support for [NAudio](https://github.com/naudio/NAudio). Dual-targets `net9.
 
 ## What's **not** here
 
-Sending or receiving live MIDI through the legacy winmm-backed `MidiIn` / `MidiOut` uses the Windows Multimedia API and lives in the [NAudio.WinMM](https://www.nuget.org/packages/NAudio.WinMM/) package. (The WinRT-backed `WinRTMidiIn` / `WinRTMidiOut` above are the modern alternative and ship here.)
+Sending or receiving live MIDI through the legacy winmm-backed `MidiIn` / `MidiOut` uses the Windows Multimedia API and lives in the [NAudio.WinMM](https://www.nuget.org/packages/1llum1n4t1s.NAudio.WinMM/) package. (The WinRT-backed `WinRTMidiIn` / `WinRTMidiOut` above are the modern alternative and ship here.)
 
 See the [NAudio documentation site](https://naudio.github.io/NAudio/) for tutorials and the full API reference, or the [GitHub repository](https://github.com/naudio/NAudio) for full documentation and tutorials on working with MIDI files and events.
 ## License

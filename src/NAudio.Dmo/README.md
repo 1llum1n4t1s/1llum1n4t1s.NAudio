@@ -1,6 +1,6 @@
 # NAudio.Dmo
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Dmo)](https://www.nuget.org/packages/NAudio.Dmo/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Dmo)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Dmo/)
 
 DirectX Media Object (DMO) and DirectSound support for [NAudio](https://github.com/naudio/NAudio). Windows-only (`net9.0-windows`).
 

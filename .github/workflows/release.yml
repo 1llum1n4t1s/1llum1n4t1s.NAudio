@@ -17,7 +17,6 @@ on:
     tags: ['v*']
 
 permissions:
-  id-token: write    # for NuGet trusted publishing (OIDC)
   contents: write    # for `gh release create`
 
 jobs:
@@ -78,34 +77,34 @@ jobs:
           "is_final=$isFinal"    | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "pack_args=$packArgs"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-      # Extract the right section from RELEASE_NOTES.md into release-body.md.
-      # Final releases use the '### <version>' section (and must have one,
-      # else fail-fast). Pre-releases use the '### Unreleased' section if it
+      # Extract the right section from CHANGELOG.md into release-body.md.
+      # Final releases use the '## [<version>]' section (and must have one,
+      # else fail-fast). Pre-releases use the '## [Unreleased]' section if it
       # exists; otherwise the file is just empty and the package ships with
       # no release notes. The same release-body.md feeds both the pack step
       # (via -p:PackageReleaseNotesFile so NuGet displays the notes on the
       # package page) and the GitHub Release body (finals only).
-      - name: Extract RELEASE_NOTES.md section
+      - name: Extract CHANGELOG.md section
         shell: pwsh
         run: |
           $version = '${{ steps.version.outputs.version }}'
           $isFinal = '${{ steps.version.outputs.is_final }}' -eq 'true'
 
           if ($isFinal) {
-            $pattern = "^### $([regex]::Escape($version))(\s|$)"
-            $label = "### $version"
+            $pattern = "^## \[$([regex]::Escape($version))\](\s|$)"
+            $label = "## [$version]"
           } else {
-            $pattern = "^### Unreleased(\s|$)"
-            $label = "### Unreleased"
+            $pattern = "^## \[Unreleased\](\s|$)"
+            $label = "## [Unreleased]"
           }
 
-          $lines = Get-Content RELEASE_NOTES.md
+          $lines = Get-Content CHANGELOG.md
           $start = -1
           $end = $lines.Length
           for ($i = 0; $i -lt $lines.Length; $i++) {
             if ($lines[$i] -match $pattern) {
               $start = $i + 1
-            } elseif ($start -ge 0 -and $lines[$i] -match "^### ") {
+            } elseif ($start -ge 0 -and $lines[$i] -match "^## ") {
               $end = $i
               break
             }
@@ -113,16 +112,16 @@ jobs:
 
           if ($start -lt 0) {
             if ($isFinal) {
-              Write-Error "RELEASE_NOTES.md has no '$label (...)' section. Rename '### Unreleased' to '### $version (DD MMM YYYY)' before tagging."
+              Write-Error "CHANGELOG.md has no '$label' section. Rename '## [Unreleased]' to '## [$version] - YYYY-MM-DD' before tagging."
               exit 1
             } else {
-              Write-Warning "RELEASE_NOTES.md has no '$label' section; package release notes will be empty."
+              Write-Warning "CHANGELOG.md has no '$label' section; package release notes will be empty."
               "" | Out-File -FilePath release-body.md -Encoding utf8
             }
           } else {
             $body = $lines[$start..($end - 1)] -join "`n"
             # Strip HTML comments — useful for contributors editing
-            # RELEASE_NOTES.md but noisy on the NuGet page / GitHub Release.
+            # CHANGELOG.md but noisy on the NuGet page / GitHub Release.
             $body = [regex]::Replace($body, '<!--[\s\S]*?-->', '').Trim()
 
             # NuGet.org caps PackageReleaseNotes at 35,000 characters and
@@ -131,7 +130,7 @@ jobs:
             # already pushed. Fail here instead, before anything is built.
             $limit = 35000
             if ($body.Length -gt $limit) {
-              Write-Error "Release notes section '$label' is $($body.Length) chars, over NuGet's $limit-character PackageReleaseNotes limit. Trim RELEASE_NOTES.md — keep headline features and breaking changes, and let the auto-generated PR list on the GitHub Release carry the per-commit detail."
+              Write-Error "Release notes section '$label' is $($body.Length) chars, over NuGet's $limit-character PackageReleaseNotes limit. Trim CHANGELOG.md — keep headline features and breaking changes, and let the auto-generated PR list on the GitHub Release carry the per-commit detail."
               exit 1
             }
 
@@ -198,16 +197,6 @@ jobs:
             artifacts/*.snupkg
           if-no-files-found: error
 
-      # NuGet trusted publishing via OIDC. The trusted-publisher policy
-      # is configured on NuGet.org per Phase 7 of the release strategy.
-      # If this step needs adjustment after Phase 7's smoke test, update
-      # here — the rest of the workflow is independent of the auth method.
-      - name: NuGet login (trusted publishing)
-        id: nuget-login
-        uses: NuGet/login@v1
-        with:
-          user: ${{ vars.NUGET_USER }}
-
       # dotnet nuget push does not expand globs on its own, and PowerShell
       # does not expand wildcards in arguments to external commands. So loop
       # over the artifacts explicitly. This also gives per-package error
@@ -225,7 +214,7 @@ jobs:
           foreach ($pkg in $packages) {
             Write-Host "Pushing $($pkg.Name)"
             dotnet nuget push $pkg.FullName `
-              --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} `
+              --api-key ${{ secrets.NUGET_API_KEY }} `
               --source https://api.nuget.org/v3/index.json `
               --skip-duplicate
             if ($LASTEXITCODE -ne 0) {
@@ -237,7 +226,7 @@ jobs:
       # GitHub Release only on final tag-driven runs. Pre-releases just
       # ship to NuGet — no GitHub Release noise for every preview. The
       # release-body.md file was already produced by the earlier
-      # "Extract RELEASE_NOTES.md section" step.
+      # "Extract CHANGELOG.md section" step.
       - name: Create GitHub Release (final only)
         if: steps.version.outputs.is_final == 'true'
         env:
@@ -245,6 +234,6 @@ jobs:
         shell: pwsh
         run: |
           gh release create "v${{ steps.version.outputs.version }}" `
-            --title "NAudio ${{ steps.version.outputs.version }}" `
+            --title "1llum1n4t1s.NAudio ${{ steps.version.outputs.version }}" `
             --notes-file release-body.md `
             --verify-tag

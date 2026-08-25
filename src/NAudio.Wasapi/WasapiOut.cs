@@ -179,7 +179,15 @@ public class WasapiOut : IWavePlayer, IWavePosition, IWaveLatency
         }
         finally
         {
-            RaisePlaybackStopped(exception);
+            playbackState = PlaybackState.Stopped;
+            try
+            {
+                RaisePlaybackStopped(exception);
+            }
+            finally
+            {
+                Interlocked.CompareExchange(ref playThread, null, Thread.CurrentThread);
+            }
         }
     }
 
@@ -339,8 +347,10 @@ public class WasapiOut : IWavePlayer, IWavePosition, IWaveLatency
         {
             playbackState = PlaybackState.Stopped;
             stopEventWaitHandle.Set();
-            playThread.Join();
-            playThread = null;
+            var thread = playThread;
+            if (thread != null && thread != Thread.CurrentThread)
+                thread.Join();
+            Interlocked.CompareExchange(ref playThread, null, thread);
         }
     }
 

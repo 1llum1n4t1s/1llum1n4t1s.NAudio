@@ -1,6 +1,6 @@
 # NAudio.Extras
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Extras)](https://www.nuget.org/packages/NAudio.Extras/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Extras)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Extras/)
 
 Extra, opinionated helpers built on top of [NAudio](https://github.com/naudio/NAudio). Targets `net9.0` and `net9.0-windows10.0.19041.0`.
 
@@ -10,9 +10,9 @@ Utilities that don't belong in the core library but are still useful across proj
 
 ## When to use it
 
-Install `NAudio.Extras` when you want these convenience helpers in addition to the main NAudio APIs. It depends on both [NAudio](https://www.nuget.org/packages/NAudio/) and (on Windows) [NAudio.Wasapi](https://www.nuget.org/packages/NAudio.Wasapi/), so it pulls in the full playback/capture stack.
+Install `NAudio.Extras` when you want these convenience helpers in addition to the main NAudio APIs. It depends on both [NAudio](https://www.nuget.org/packages/1llum1n4t1s.NAudio/) and (on Windows) [NAudio.Wasapi](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Wasapi/), so it pulls in the full playback/capture stack.
 
-This package is not required for typical NAudio usage — start with the main [NAudio](https://www.nuget.org/packages/NAudio/) package and add `NAudio.Extras` only if you need one of the helpers it contains.
+This package is not required for typical NAudio usage — start with the main [NAudio](https://www.nuget.org/packages/1llum1n4t1s.NAudio/) package and add `NAudio.Extras` only if you need one of the helpers it contains.
 
 See the [NAudio documentation site](https://naudio.github.io/NAudio/) for tutorials and the full API reference, or the [GitHub repository](https://github.com/naudio/NAudio) for source and documentation.
 ## License

@@ -1,6 +1,6 @@
 # NAudio.Core
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio.Core)](https://www.nuget.org/packages/NAudio.Core/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Core)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Core/)
 
 The cross-platform core of [NAudio](https://github.com/naudio/NAudio). Contains everything that is independent of the underlying audio API, so it targets plain `net9.0` and can be used on Windows, Linux, and macOS.
 
@@ -16,7 +16,7 @@ The cross-platform core of [NAudio](https://github.com/naudio/NAudio). Contains 
 
 ## When to use it
 
-Reference `NAudio.Core` directly when you want to read, write, or manipulate audio on non-Windows targets, or when you are assembling your own combination of platform packages (`NAudio.Wasapi`, `NAudio.WinMM`, `NAudio.Asio`, …) and don't want the full [NAudio](https://www.nuget.org/packages/NAudio/) meta-package.
+Reference `NAudio.Core` directly when you want to read, write, or manipulate audio on non-Windows targets, or when you are assembling your own combination of platform packages (`NAudio.Wasapi`, `NAudio.WinMM`, `NAudio.Asio`, …) and don't want the full [NAudio](https://www.nuget.org/packages/1llum1n4t1s.NAudio/) meta-package.
 
 See the [NAudio documentation site](https://naudio.github.io/NAudio/) for tutorials and the full API reference, or the [GitHub repository](https://github.com/naudio/NAudio) for full documentation.
 ## License

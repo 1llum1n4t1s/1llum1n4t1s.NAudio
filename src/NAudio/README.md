@@ -1,10 +1,10 @@
-# NAudio
+# 1llum1n4t1s.NAudio
 
-[![Nuget](https://img.shields.io/nuget/v/NAudio)](https://www.nuget.org/packages/NAudio/)
+[![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio)](https://www.nuget.org/packages/1llum1n4t1s.NAudio/)
 
-NAudio is an open source .NET audio library written by [Mark Heath](https://markheath.net) and contributors.
+1llum1n4t1s.NAudio is a fork of the open source .NET audio library written by [Mark Heath](https://markheath.net) and contributors. It keeps the upstream assembly names and `NAudio.*` namespaces while publishing every package under the `1llum1n4t1s.NAudio.*` ID family.
 
-This is the main NAudio meta-package. Installing it pulls in everything you need to play, record and manipulate audio on .NET, and adds `AudioFileReader` — the one-line "just open this audio file" reader that picks the right decoder for you — along with `Mp3FileReader`.
+This is the main 1llum1n4t1s.NAudio meta-package. Installing it pulls in everything you need to play, record and manipulate audio on .NET, and adds `AudioFileReader` — the one-line "just open this audio file" reader that picks the right decoder for you — along with `Mp3FileReader`.
 
 Requires `net9.0` or later. If you need .NET Framework or .NET Standard 2.0, use NAudio 2.x.
 
@@ -31,11 +31,11 @@ These are not pulled in by the meta-package — add them explicitly if you want 
 
 | Package | Platform | What it gives you |
 | --- | --- | --- |
-| [NAudio.Sampler](https://www.nuget.org/packages/NAudio.Sampler/) | cross-platform | Polyphonic software sampler — SoundFont (`.sf2`), SFZ and single-sample instruments |
-| [NAudio.SoundFile](https://www.nuget.org/packages/NAudio.SoundFile/) | cross-platform | Read *and write* WAV/AIFF/FLAC/Ogg-Vorbis/Opus/MP3 via libsndfile |
-| [NAudio.Alsa](https://www.nuget.org/packages/NAudio.Alsa/) | Linux | `AlsaOut` / `AlsaIn` playback and capture via libasound |
-| [NAudio.Vst3](https://www.nuget.org/packages/NAudio.Vst3/) | Windows | VST 3 plug-in hosting (preview) — effects and instruments |
-| [NAudio.Extras](https://www.nuget.org/packages/NAudio.Extras/) | cross-platform (+ Windows extras) | Opinionated helpers — playback engine, capture mixing, ID3 tags |
+| [NAudio.Sampler](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Sampler/) | cross-platform | Polyphonic software sampler — SoundFont (`.sf2`), SFZ and single-sample instruments |
+| [NAudio.SoundFile](https://www.nuget.org/packages/1llum1n4t1s.NAudio.SoundFile/) | cross-platform | Read *and write* WAV/AIFF/FLAC/Ogg-Vorbis/Opus/MP3 via libsndfile |
+| [NAudio.Alsa](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Alsa/) | Linux | `AlsaOut` / `AlsaIn` playback and capture via libasound |
+| [NAudio.Vst3](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Vst3/) | Windows | VST 3 plug-in hosting (preview) — effects and instruments |
+| [NAudio.Extras](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Extras/) | cross-platform (+ Windows extras) | Opinionated helpers — playback engine, capture mixing, ID3 tags |
 
 ## Getting started
 
@@ -52,10 +52,11 @@ while (player.PlaybackState == PlaybackState.Playing)
 }
 ```
 
-- **[Documentation site](https://naudio.github.io/NAudio/)** — tutorials and the full API reference
-- **[GitHub repository](https://github.com/naudio/NAudio)** — source, issues, and the demo applications (`NAudioDemo`, `NAudioWpfDemo`)
-- **[Migrating from NAudio 2 to NAudio 3](https://github.com/naudio/NAudio/blob/main/Docs/MigratingFromNAudio2.md)** — every breaking change, with before/after code
+- **[Upstream documentation site](https://naudio.github.io/NAudio/)** — tutorials and the full API reference
+- **[Fork repository](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio)** — source, issues, and the demo applications (`NAudioDemo`, `NAudioWpfDemo`)
+- **[Fork changelog](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/main/CHANGELOG.md)** — fork-specific fixes, compatibility notes, and release history
+- **[Migrating from NAudio 2 to NAudio 3](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/main/Docs/MigratingFromNAudio2.md)** — every breaking change, with before/after code
 
 ## License
 
-MIT. See the [project site](https://github.com/naudio/NAudio) for source, issues, and contribution guidelines.
+MIT. See the [fork repository](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio) for source and issues, and the [upstream project](https://github.com/naudio/NAudio) for the original project and contributors.

@@ -1,26 +1,26 @@
-# Working in NAudio
+# Working in 1llum1n4t1s.NAudio
 
-This file gives AI agents (Claude, etc.) the conventions for contributing to NAudio. Humans should read [README.md](README.md) and [Docs/Architecture/](Docs/Architecture/) instead.
+This file gives coding agents the conventions for contributing to the 1llum1n4t1s.NAudio fork. Humans should read [README.md](README.md) and [Docs/Architecture/](Docs/Architecture/) instead.
 
 ## Orientation
 
 - **Repository layout.** Projects are grouped by role: `src/` holds the shipping libraries (the NuGet packages), `tests/` holds the test, benchmark and diagnostic projects (including `NAudio.Benchmarks`, `NAudioAotSmokeTest`, `MfStressTest`), and `samples/` holds the runnable demo/tool apps (`NAudioDemo`, `NAudioWpfDemo`, `NAudioConsoleTest`, `AudioFileInspector`, `MidiFileConverter`, `MixDiff`) plus their `SampleData/`. DocFX lives entirely under `docfx/` (`docfx.json`, `index.md`, `toc.yml`, `templates/`, generated `api/`); tutorial Markdown stays in `Docs/`.
-- **NAudio 3 development happens on `main`.** NAudio 2 maintenance happens on `release/2.x`. Default to targeting `main` unless explicitly told otherwise. `main` and `release/*` are protected — all changes go through PRs.
-- **Use descriptive branch names.** Cloud agents are often started on an auto-generated branch (e.g. `claude/loving-galileo-Wpz4o`). Do not push that name to the NAudio repo. Before the first push, rename the branch to something that describes the work, referencing an issue or PR number where relevant — e.g. `feature/channel-mixer-sample-provider`, `fix/1234-wasapi-leak`, `docs/release-strategy`. Keep your existing commits; just move them with `git branch -m <new-name>` before `git push -u origin <new-name>`.
+- **The fork's NAudio 3 development happens on `main`.** Sync upstream changes through a descriptive temporary branch such as `codex/upstream-sync`, verify the fork-specific compatibility and Native AOT tests, and then integrate that branch into `main`. Use `release/x.y.z` only for an explicitly requested release.
+- **Preserve upstream history.** Keep `upstream/main` as a merge parent when synchronizing the fork so future upstream updates remain traceable. Use a normal fast-forward push from the local `main`; force-push only after the maintainer explicitly approves the exact history rewrite.
 - **Architecture docs** in [Docs/Architecture/](Docs/Architecture/) are the source of truth for cross-cutting decisions:
   - [ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md) — release/branch/version flow
   - [NAudio3AssemblyLayoutPlan.md](Docs/Architecture/NAudio3AssemblyLayoutPlan.md) — package structure
   - [MODERNIZATION.md](Docs/Architecture/MODERNIZATION.md) — modernisation phases
 
-## Release notes
+## Changelog
 
-When you make a **user-visible change** — new public API, behaviour change, bug fix, deprecation, packaging change — add a one-line bullet to the `### Unreleased` section at the top of [RELEASE_NOTES.md](RELEASE_NOTES.md). Match the style of existing entries:
+When you make a **user-visible fork change** — new public API, behaviour change, bug fix, deprecation, packaging change — add a concise Japanese bullet to the matching category under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md). Keep upstream history in `RELEASE_NOTES.md` unchanged. Match the style of existing entries:
 
-- Past tense (`Fixed X`, `Added Y`, `Updated Z`)
+- Describe the concrete user-visible result
 - Mention the GitHub PR or issue number if known: `(#1234)`
 - One line, no prose paragraphs — the maintainer will edit at release time
 
-**Skip the release-notes entry only for:** purely internal refactors, test-only changes, dependency bumps with no observable effect, docs/comment fixes. If unsure whether a change is user-visible, **add the entry** and let the maintainer remove it if not needed.
+Purely internal refactors, test-only changes, dependency bumps with no observable effect, and docs/comment fixes can omit a changelog entry. When impact is uncertain, add the entry for the maintainer to curate.
 
 ## Documentation site
 
@@ -28,11 +28,15 @@ Tutorials live in [Docs/](Docs/) as Markdown and are published to a DocFX site o
 
 ## PR labelling
 
-When opening a PR (where you have permission), apply one of: `breaking`, `enhancement`, `bug`, `documentation`. These feed the auto-generated changelog at release time. Use `release-notes-skip` for PRs that should not appear in the changelog at all.
+When opening a PR (where you have permission), apply one of: `breaking`, `enhancement`, `bug`, `documentation`. These categorize GitHub's supplemental generated notes; `CHANGELOG.md` remains the canonical user-facing history. Use `release-notes-skip` for PRs that should not appear in generated notes.
 
 ## Versioning
 
 Package versions are centralised in [Directory.Build.props](Directory.Build.props) as `<VersionPrefix>`. Do **not** add a per-csproj `<Version>` to NAudio packages — they're meant to stay in lockstep. The tool/sample apps (MixDiff, AudioFileInspector, MidiFileConverter) keep their own explicit `<Version>` and are exempt.
+
+## Language
+
+Write code comments and commit messages in Japanese unless an upstream file already establishes a local English convention. Public API XML documentation should follow the surrounding project style so generated documentation remains consistent.
 
 ## Building & testing on Linux
 

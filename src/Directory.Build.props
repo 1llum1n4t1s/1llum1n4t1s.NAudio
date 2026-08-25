@@ -1,0 +1,9 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)..\Directory.Build.props" />
+
+  <PropertyGroup>
+    <!-- Keep upstream assembly names and namespaces for source/binary compatibility,
+         while publishing the fork under package IDs that cannot collide with NAudio. -->
+    <PackageId>1llum1n4t1s.$(MSBuildProjectName)</PackageId>
+  </PropertyGroup>
+</Project>
