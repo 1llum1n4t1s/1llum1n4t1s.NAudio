@@ -44,6 +44,16 @@ public class WaveFormatSerializeTests
     }
 
     [Test]
+    public void SeventeenByteFormatChunkIsRejectedBeforeReadingPayload()
+    {
+        using var ms = new MemoryStream(new byte[18]);
+        using var reader = new BinaryReader(ms);
+
+        Assert.Throws<InvalidDataException>(() => WaveFormat.FromFormatChunk(reader, 17));
+        Assert.That(ms.Position, Is.Zero);
+    }
+
+    [Test]
     public void PcmRoundTripsThroughSerialize()
     {
         var format = new WaveFormat(22050, 24, 1);

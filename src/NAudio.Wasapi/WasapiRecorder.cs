@@ -42,6 +42,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     private Thread captureThread;
     private EventWaitHandle frameEvent;
     private byte[] silenceBuffer = Array.Empty<byte>();
+    private bool isDisposed;
 
     /// <summary>
     /// Fired when captured audio data is available. The buffer span is only valid
@@ -586,6 +587,8 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             }
             finally
             {
+                if (isDisposed)
+                    DisposeResources();
                 Interlocked.CompareExchange(ref captureThread, null, Thread.CurrentThread);
             }
         }
@@ -607,22 +610,24 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
         int packetSize = capture.GetNextPacketSize();
         while (packetSize > 0)
         {
-            using var lease = capture.GetBufferLease(bytesPerFrame);
-            if ((lease.Flags & AudioClientBufferFlags.Silent) != 0)
             {
-                // WASAPI does not guarantee the buffer memory is zeroed for a silent packet — its
-                // contents are undefined and can be stale audio left over from a previous stream,
-                // which surfaces as a short tone/noise burst (typically on the first packet after
-                // Start, which is commonly flagged silent while capture ramps up). Deliver real
-                // silence of the same length instead of the raw buffer so listeners never see it.
-                var length = lease.Buffer.Length;
-                if (silenceBuffer.Length < length)
-                    silenceBuffer = new byte[length];
-                DataAvailable?.Invoke(silenceBuffer.AsSpan(0, length), lease.Flags, lease.DevicePosition, lease.QPCPosition);
-            }
-            else
-            {
-                DataAvailable?.Invoke(lease.Buffer, lease.Flags, lease.DevicePosition, lease.QPCPosition);
+                using var lease = capture.GetBufferLease(bytesPerFrame);
+                if ((lease.Flags & AudioClientBufferFlags.Silent) != 0)
+                {
+                    // WASAPI does not guarantee the buffer memory is zeroed for a silent packet — its
+                    // contents are undefined and can be stale audio left over from a previous stream,
+                    // which surfaces as a short tone/noise burst (typically on the first packet after
+                    // Start, which is commonly flagged silent while capture ramps up). Deliver real
+                    // silence of the same length instead of the raw buffer so listeners never see it.
+                    var length = lease.Buffer.Length;
+                    if (silenceBuffer.Length < length)
+                        silenceBuffer = new byte[length];
+                    DataAvailable?.Invoke(silenceBuffer.AsSpan(0, length), lease.Flags, lease.DevicePosition, lease.QPCPosition);
+                }
+                else
+                {
+                    DataAvailable?.Invoke(lease.Buffer, lease.Flags, lease.DevicePosition, lease.QPCPosition);
+                }
             }
             packetSize = capture.GetNextPacketSize();
         }
@@ -645,14 +650,17 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     /// </summary>
     public void Dispose()
     {
+        if (isDisposed)
+            return;
+
+        isDisposed = true;
+        GC.SuppressFinalize(this);
         StopRecording();
         var thread = captureThread;
-        if (thread != null && thread != Thread.CurrentThread)
-            thread.Join();
-        audioClient?.Dispose();
-        audioClient = null;
-        frameEvent?.Dispose();
-        GC.SuppressFinalize(this);
+        if (thread == Thread.CurrentThread)
+            return;
+        thread?.Join();
+        DisposeResources();
     }
 
     /// <summary>
@@ -660,14 +668,26 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     /// </summary>
     public async ValueTask DisposeAsync()
     {
+        if (isDisposed)
+            return;
+
+        isDisposed = true;
+        GC.SuppressFinalize(this);
         StopRecording();
         var thread = captureThread;
-        if (thread != null && thread != Thread.CurrentThread)
-            await Task.Run(thread.Join);
+        if (thread == Thread.CurrentThread)
+            return;
+        if (thread != null)
+            await Task.Run(thread.Join).ConfigureAwait(false);
+        DisposeResources();
+    }
+
+    private void DisposeResources()
+    {
         audioClient?.Dispose();
         audioClient = null;
         frameEvent?.Dispose();
-        GC.SuppressFinalize(this);
+        frameEvent = null;
     }
 }
 

@@ -24,5 +24,25 @@ internal abstract class StructureBuilder<T>
         data = new List<T>();
     }
 
+    protected static int ValidateRange(
+        int start, int endExclusive, int availableCount, string description)
+    {
+        if (start < 0 || endExclusive < start || endExclusive > availableCount)
+        {
+            throw new InvalidDataException(
+                $"Invalid SoundFont {description} range [{start}, {endExclusive}) for {availableCount} records.");
+        }
+
+        return endExclusive - start;
+    }
+
+    protected void RemoveTerminalRecord(string description)
+    {
+        if (data.Count == 0)
+            throw new InvalidDataException($"Missing required SoundFont {description} terminal record.");
+
+        data.RemoveAt(data.Count - 1);
+    }
+
     public T[] Data => data.ToArray();
 }

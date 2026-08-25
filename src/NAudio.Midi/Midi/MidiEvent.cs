@@ -150,7 +150,8 @@ public class MidiEvent
                 me = new MidiEvent();
                 break;
             case MidiCommandCode.Sysex:
-                me = SysexEvent.ReadSysexEvent(br);
+            case MidiCommandCode.Eox:
+                me = SysexEvent.ReadSysexEventFromMidiFile(br);
                 break;
             case MidiCommandCode.MetaEvent:
                 me = MetaEvent.ReadMetaEvent(br);

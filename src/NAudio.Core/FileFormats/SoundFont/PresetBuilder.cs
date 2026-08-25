@@ -24,7 +24,14 @@ internal class PresetBuilder : StructureBuilder<Preset>
         p.genre = br.ReadUInt32();
         p.morphology = br.ReadUInt32();
         if (lastPreset != null)
-            lastPreset.endPresetZoneIndex = (ushort)(p.startPresetZoneIndex - 1);
+        {
+            if (p.startPresetZoneIndex < lastPreset.startPresetZoneIndex)
+                throw new InvalidDataException("SoundFont preset zone indices must not decrease.");
+
+            lastPreset.endPresetZoneIndex = p.startPresetZoneIndex == lastPreset.startPresetZoneIndex
+                ? lastPreset.startPresetZoneIndex
+                : (ushort)(p.startPresetZoneIndex - 1);
+        }
         data.Add(p);
         lastPreset = p;
         return p;
@@ -38,15 +45,23 @@ internal class PresetBuilder : StructureBuilder<Preset>
 
     public void LoadZones(Zone[] presetZones)
     {
-        // don't do the last preset, which is simply EOP
+        if (data.Count == 0)
+            throw new InvalidDataException("Missing required SoundFont phdr/EOP terminal record.");
+
+        ValidateRange(data[^1].startPresetZoneIndex, data[^1].startPresetZoneIndex,
+            presetZones.Length, "preset zone terminal");
+
+        // The final record is EOP. Successive start indices define an exclusive range.
         for (int preset = 0; preset < data.Count - 1; preset++)
         {
             Preset p = data[preset];
-            p.Zones = new Zone[p.endPresetZoneIndex - p.startPresetZoneIndex + 1];
+            int endExclusive = data[preset + 1].startPresetZoneIndex;
+            int count = ValidateRange(
+                p.startPresetZoneIndex, endExclusive, presetZones.Length, "preset zone");
+            p.Zones = new Zone[count];
             Array.Copy(presetZones, p.startPresetZoneIndex, p.Zones, 0, p.Zones.Length);
         }
-        // we can get rid of the EOP record now
-        data.RemoveAt(data.Count - 1);
+        RemoveTerminalRecord("phdr/EOP");
     }
 
     public Preset[] Presets => data.ToArray();

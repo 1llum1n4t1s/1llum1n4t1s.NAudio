@@ -31,6 +31,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     private readonly int audioBufferMillisecondsLength;
     private long totalPacketCount;
     private long silentPacketCount;
+    private bool isDisposed;
 
     /// <summary>
     /// Indicates recorded data is available 
@@ -378,9 +379,17 @@ public class WasapiCapture : IWaveIn, IWaveLatency
             try { client.Stop(); } catch { /* device already gone */ }
             // don't dispose - the AudioClient only gets disposed when WasapiCapture is disposed
         }
-        captureThread = null;
         captureState = CaptureState.Stopped;
-        RaiseRecordingStopped(exception);
+        try
+        {
+            RaiseRecordingStopped(exception);
+        }
+        finally
+        {
+            if (isDisposed)
+                DisposeResources();
+            Interlocked.CompareExchange(ref captureThread, null, Thread.CurrentThread);
+        }
     }
 
     private void DoRecording(AudioClient client)
@@ -480,10 +489,21 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// </summary>
     public void Dispose()
     {
+        if (isDisposed)
+            return;
+
+        isDisposed = true;
         GC.SuppressFinalize(this);
         StopRecording();
-        captureThread?.Join();
-        captureThread = null;
+        var thread = captureThread;
+        if (thread == Thread.CurrentThread)
+            return;
+        thread?.Join();
+        DisposeResources();
+    }
+
+    private void DisposeResources()
+    {
         audioClient?.Dispose();
         audioClient = null;
         frameEventWaitHandle?.Dispose();

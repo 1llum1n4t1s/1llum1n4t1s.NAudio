@@ -181,7 +181,8 @@ public class AudioFileReader : WaveStream, ISampleProvider
         if (read >= 12)
         {
             ReadOnlySpan<byte> h = header;
-            if (h.Slice(0, 4).SequenceEqual("RIFF"u8) && h.Slice(8, 4).SequenceEqual("WAVE"u8))
+            if ((h.Slice(0, 4).SequenceEqual("RIFF"u8) || h.Slice(0, 4).SequenceEqual("RF64"u8)) &&
+                h.Slice(8, 4).SequenceEqual("WAVE"u8))
                 return StreamAudioFormat.Wave;
             if (h.Slice(0, 4).SequenceEqual("FORM"u8) &&
                 (h.Slice(8, 4).SequenceEqual("AIFF"u8) || h.Slice(8, 4).SequenceEqual("AIFC"u8)))

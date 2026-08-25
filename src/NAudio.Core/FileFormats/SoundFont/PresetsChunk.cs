@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Text;
 
 namespace NAudio.SoundFont;
@@ -27,6 +28,7 @@ public class PresetsChunk
             throw new InvalidDataException($"Not a presets data chunk ({header})");
         }
 
+        var foundChunks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         RiffChunk c;
         while ((c = chunk.GetNextSubChunk()) != null)
         {
@@ -34,43 +36,59 @@ public class PresetsChunk
             {
                 case "PHDR":
                 case "phdr":
+                    foundChunks.Add("phdr");
                     c.GetDataAsStructureArray(presetHeaders);
                     break;
                 case "PBAG":
                 case "pbag":
+                    foundChunks.Add("pbag");
                     c.GetDataAsStructureArray(presetZones);
                     break;
                 case "PMOD":
                 case "pmod":
+                    foundChunks.Add("pmod");
                     c.GetDataAsStructureArray(presetZoneModulators);
                     break;
                 case "PGEN":
                 case "pgen":
+                    foundChunks.Add("pgen");
                     c.GetDataAsStructureArray(presetZoneGenerators);
                     break;
                 case "INST":
                 case "inst":
+                    foundChunks.Add("inst");
                     c.GetDataAsStructureArray(instruments);
                     break;
                 case "IBAG":
                 case "ibag":
+                    foundChunks.Add("ibag");
                     c.GetDataAsStructureArray(instrumentZones);
                     break;
                 case "IMOD":
                 case "imod":
+                    foundChunks.Add("imod");
                     c.GetDataAsStructureArray(instrumentZoneModulators);
                     break;
                 case "IGEN":
                 case "igen":
+                    foundChunks.Add("igen");
                     c.GetDataAsStructureArray(instrumentZoneGenerators);
                     break;
                 case "SHDR":
                 case "shdr":
+                    foundChunks.Add("shdr");
                     c.GetDataAsStructureArray(sampleHeaders);
                     break;
                 default:
                     throw new InvalidDataException($"Unknown chunk type {c.ChunkID}");
             }
+        }
+
+        string[] requiredChunks = ["phdr", "pbag", "pmod", "pgen", "inst", "ibag", "imod", "igen", "shdr"];
+        foreach (string requiredChunk in requiredChunks)
+        {
+            if (!foundChunks.Contains(requiredChunk))
+                throw new InvalidDataException($"Missing required SoundFont pdta chunk '{requiredChunk}'.");
         }
 
         // now link things up

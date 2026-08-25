@@ -11,6 +11,7 @@ namespace NAudio.Wave.SampleProviders;
 public class MixingSampleProvider : ISampleProvider
 {
     private readonly List<ISampleProvider> sources;
+    private readonly object readLock = new();
     private float[] sourceBuffer;
     private const int MaxInputs = 1024; // protect ourselves against doing something silly
 
@@ -66,8 +67,8 @@ public class MixingSampleProvider : ISampleProvider
     /// <param name="mixerInput">Mixer input</param>
     public void AddMixerInput(ISampleProvider mixerInput)
     {
-        // we'll just call the lock around add since we are protecting against an AddMixerInput at
-        // the same time as a Read, rather than two AddMixerInput calls at the same time
+        ArgumentNullException.ThrowIfNull(mixerInput);
+
         lock (sources)
         {
             if (sources.Count >= MaxInputs)
@@ -80,19 +81,19 @@ public class MixingSampleProvider : ISampleProvider
             {
                 throw new ArgumentException("Mixer input has already been added", nameof(mixerInput));
             }
-            sources.Add(mixerInput);
-        }
-        if (WaveFormat == null)
-        {
-            WaveFormat = mixerInput.WaveFormat;
-        }
-        else
-        {
-            if (WaveFormat.SampleRate != mixerInput.WaveFormat.SampleRate ||
+
+            if (WaveFormat == null)
+            {
+                WaveFormat = mixerInput.WaveFormat;
+            }
+            else if (WaveFormat.SampleRate != mixerInput.WaveFormat.SampleRate ||
                 WaveFormat.Channels != mixerInput.WaveFormat.Channels)
             {
                 throw new ArgumentException("All mixer inputs must have the same WaveFormat");
             }
+
+            // 検証に成功した入力だけを公開状態へ追加する。
+            sources.Add(mixerInput);
         }
     }
 
@@ -135,13 +136,20 @@ public class MixingSampleProvider : ISampleProvider
     public int Read(Span<float> buffer)
     {
         int outputSamples = 0;
-        sourceBuffer = BufferHelpers.Ensure(sourceBuffer, buffer.Length);
-        lock (sources)
+        List<ISampleProvider> endedSources = null;
+        lock (readLock)
         {
-            int index = sources.Count - 1;
+            sourceBuffer = BufferHelpers.Ensure(sourceBuffer, buffer.Length);
+            ISampleProvider[] sourceSnapshot;
+            lock (sources)
+            {
+                sourceSnapshot = sources.ToArray();
+            }
+
+            int index = sourceSnapshot.Length - 1;
             while (index >= 0)
             {
-                var source = sources[index];
+                var source = sourceSnapshot[index];
                 int samplesRead = source.Read(sourceBuffer.AsSpan(0, buffer.Length));
                 if (samplesRead > 0)
                 {
@@ -170,16 +178,31 @@ public class MixingSampleProvider : ISampleProvider
                 outputSamples = Math.Max(samplesRead, outputSamples);
                 if (samplesRead < buffer.Length)
                 {
-                    MixerInputEnded?.Invoke(this, new SampleProviderEventArgs(source));
-                    sources.RemoveAt(index);
+                    lock (sources)
+                    {
+                        if (sources.Remove(source))
+                        {
+                            endedSources ??= new List<ISampleProvider>();
+                            endedSources.Add(source);
+                        }
+                    }
                 }
                 index--;
             }
+
+            if (ReadFully && outputSamples < buffer.Length)
+            {
+                buffer.Slice(outputSamples).Clear();
+                outputSamples = buffer.Length;
+            }
         }
-        if (ReadFully && outputSamples < buffer.Length)
+
+        if (endedSources != null)
         {
-            buffer.Slice(outputSamples).Clear();
-            outputSamples = buffer.Length;
+            foreach (var source in endedSources)
+            {
+                MixerInputEnded?.Invoke(this, new SampleProviderEventArgs(source));
+            }
         }
         return outputSamples;
     }

@@ -70,6 +70,27 @@ internal static class SoundFontTestHelper
         return ms.ToArray();
     }
 
+    public static byte[] SetChunkUInt16(byte[] soundFont, string chunkId, int offsetWithinChunkData, ushort value)
+    {
+        var result = (byte[])soundFont.Clone();
+        var id = Encoding.ASCII.GetBytes(chunkId);
+        for (int i = 0; i <= result.Length - id.Length; i++)
+        {
+            if (!result.AsSpan(i, id.Length).SequenceEqual(id))
+                continue;
+
+            int valueOffset = i + 8 + offsetWithinChunkData;
+            if (valueOffset < i + 8 || valueOffset > result.Length - sizeof(ushort))
+                throw new ArgumentOutOfRangeException(nameof(offsetWithinChunkData));
+
+            result[valueOffset] = (byte)value;
+            result[valueOffset + 1] = (byte)(value >> 8);
+            return result;
+        }
+
+        throw new ArgumentException($"Chunk '{chunkId}' was not found.", nameof(chunkId));
+    }
+
     /// <summary>
     /// Writes a LIST chunk: "LIST" + uint32 size + 4-byte type + sub-chunk data,
     /// word-aligned with a trailing pad byte if the payload length is odd.
@@ -270,7 +291,8 @@ internal static class SoundFontTestHelper
     public static byte[] BuildMinimalPdtaList(
         string presetName = "Piano", ushort presetNum = 0, ushort bank = 0,
         string instName = "Piano", string sampleName = "TestSample",
-        uint sampleEnd = 3, uint sampleRate = 44100, byte originalPitch = 60)
+        uint sampleEnd = 3, uint sampleRate = 44100, byte originalPitch = 60,
+        string excludedChunkId = null)
     {
         var phdr = Chunk("phdr", Concat(
             PresetHeaderRecord(presetName, presetNum, bank, 0),
@@ -298,7 +320,23 @@ internal static class SoundFontTestHelper
             new byte[46] // EOS terminal
         ));
 
-        return ListChunk("pdta", phdr, pbag, pmod, pgen, inst, ibag, imod, igen, shdr);
+        var chunks = new List<byte[]>();
+        AddChunk("phdr", phdr);
+        AddChunk("pbag", pbag);
+        AddChunk("pmod", pmod);
+        AddChunk("pgen", pgen);
+        AddChunk("inst", inst);
+        AddChunk("ibag", ibag);
+        AddChunk("imod", imod);
+        AddChunk("igen", igen);
+        AddChunk("shdr", shdr);
+        return ListChunk("pdta", chunks.ToArray());
+
+        void AddChunk(string id, byte[] chunk)
+        {
+            if (!string.Equals(id, excludedChunkId, StringComparison.OrdinalIgnoreCase))
+                chunks.Add(chunk);
+        }
     }
 
     /// <summary>

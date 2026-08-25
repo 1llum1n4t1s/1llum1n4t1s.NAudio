@@ -26,9 +26,8 @@ public class AiffFileReader : WaveStream
     /// with 8, 16, 24 and 32 bit PCM data.
     /// </remarks>
     public AiffFileReader(String aiffFile) :
-        this(File.OpenRead(aiffFile))
+        this(File.OpenRead(aiffFile), true)
     {
-        ownInput = true;
     }
 
     /// <summary>
@@ -36,17 +35,33 @@ public class AiffFileReader : WaveStream
     /// </summary>
     /// <param name="inputStream">The input stream containing a AIF file including header</param>
     public AiffFileReader(Stream inputStream)
+        : this(inputStream, false)
     {
-        // The caller owns a stream they passed in; only the filename constructor sets ownInput = true.
-        ownInput = false;
+    }
+
+    private AiffFileReader(Stream inputStream, bool ownInput)
+    {
+        this.ownInput = ownInput;
         waveStream = inputStream;
-        ReadAiffHeader(waveStream, out waveFormat, out dataPosition, out dataChunkLength, chunks);
-        if (waveFormat.BlockAlign <= 0)
+        try
         {
-            throw new InvalidDataException(
-                $"Invalid AIFF file - block align is {waveFormat.BlockAlign} (channels={waveFormat.Channels}, bitsPerSample={waveFormat.BitsPerSample}).");
+            ReadAiffHeader(waveStream, out waveFormat, out dataPosition, out dataChunkLength, chunks);
+            if (waveFormat.BlockAlign <= 0)
+            {
+                throw new InvalidDataException(
+                    $"Invalid AIFF file - block align is {waveFormat.BlockAlign} (channels={waveFormat.Channels}, bitsPerSample={waveFormat.BitsPerSample}).");
+            }
+            Position = 0;
         }
-        Position = 0;
+        catch
+        {
+            if (ownInput)
+            {
+                waveStream.Dispose();
+                waveStream = null;
+            }
+            throw;
+        }
     }
 
     /// <summary>
@@ -87,6 +102,12 @@ public class AiffFileReader : WaveStream
             }
             if (nextChunk.ChunkName == "COMM")
             {
+                if (nextChunk.DataLength < 18)
+                {
+                    throw new FormatException(
+                        $"Invalid AIFF file - COMM chunk is {nextChunk.DataLength} bytes; at least 18 are required.");
+                }
+
                 short numChannels = ConvertShort(br.ReadBytes(2));
                 uint numSampleFrames = ConvertInt(br.ReadBytes(4));
                 short sampleSize = ConvertShort(br.ReadBytes(2));
@@ -94,14 +115,21 @@ public class AiffFileReader : WaveStream
 
                 format = new WaveFormat((int)sampleRate, sampleSize, numChannels);
 
-                if (nextChunk.ChunkLength > 18 && formType == "AIFC")
+                if (formType == "AIFC")
                 {
+                    if (nextChunk.DataLength < 22)
+                    {
+                        throw new FormatException(
+                            $"Invalid AIFC file - COMM chunk is {nextChunk.DataLength} bytes; at least 22 are required.");
+                    }
+
                     // In an AIFC file, the compression format is tacked on to the COMM chunk
                     string compress = new string(br.ReadChars(4)).ToLower();
                     if (compress != "none") throw new FormatException("Compressed AIFC is not supported.");
-                    br.ReadBytes((int)nextChunk.ChunkLength - 22);
                 }
-                else br.ReadBytes((int)nextChunk.ChunkLength - 18);
+
+                // 拡張データと偶数境界のパディングを含むチャンク末尾へ正確に進める。
+                br.BaseStream.Position = (long)nextChunk.ChunkStart + 8 + nextChunk.ChunkLength;
             }
             else if (nextChunk.ChunkName == "SSND")
             {
@@ -111,7 +139,7 @@ public class AiffFileReader : WaveStream
                 // the first sample frame (used to block-align the sound data), so it counts
                 // against the chunk length as well as advancing the start. A file declaring a
                 // bigger offset than the chunk holds has no readable sound data at all.
-                long soundDataLength = (long)nextChunk.ChunkLength - 8 - offset;
+                long soundDataLength = (long)nextChunk.DataLength - 8 - offset;
                 if (soundDataLength > int.MaxValue)
                 {
                     // ckSize is a signed 32-bit long in the AIFF spec, so sound data cannot
@@ -214,6 +242,11 @@ public class AiffFileReader : WaveStream
         {
             lock (lockObject)
             {
+                if (value < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Position cannot be less than zero.");
+                }
+
                 value = Math.Min(value, Length);
                 // make sure we don't get out of sync
                 value -= (value % waveFormat.BlockAlign);
@@ -336,6 +369,8 @@ public class AiffFileReader : WaveStream
         /// </summary>
         public uint ChunkLength;
 
+        internal uint DataLength;
+
         /// <summary>
         /// Chunk start
         /// </summary>
@@ -348,6 +383,7 @@ public class AiffFileReader : WaveStream
         {
             ChunkStart = start;
             ChunkName = name;
+            DataLength = length;
             ChunkLength = length + (uint)(length % 2 == 1 ? 1 : 0);
         }
     }

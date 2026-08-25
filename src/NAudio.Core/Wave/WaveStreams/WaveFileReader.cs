@@ -152,6 +152,11 @@ public class WaveFileReader : WaveStream
         {
             lock (lockObject)
             {
+                if (value < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Position cannot be less than zero.");
+                }
+
                 value = Math.Min(value, Length);
                 // make sure we don't get out of sync
                 value -= (value % waveFormat.BlockAlign);

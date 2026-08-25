@@ -32,7 +32,7 @@ internal class SampleHeaderBuilder : StructureBuilder<SampleHeader>
 
     internal void RemoveEOS()
     {
-        data.RemoveAt(data.Count - 1);
+        RemoveTerminalRecord("shdr/EOS");
     }
 
     public SampleHeader[] SampleHeaders => data.ToArray();

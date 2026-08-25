@@ -11,6 +11,7 @@ namespace NAudio.Midi;
 public class SysexEvent : MidiEvent
 {
     private byte[] data;
+    private bool hasEndOfExclusive = true;
 
     /// <summary>
     /// Creates a new sysex event
@@ -76,6 +77,23 @@ public class SysexEvent : MidiEvent
         return se;
     }
 
+    internal static SysexEvent ReadSysexEventFromMidiFile(BinaryReader br)
+    {
+        int length = ReadVarInt(br);
+        byte[] framedData = br.ReadBytes(length);
+        if (framedData.Length != length)
+            throw new EndOfStreamException("Unexpected end of stream while reading a MIDI SysEx event");
+
+        var se = new SysexEvent
+        {
+            hasEndOfExclusive = length > 0 && framedData[^1] == (byte)MidiCommandCode.Eox
+        };
+        int payloadLength = se.hasEndOfExclusive ? length - 1 : length;
+        se.data = new byte[payloadLength];
+        Array.Copy(framedData, se.data, payloadLength);
+        return se;
+    }
+
     /// <summary>
     /// Creates a deep clone of this MIDI event.
     /// </summary>
@@ -109,10 +127,10 @@ public class SysexEvent : MidiEvent
     public override void Export(ref long absoluteTime, BinaryWriter writer)
     {
         base.Export(ref absoluteTime, writer);
-        //WriteVarInt(writer,length);
-        //writer.Write(data, 0, data.Length);
         var sysexData = data ?? Array.Empty<byte>();
+        WriteVarInt(writer, sysexData.Length + (hasEndOfExclusive ? 1 : 0));
         writer.Write(sysexData, 0, sysexData.Length);
-        writer.Write((byte)0xF7);
+        if (hasEndOfExclusive)
+            writer.Write((byte)MidiCommandCode.Eox);
     }
 }

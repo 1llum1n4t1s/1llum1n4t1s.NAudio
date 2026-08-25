@@ -131,13 +131,16 @@ public class Mp3FileReaderBase : WaveStream
             mp3DataLength = mp3Stream.Length - dataStartPosition;
 
             // try for an ID3v1 tag as well
-            mp3Stream.Position = mp3Stream.Length - 128;
-            byte[] tag = new byte[128];
-            _ = mp3Stream.Read(tag, 0, 128);
-            if (tag[0] == 'T' && tag[1] == 'A' && tag[2] == 'G')
+            if (mp3Stream.Length >= 128)
             {
-                Id3v1Tag = tag;
-                mp3DataLength -= 128;
+                mp3Stream.Position = mp3Stream.Length - 128;
+                byte[] tag = new byte[128];
+                _ = mp3Stream.Read(tag, 0, 128);
+                if (tag[0] == 'T' && tag[1] == 'A' && tag[2] == 'G')
+                {
+                    Id3v1Tag = tag;
+                    mp3DataLength -= 128;
+                }
             }
 
             // Bitrate on Mp3WaveFormat is informational; ACM/DMO/MFT/NLayer decoders

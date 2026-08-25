@@ -29,7 +29,7 @@ internal class GeneratorBuilder : StructureBuilder<Generator>
         {
             if (g.GeneratorType == GeneratorEnum.Instrument)
             {
-                g.Instrument = instruments[g.UInt16Amount];
+                g.Instrument = ResolveReference(instruments, instruments.Length, g.UInt16Amount, "Instrument");
             }
         }
     }
@@ -40,8 +40,21 @@ internal class GeneratorBuilder : StructureBuilder<Generator>
         {
             if (g.GeneratorType == GeneratorEnum.SampleID)
             {
-                g.SampleHeader = sampleHeaders[g.UInt16Amount];
+                int playableSampleCount = sampleHeaders.Length > 0 ? sampleHeaders.Length - 1 : 0;
+                g.SampleHeader = ResolveReference(
+                    sampleHeaders, playableSampleCount, g.UInt16Amount, "SampleID");
             }
         }
+    }
+
+    private static T ResolveReference<T>(T[] records, int validCount, ushort index, string description)
+    {
+        if (index >= validCount)
+        {
+            throw new InvalidDataException(
+                $"Invalid SoundFont {description} index {index}; expected a playable record below {validCount}.");
+        }
+
+        return records[index];
     }
 }

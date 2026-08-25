@@ -35,4 +35,20 @@ public class Mp3FileReaderBaseTests
         Assert.Throws<InvalidDataException>(() =>
             new Mp3FileReaderBase(ms, fmt => new FakeMp3FrameDecompressor(fmt)));
     }
+
+    [Test]
+    [Category("UnitTest")]
+    public void OpensSingleFrameMp3ShorterThanId3v1Tag()
+    {
+        byte[] frame = new byte[26];
+        frame[0] = 0xFF;
+        frame[1] = 0xF3;
+        frame[2] = 0x10;
+        frame[3] = 0x00;
+
+        using var reader = new Mp3FileReaderBase(
+            new MemoryStream(frame), fmt => new FakeMp3FrameDecompressor(fmt));
+
+        Assert.That(reader.Mp3WaveFormat.SampleRate, Is.EqualTo(22050));
+    }
 }

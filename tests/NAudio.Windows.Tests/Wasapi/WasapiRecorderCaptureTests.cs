@@ -1,4 +1,4 @@
-using NAudio.CoreAudioApi;
+﻿using NAudio.CoreAudioApi;
 using NAudio.CoreAudioApi.Interfaces;
 using NAudio.Wave;
 using NUnit.Framework;
@@ -122,6 +122,41 @@ public class WasapiRecorderCaptureTests
     }
 
     [Test]
+    public void LegacyDataAvailableHandlerCanDisposeCaptureWithoutJoiningItself()
+    {
+        byte[] data = { 1, 2, 3, 4 };
+        using var nativeCapture = new FakeCaptureClient(data, frames: 1, default);
+        using var client = new AudioClient(new FakeAudioClient(), nativeCapture);
+#pragma warning disable CS0618 // This test protects the legacy WasapiCapture lifecycle.
+        using var capture = new WasapiCapture(client, useEventSync: true,
+            audioBufferMillisecondsLength: 1, isProcessLoopback: false);
+        using var disposeReturned = new ManualResetEventSlim();
+        using var stopped = new ManualResetEventSlim();
+        Exception stoppedException = null;
+        capture.DataAvailable += (_, _) =>
+        {
+            capture.Dispose();
+            disposeReturned.Set();
+        };
+        capture.RecordingStopped += (_, args) =>
+        {
+            stoppedException = args.Exception;
+            stopped.Set();
+        };
+
+        capture.StartRecording();
+
+        Assert.That(disposeReturned.Wait(TimeSpan.FromSeconds(2)), Is.True);
+        Assert.That(stopped.Wait(TimeSpan.FromSeconds(2)), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(nativeCapture.ReleaseCount, Is.EqualTo(1));
+            Assert.That(stoppedException, Is.Null);
+        });
+#pragma warning restore CS0618
+    }
+
+    [Test]
     public void RecordingStoppedHandlerCanDisposeRecorderWithoutJoiningItself()
     {
         using var nativeCapture = new FakeCaptureClient(Array.Empty<byte>(), frames: 0, default)
@@ -139,6 +174,37 @@ public class WasapiRecorderCaptureTests
         recorder.StartRecording();
 
         Assert.That(stopped.Wait(TimeSpan.FromSeconds(2)), Is.True);
+    }
+
+    [Test]
+    public void DataAvailableHandlerDefersRecorderDisposalUntilBufferRelease()
+    {
+        byte[] data = { 1, 2, 3, 4 };
+        using var nativeCapture = new FakeCaptureClient(data, frames: 1, default);
+        using var recorder = CreateRecorder(new FakeAudioClient(), nativeCapture);
+        using var disposeReturned = new ManualResetEventSlim();
+        using var stopped = new ManualResetEventSlim();
+        Exception stoppedException = null;
+        recorder.DataAvailable += (_, _, _, _) =>
+        {
+            recorder.Dispose();
+            disposeReturned.Set();
+        };
+        recorder.RecordingStopped += (_, args) =>
+        {
+            stoppedException = args.Exception;
+            stopped.Set();
+        };
+
+        recorder.StartRecording();
+
+        Assert.That(disposeReturned.Wait(TimeSpan.FromSeconds(2)), Is.True);
+        Assert.That(stopped.Wait(TimeSpan.FromSeconds(2)), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(nativeCapture.ReleaseCount, Is.EqualTo(1));
+            Assert.That(stoppedException, Is.Null);
+        });
     }
 
     private static WasapiRecorder CreateRecorder(FakeAudioClient client,

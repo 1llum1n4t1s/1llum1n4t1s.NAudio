@@ -12,6 +12,22 @@ namespace NAudio.Core.Tests.Aiff;
 public class AiffReaderTests
 {
     [Test]
+    [Category("UnitTest")]
+    public void FilenameConstructorDisposesFileOnHeaderParseFailure()
+    {
+        string tempFilePath = Path.GetTempFileName();
+        File.WriteAllText(tempFilePath, "not an AIFF file");
+        try
+        {
+            Assert.That(() => new AiffFileReader(tempFilePath), Throws.Exception);
+        }
+        finally
+        {
+            File.Delete(tempFilePath);
+        }
+    }
+
+    [Test]
     [Category("IntegrationTest")]
     public void ConvertAiffToWav()
     {
@@ -228,6 +244,43 @@ public class AiffReaderTests
         }
     }
 
+    [Test]
+    [Category("UnitTest")]
+    public void AifcWithShortCommChunkThrowsFormatException()
+    {
+        var aifc = BuildAiff(44100, channels: 1, bitsPerSample: 16, soundData: new byte[4]);
+        Encoding.ASCII.GetBytes("AIFC").CopyTo(aifc, 8);
+        aifc[16] = 0;
+        aifc[17] = 0;
+        aifc[18] = 0;
+        aifc[19] = 20;
+
+        Assert.That(() => new AiffFileReader(new MemoryStream(aifc)),
+            Throws.TypeOf<FormatException>().With.Message.Contains("at least 22"));
+    }
+
+    [Test]
+    [Category("UnitTest")]
+    public void NegativePositionIsRejectedWithoutMovingIntoHeader()
+    {
+        var aiff = BuildAiff(44100, channels: 1, bitsPerSample: 16, soundData: new byte[4]);
+        using var reader = new AiffFileReader(new MemoryStream(aiff));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => reader.Position = -reader.BlockAlign);
+        Assert.That(reader.Position, Is.Zero);
+    }
+
+    [Test]
+    [Category("UnitTest")]
+    public void OddLengthSsndDoesNotExposePaddingAsAudio()
+    {
+        var aiff = BuildAiff(44100, channels: 1, bitsPerSample: 8,
+            soundData: new byte[] { 0x01, 0x02, 0x03 });
+        using var reader = new AiffFileReader(new MemoryStream(aiff));
+
+        Assert.That(reader.Length, Is.EqualTo(3));
+    }
+
     // Serves a small header and reports a much larger Length, so a test can present an
     // oversized chunk without allocating gigabytes. Everything past the header reads as zero.
     private sealed class SparseStream : Stream
@@ -334,7 +387,8 @@ public class AiffReaderTests
 
         const int commSize = 18;                 // channels(2) + frames(4) + sampleSize(2) + rate(10)
         int ssndSize = 8 + ssndOffset + soundData.Length;   // offset(4) + blockSize(4) + pad + data
-        int formSize = 4 + (8 + commSize) + (8 + ssndSize);
+        int paddedSsndSize = ssndSize + (ssndSize & 1);
+        int formSize = 4 + (8 + commSize) + (8 + paddedSsndSize);
 
         Tag("FORM"); WriteBE32(formSize); Tag("AIFF");
         Tag("COMM"); WriteBE32(commSize);
@@ -343,6 +397,7 @@ public class AiffReaderTests
         Tag("SSND"); WriteBE32(ssndSize); WriteBE32(ssndOffset); WriteBE32(0);
         bw.Write(new byte[ssndOffset]);
         bw.Write(soundData);
+        if ((ssndSize & 1) != 0) bw.Write((byte)0);
         bw.Flush();
 
         return ms.ToArray();

@@ -54,7 +54,7 @@ public class SysexEventTests
     [Test]
     public void ReadNextEvent_ParsesSysexEventAndAssignsBaseFields()
     {
-        using var ms = new MemoryStream(new byte[] { 0x05, 0xF0, 0x10, 0x20, 0xF7 });
+        using var ms = new MemoryStream(new byte[] { 0x05, 0xF0, 0x03, 0x10, 0x20, 0xF7 });
         using var br = new BinaryReader(ms);
         var midiEvent = MidiEvent.ReadNextEvent(br, null);
 
@@ -77,7 +77,51 @@ public class SysexEventTests
         sysex.Export(ref absoluteTime, writer);
 
         Assert.That(absoluteTime, Is.EqualTo(10));
-        Assert.That(ms.ToArray(), Is.EqualTo(new byte[] { 0x0A, 0xF0, 0x01, 0x02, 0xF7 }));
+        Assert.That(ms.ToArray(), Is.EqualTo(new byte[] { 0x0A, 0xF0, 0x03, 0x01, 0x02, 0xF7 }));
+    }
+
+    [Test]
+    public void ReadNextEvent_UsesDeclaredLengthForUnterminatedPacket()
+    {
+        byte[] bytes = { 0x00, 0xF0, 0x02, 0x10, 0x20 };
+        using var ms = new MemoryStream(bytes);
+        using var br = new BinaryReader(ms);
+        var sysex = (SysexEvent)MidiEvent.ReadNextEvent(br, null);
+
+        Assert.That(sysex.Data, Is.EqualTo(new byte[] { 0x10, 0x20 }));
+
+        using var exported = new MemoryStream();
+        using var writer = new BinaryWriter(exported);
+        long absoluteTime = 0;
+        sysex.Export(ref absoluteTime, writer);
+        Assert.That(exported.ToArray(), Is.EqualTo(bytes));
+    }
+
+    [Test]
+    public void ReadNextEvent_ParsesAndExportsF7ContinuationPacket()
+    {
+        byte[] bytes = { 0x00, 0xF7, 0x03, 0x01, 0x02, 0xF7 };
+        using var ms = new MemoryStream(bytes);
+        using var br = new BinaryReader(ms);
+        var sysex = (SysexEvent)MidiEvent.ReadNextEvent(br, null);
+
+        Assert.That(sysex.CommandCode, Is.EqualTo(MidiCommandCode.Eox));
+        Assert.That(sysex.Data, Is.EqualTo(new byte[] { 0x01, 0x02 }));
+
+        using var exported = new MemoryStream();
+        using var writer = new BinaryWriter(exported);
+        long absoluteTime = 0;
+        sysex.Export(ref absoluteTime, writer);
+        Assert.That(exported.ToArray(), Is.EqualTo(bytes));
+    }
+
+    [Test]
+    public void ReadNextEvent_RejectsTruncatedDeclaredPayload()
+    {
+        using var ms = new MemoryStream(new byte[] { 0x00, 0xF0, 0x03, 0x01, 0x02 });
+        using var br = new BinaryReader(ms);
+
+        Assert.Throws<EndOfStreamException>(() => MidiEvent.ReadNextEvent(br, null));
     }
 
     [Test]
@@ -158,10 +202,11 @@ public class SysexEventTests
 
     private static SysexEvent ReadViaMidiEvent(byte[] data)
     {
-        var bytes = new byte[2 + data.Length + 1];
+        var bytes = new byte[3 + data.Length + 1];
         bytes[0] = 0x00;
         bytes[1] = 0xF0;
-        Array.Copy(data, 0, bytes, 2, data.Length);
+        bytes[2] = (byte)(data.Length + 1);
+        Array.Copy(data, 0, bytes, 3, data.Length);
         bytes[bytes.Length - 1] = 0xF7;
 
         using var ms = new MemoryStream(bytes);

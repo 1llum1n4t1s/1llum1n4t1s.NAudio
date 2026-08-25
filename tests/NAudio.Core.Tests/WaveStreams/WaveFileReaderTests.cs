@@ -114,6 +114,19 @@ public class WaveFileReaderTests
     }
 
     [Test]
+    [Category("UnitTest")]
+    public void NegativePositionIsRejectedWithoutMovingIntoHeader()
+    {
+        var bytes = WaveFileBuilder.Build(
+            new WaveFormat(8000, 16, 1),
+            new byte[] { 1, 0, 2, 0 });
+        using var reader = new WaveFileReader(new MemoryStream(bytes));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => reader.Position = -reader.BlockAlign);
+        Assert.That(reader.Position, Is.Zero);
+    }
+
+    [Test]
     [Category("IntegrationTest")]
     public void CanLoadAndReadVariousProblemWavFiles()
     {
@@ -383,4 +396,5 @@ public class WaveFileReaderTests
         Assert.That(buffer, Is.EqualTo(audio));
         Assert.That(reader.Read(buffer, 0, buffer.Length), Is.EqualTo(0));
     }
+
 }

@@ -182,6 +182,59 @@ public class WaveFileChunkReaderTests
     }
 
     [Test]
+    public void Rf64RejectsDs64ChunkShorterThanRequiredHeader()
+    {
+        var bytes = Riff("RF64", w =>
+        {
+            Fourcc(w, "WAVE");
+            Fourcc(w, "ds64");
+            w.Write(24u);
+            w.Write(0L);
+            w.Write(0L);
+            w.Write(0L);
+        }, riffSizeOverride: 0xFFFFFFFF);
+
+        Assert.That(() => OpenReader(bytes),
+            Throws.TypeOf<FormatException>().With.Message.Contain("shorter than 28"));
+    }
+
+    [Test]
+    public void Rf64RejectsDs64ChunkExtendingPastEndOfStream()
+    {
+        var bytes = Riff("RF64", w =>
+        {
+            Fourcc(w, "WAVE");
+            Fourcc(w, "ds64");
+            w.Write(4096u);
+            w.Write(0L);
+            w.Write(0L);
+            w.Write(0L);
+            w.Write(0u);
+        }, riffSizeOverride: 0xFFFFFFFF);
+
+        Assert.That(() => OpenReader(bytes),
+            Throws.TypeOf<EndOfStreamException>().With.Message.Contain("past the end"));
+    }
+
+    [Test]
+    public void Rf64RejectsDs64TableLargerThanChunk()
+    {
+        var bytes = Riff("RF64", w =>
+        {
+            Fourcc(w, "WAVE");
+            Fourcc(w, "ds64");
+            w.Write(28u);
+            w.Write(0L);
+            w.Write(0L);
+            w.Write(0L);
+            w.Write(1u);
+        }, riffSizeOverride: 0xFFFFFFFF);
+
+        Assert.That(() => OpenReader(bytes),
+            Throws.TypeOf<FormatException>().With.Message.Contain("table"));
+    }
+
+    [Test]
     public void Rf64TakesDataChunkLengthFromDs64NotDataHeader()
     {
         // The data chunk's own size field is the RF64 0xFFFFFFFF sentinel; the real
@@ -205,6 +258,33 @@ public class WaveFileChunkReaderTests
         using var r = OpenReader(bytes);
         Assert.That(r.Length, Is.EqualTo(audio.Length));
         Assert.That(r.WaveFormat, Is.Not.Null);
+    }
+
+    [Test]
+    public void Rf64DataLengthIsClampedToAvailableBytes()
+    {
+        var audio = new byte[] { 1, 2, 3, 4, 5, 6 };
+        var bytes = Riff("RF64", w =>
+        {
+            Fourcc(w, "WAVE");
+            Fourcc(w, "ds64");
+            w.Write(28);
+            w.Write(1_000_000L);
+            w.Write(1_000_000L);
+            w.Write(3L);
+            w.Write(0);
+            WriteFmt(w);
+            Fourcc(w, "data");
+            w.Write(0xFFFFFFFFu);
+            w.Write(audio);
+        }, riffSizeOverride: 0xFFFFFFFF);
+
+        using var reader = OpenReader(bytes);
+
+        Assert.That(reader.Length, Is.EqualTo(audio.Length));
+        var buffer = new byte[audio.Length];
+        Assert.That(reader.Read(buffer, 0, buffer.Length), Is.EqualTo(audio.Length));
+        Assert.That(buffer, Is.EqualTo(audio));
     }
 
     // --- Corrupt / oversized trailing chunk ----------------------------

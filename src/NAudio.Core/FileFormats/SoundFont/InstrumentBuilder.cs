@@ -23,7 +23,12 @@ internal class InstrumentBuilder : StructureBuilder<Instrument>
         i.startInstrumentZoneIndex = br.ReadUInt16();
         if (lastInstrument != null)
         {
-            lastInstrument.endInstrumentZoneIndex = (ushort)(i.startInstrumentZoneIndex - 1);
+            if (i.startInstrumentZoneIndex < lastInstrument.startInstrumentZoneIndex)
+                throw new InvalidDataException("SoundFont instrument zone indices must not decrease.");
+
+            lastInstrument.endInstrumentZoneIndex = i.startInstrumentZoneIndex == lastInstrument.startInstrumentZoneIndex
+                ? lastInstrument.startInstrumentZoneIndex
+                : (ushort)(i.startInstrumentZoneIndex - 1);
         }
         data.Add(i);
         lastInstrument = i;
@@ -38,15 +43,23 @@ internal class InstrumentBuilder : StructureBuilder<Instrument>
 
     public void LoadZones(Zone[] zones)
     {
-        // don't do the last preset, which is simply EOP
+        if (data.Count == 0)
+            throw new InvalidDataException("Missing required SoundFont inst/EOI terminal record.");
+
+        ValidateRange(data[^1].startInstrumentZoneIndex, data[^1].startInstrumentZoneIndex,
+            zones.Length, "instrument zone terminal");
+
+        // The final record is EOI. Successive start indices define an exclusive range.
         for (int instrument = 0; instrument < data.Count - 1; instrument++)
         {
             Instrument i = data[instrument];
-            i.Zones = new Zone[i.endInstrumentZoneIndex - i.startInstrumentZoneIndex + 1];
+            int endExclusive = data[instrument + 1].startInstrumentZoneIndex;
+            int count = ValidateRange(
+                i.startInstrumentZoneIndex, endExclusive, zones.Length, "instrument zone");
+            i.Zones = new Zone[count];
             Array.Copy(zones, i.startInstrumentZoneIndex, i.Zones, 0, i.Zones.Length);
         }
-        // we can get rid of the EOP record now
-        data.RemoveAt(data.Count - 1);
+        RemoveTerminalRecord("inst/EOI");
     }
 
     public Instrument[] Instruments => data.ToArray();

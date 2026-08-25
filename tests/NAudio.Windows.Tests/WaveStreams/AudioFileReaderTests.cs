@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using NAudio.Utils;
 using NAudio.Wave;
 using NUnit.Framework;
@@ -58,6 +59,19 @@ public class AudioFileReaderTests
         Assert.That(reader.Length, Is.GreaterThan(0));
         AssertReadParity(reader, chunkSize: 2048);
         Assert.That(reader.FileName, Is.Null);
+    }
+
+    [Test]
+    public void AudioFileReader_StreamConstructor_DetectsRf64AsWave()
+    {
+        using var stream = new MemoryStream(Build16BitMonoPcmRf64());
+        using var reader = new AudioFileReader(stream);
+        var readerStream = typeof(AudioFileReader)
+            .GetField("readerStream", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?.GetValue(reader);
+
+        Assert.That(readerStream, Is.TypeOf<WaveFileReader>());
+        Assert.That(reader.Length, Is.GreaterThan(0));
     }
 
     [Test]
@@ -146,6 +160,33 @@ public class AudioFileReaderTests
             }
         }
         return ms.ToArray();
+    }
+
+    private static byte[] Build16BitMonoPcmRf64()
+    {
+        var audio = new byte[] { 1, 0, 2, 0, 3, 0, 4, 0 };
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream, System.Text.Encoding.ASCII, leaveOpen: true);
+        writer.Write("RF64"u8);
+        writer.Write(uint.MaxValue);
+        writer.Write("WAVE"u8);
+        writer.Write("ds64"u8);
+        writer.Write(28u);
+        long riffSizePosition = stream.Position;
+        writer.Write(0L);
+        writer.Write((long)audio.Length);
+        writer.Write(audio.Length / 2L);
+        writer.Write(0u);
+        writer.Write("fmt "u8);
+        new WaveFormat(8000, 16, 1).Serialize(writer);
+        writer.Write("data"u8);
+        writer.Write(uint.MaxValue);
+        writer.Write(audio);
+
+        long fileLength = stream.Length;
+        stream.Position = riffSizePosition;
+        writer.Write(fileLength - 8);
+        return stream.ToArray();
     }
 
     private static byte[] ReadAllViaByteArray(WaveStream stream, int chunkSize)

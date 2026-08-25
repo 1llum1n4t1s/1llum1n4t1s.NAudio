@@ -67,6 +67,7 @@ internal class WaveFileChunkReader
             if (chunkIdentifier == dataChunkId)
             {
                 dataChunkPosition = stream.Position;
+                long availableBytes = stream.Length - dataChunkPosition;
                 if (!isRf64) // we already know the dataChunkLength if this is an RF64 file
                 {
                     // Some encoders (e.g. FFmpeg writing WAV to a non-seekable pipe) leave a
@@ -74,8 +75,11 @@ internal class WaveFileChunkReader
                     // bytes actually present. Clamp to what the stream really contains so a
                     // MemoryStream (which cannot seek past its end) doesn't throw, and so the
                     // reported length reflects the available samples. See issue #1090.
-                    long availableBytes = stream.Length - dataChunkPosition;
                     dataChunkLength = chunkLength > availableBytes ? availableBytes : chunkLength;
+                }
+                else if (dataChunkLength > availableBytes)
+                {
+                    dataChunkLength = availableBytes;
                 }
                 stream.Position += dataChunkLength;
             }
@@ -146,11 +150,26 @@ internal class WaveFileChunkReader
         {
             throw new FormatException("Invalid RF64 WAV file - No ds64 chunk found");
         }
-        int chunkSize = reader.ReadInt32();
-        this.riffSize = reader.ReadInt64();
-        this.dataChunkLength = reader.ReadInt64();
-        long sampleCount = reader.ReadInt64(); // replaces the value in the fact chunk
-        reader.ReadBytes(chunkSize - 24); // get to the end of this chunk (should parse extra stuff later)
+        uint chunkSize = reader.ReadUInt32();
+        if (chunkSize < 28)
+            throw new FormatException("Invalid RF64 WAV file - ds64 chunk is shorter than 28 bytes");
+        if (chunkSize > reader.BaseStream.Length - reader.BaseStream.Position)
+            throw new EndOfStreamException("Invalid RF64 WAV file - ds64 chunk extends past the end of the stream");
+
+        ulong rf64RiffSize = reader.ReadUInt64();
+        ulong rf64DataLength = reader.ReadUInt64();
+        _ = reader.ReadUInt64(); // sample count replaces the value in the fact chunk
+        uint tableLength = reader.ReadUInt32();
+        if (rf64RiffSize > long.MaxValue || rf64DataLength > long.MaxValue)
+            throw new FormatException("Invalid RF64 WAV file - ds64 sizes exceed the supported range");
+
+        ulong tableSize = (ulong)tableLength * 12;
+        if (tableSize > chunkSize - 28)
+            throw new FormatException("Invalid RF64 WAV file - ds64 table is larger than the chunk");
+
+        this.riffSize = (long)rf64RiffSize;
+        this.dataChunkLength = (long)rf64DataLength;
+        reader.BaseStream.Seek(chunkSize - 28, SeekOrigin.Current);
     }
 
     private static RiffChunk GetRiffChunk(Stream stream, Int32 chunkIdentifier, Int32 chunkLength)

@@ -23,6 +23,27 @@ public class SoundFontLoadTests
     }
 
     [Test]
+    public void StreamConstructorPreservesLegacyOwnershipBehavior()
+    {
+        var stream = new MemoryStream(SoundFontTestHelper.BuildMinimalSoundFont());
+
+        _ = new NAudio.SoundFont.SoundFont(stream);
+
+        Assert.That(stream.CanRead, Is.False);
+    }
+
+    [Test]
+    public void LeaveOpenConstructorDoesNotDisposeCallerStream()
+    {
+        using var stream = new MemoryStream(SoundFontTestHelper.BuildMinimalSoundFont());
+
+        _ = new NAudio.SoundFont.SoundFont(stream, leaveOpen: true);
+
+        Assert.That(stream.CanRead, Is.True);
+        Assert.DoesNotThrow(() => stream.Position = 0);
+    }
+
+    [Test]
     public void LoadsRichSoundFontWithMultiplePresetsAndInstruments()
     {
         var sf2 = SoundFontTestHelper.BuildRichSoundFont();
@@ -74,6 +95,77 @@ public class SoundFontLoadTests
         var bytes = ms.ToArray();
 
         Assert.That(() => new NAudio.SoundFont.SoundFont(new MemoryStream(bytes)),
+            Throws.TypeOf<InvalidDataException>());
+    }
+
+    [Test]
+    public void RejectsMissingRequiredTopLevelChunksWithInvalidDataException()
+    {
+        var info = SoundFontTestHelper.BuildInfoList();
+        var sdta = SoundFontTestHelper.BuildSdtaList(new byte[8]);
+        var cases = new[]
+        {
+            (SoundFontTestHelper.BuildSoundFont([], [], []), "INFO list"),
+            (SoundFontTestHelper.BuildSoundFont(info, [], []), "sample data list"),
+            (SoundFontTestHelper.BuildSoundFont(info, sdta, []), "preset data list")
+        };
+
+        foreach (var (bytes, missingChunk) in cases)
+        {
+            var exception = Assert.Throws<InvalidDataException>(
+                () => new NAudio.SoundFont.SoundFont(new MemoryStream(bytes)));
+            Assert.That(exception.Message, Does.Contain(missingChunk));
+        }
+    }
+
+    [TestCase("phdr")]
+    [TestCase("pbag")]
+    [TestCase("pmod")]
+    [TestCase("pgen")]
+    [TestCase("inst")]
+    [TestCase("ibag")]
+    [TestCase("imod")]
+    [TestCase("igen")]
+    [TestCase("shdr")]
+    public void RejectsMissingRequiredPdtaChunkWithInvalidDataException(string chunkId)
+    {
+        var sf2 = SoundFontTestHelper.BuildSoundFont(
+            SoundFontTestHelper.BuildInfoList(),
+            SoundFontTestHelper.BuildSdtaList(new byte[8]),
+            SoundFontTestHelper.BuildMinimalPdtaList(excludedChunkId: chunkId));
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => new NAudio.SoundFont.SoundFont(new MemoryStream(sf2)));
+
+        Assert.That(exception.Message, Does.Contain(chunkId).IgnoreCase);
+    }
+
+    [TestCase("pgen", 1, "Instrument")]
+    [TestCase("igen", 2, "SampleID")]
+    public void RejectsGeneratorIndexOutsidePlayableRecords(string chunkId, int index, string generatorName)
+    {
+        var sf2 = SoundFontTestHelper.SetChunkUInt16(
+            SoundFontTestHelper.BuildMinimalSoundFont(), chunkId, 2, (ushort)index);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => new NAudio.SoundFont.SoundFont(new MemoryStream(sf2)));
+
+        Assert.That(exception.Message, Does.Contain(generatorName));
+    }
+
+    [TestCase("inst", 20, 2)]
+    [TestCase("phdr", 24, 2)]
+    [TestCase("ibag", 0, 2)]
+    [TestCase("ibag", 2, 2)]
+    [TestCase("pbag", 0, 2)]
+    [TestCase("pbag", 2, 2)]
+    public void RejectsDecreasingPdtaRangesWithInvalidDataException(
+        string chunkId, int offsetWithinChunkData, int value)
+    {
+        var sf2 = SoundFontTestHelper.SetChunkUInt16(
+            SoundFontTestHelper.BuildMinimalSoundFont(), chunkId, offsetWithinChunkData, (ushort)value);
+
+        Assert.That(() => new NAudio.SoundFont.SoundFont(new MemoryStream(sf2)),
             Throws.TypeOf<InvalidDataException>());
     }
 

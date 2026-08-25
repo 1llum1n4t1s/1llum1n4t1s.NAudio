@@ -17,19 +17,32 @@ public class SoundFont
     /// </summary>
     /// <param name="fileName">Filename of the SoundFont</param>
     public SoundFont(string fileName) :
-        this(new FileStream(fileName, FileMode.Open, FileAccess.Read))
+        this(new FileStream(fileName, FileMode.Open, FileAccess.Read), leaveOpen: false)
     {
     }
 
     /// <summary>
-    /// Loads a SoundFont from a stream
+    /// ストリームから SoundFont を読み込みます。
     /// </summary>
-    /// <param name="sfFile">stream</param>
-    public SoundFont(Stream sfFile)
+    /// <param name="sfFile">読み込み後に互換性維持のため破棄されるストリーム</param>
+    public SoundFont(Stream sfFile) :
+        this(sfFile, leaveOpen: false)
     {
-        using (sfFile) // a bit ugly, done to get Win store to compile
+    }
+
+    /// <summary>
+    /// ストリームを開いたままにするか指定して SoundFont を読み込みます。
+    /// </summary>
+    /// <param name="sfFile">SoundFont を含むストリーム</param>
+    /// <param name="leaveOpen">読み込み後も <paramref name="sfFile"/> を開いたままにする場合は <see langword="true"/></param>
+    public SoundFont(Stream sfFile, bool leaveOpen)
+    {
+        ArgumentNullException.ThrowIfNull(sfFile);
+
+        try
         {
-            RiffChunk riff = RiffChunk.GetTopLevelChunk(new BinaryReader(sfFile));
+            using var reader = new BinaryReader(sfFile, System.Text.Encoding.UTF8, leaveOpen: true);
+            RiffChunk riff = RiffChunk.GetTopLevelChunk(reader);
             if (riff.ChunkID == "RIFF")
             {
                 string formHeader = riff.ReadChunkID();
@@ -37,16 +50,15 @@ public class SoundFont
                 {
                     throw new InvalidDataException($"Not a SoundFont ({formHeader})");
                 }
-                RiffChunk list = riff.GetNextSubChunk();
+                RiffChunk list = GetRequiredSubChunk(riff, "INFO list");
                 if (list.ChunkID == "LIST")
                 {
-                    //RiffChunk r = list.GetNextSubChunk();
                     info = new InfoChunk(list);
 
-                    RiffChunk r = riff.GetNextSubChunk();
+                    RiffChunk r = GetRequiredSubChunk(riff, "sample data list");
                     sampleData = new SampleDataChunk(r);
 
-                    r = riff.GetNextSubChunk();
+                    r = GetRequiredSubChunk(riff, "preset data list");
                     presetsChunk = new PresetsChunk(r);
                 }
                 else
@@ -59,7 +71,17 @@ public class SoundFont
                 throw new InvalidDataException("Not a RIFF file");
             }
         }
+        finally
+        {
+            if (!leaveOpen)
+            {
+                sfFile.Dispose();
+            }
+        }
     }
+
+    private static RiffChunk GetRequiredSubChunk(RiffChunk riff, string description)
+        => riff.GetNextSubChunk() ?? throw new InvalidDataException($"Missing required SoundFont {description}.");
 
     /// <summary>
     /// The File Info Chunk

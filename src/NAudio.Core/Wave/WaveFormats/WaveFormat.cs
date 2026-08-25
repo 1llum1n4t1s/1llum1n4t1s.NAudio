@@ -208,7 +208,7 @@ public class WaveFormat
 
     private void ReadWaveFormat(BinaryReader br, int formatChunkLength)
     {
-        if (formatChunkLength < 16)
+        if (formatChunkLength < 16 || formatChunkLength == 17)
             throw new InvalidDataException("Invalid WaveFormat Structure");
         waveFormatTag = (WaveFormatEncoding)br.ReadUInt16();
         channels = br.ReadInt16();
