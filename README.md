@@ -10,8 +10,8 @@ Process Loopback Capture と Native AOT 対応を強化したフォークです�
 `1llum1n4t1s.NAudio.*` に分離しています。
 
 > [!IMPORTANT]
-> この README は次期 3.x 系を説明しています。3.x が NuGet へ公開されるまでは、
-> NuGet の stable 版 1.x と対象 framework・package 構成・Process Loopback の使い方が異なります。
+> 現在の stable 版は 4.x 系です。旧 1.x 系とは対象 framework・package 構成・
+> Process Loopback の推奨 API が異なるため、更新時は「1.x からの移行」を確認してください。
 
 ## 特徴
 
@@ -114,7 +114,7 @@ using var capture = await WasapiCapture.CreateForProcessCaptureAsync(
     cancellationToken);
 ```
 
-この互換 API は従来と同じ 48 kHz / 16-bit / stereo を使用します。3.x 実装は
+この互換 API は従来と同じ 48 kHz / 16-bit / stereo を使用します。4.x 実装は
 source-generated COM を使うため、1.x で必要だった STA UI thread と非 null の
 `SynchronizationContext` は不要です。新規コードには `WasapiRecorderBuilder` を推奨します。
 
@@ -170,7 +170,7 @@ trim/AOT warning と配布サイズを抑えられます。
 
 ## 1.x からの移行
 
-3.x は NAudio 3 を基点に再構築した major migration であり、1.x の完全な drop-in replacement
+4.x は NAudio 3 を基点に再構築した major migration であり、1.x の完全な drop-in replacement
 ではありません。
 
 - 単一 assembly から複数 package / assembly へ分割されています

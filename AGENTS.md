@@ -1,13 +1,13 @@
 # Working in 1llum1n4t1s.NAudio
 
-This file gives coding agents the conventions for contributing to the 1llum1n4t1s.NAudio fork. Humans should read [README.md](README.md) and [Docs/Architecture/](Docs/Architecture/) instead.
+This file gives coding agents the conventions for contributing to the 1llum1n4t1s.NAudio fork. Humans should read [README.md](README.md) for usage and [DESIGN.md](DESIGN.md) for the current system design. Detailed decision history remains under [Docs/Architecture/](Docs/Architecture/).
 
 ## Orientation
 
 - **Repository layout.** Projects are grouped by role: `src/` holds the shipping libraries (the NuGet packages), `tests/` holds the test, benchmark and diagnostic projects (including `NAudio.Benchmarks`, `NAudioAotSmokeTest`, `MfStressTest`), and `samples/` holds the runnable demo/tool apps (`NAudioDemo`, `NAudioWpfDemo`, `NAudioConsoleTest`, `AudioFileInspector`, `MidiFileConverter`, `MixDiff`) plus their `SampleData/`. DocFX lives entirely under `docfx/` (`docfx.json`, `index.md`, `toc.yml`, `templates/`, generated `api/`); tutorial Markdown stays in `Docs/`.
-- **The fork's NAudio 3 development happens on `main`.** Sync upstream changes through a descriptive temporary branch such as `codex/upstream-sync`, verify the fork-specific compatibility and Native AOT tests, and then integrate that branch into `main`. Use `release/x.y.z` only for an explicitly requested release.
+- **Fork development happens on `main`.** The 4.x fork is based on upstream NAudio 3. Sync upstream changes through a descriptive temporary branch such as `codex/upstream-sync`, verify the fork-specific compatibility and Native AOT tests, and then integrate that branch into `main`. Use `release/x.y.z` only for an explicitly requested release.
 - **Preserve upstream history.** Keep `upstream/main` as a merge parent when synchronizing the fork so future upstream updates remain traceable. Use a normal fast-forward push from the local `main`; force-push only after the maintainer explicitly approves the exact history rewrite.
-- **Architecture docs** in [Docs/Architecture/](Docs/Architecture/) are the source of truth for cross-cutting decisions:
+- **Architecture docs.** [DESIGN.md](DESIGN.md) is the source of truth for the current package boundaries, data flows and invariants. [Docs/Architecture/](Docs/Architecture/) retains detailed decision records and migration history:
   - [ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md) — release/branch/version flow
   - [NAudio3AssemblyLayoutPlan.md](Docs/Architecture/NAudio3AssemblyLayoutPlan.md) — package structure
   - [MODERNIZATION.md](Docs/Architecture/MODERNIZATION.md) — modernisation phases
@@ -37,6 +37,18 @@ Package versions are centralised in [Directory.Build.props](Directory.Build.prop
 ## Language
 
 Write code comments and commit messages in Japanese unless an upstream file already establishes a local English convention. Public API XML documentation should follow the surrounding project style so generated documentation remains consistent.
+
+## Build and verification
+
+On Windows, use the same sequence as CI:
+
+```powershell
+dotnet restore NAudio.slnx
+dotnet build NAudio.slnx --configuration Release --no-restore
+dotnet test --solution NAudio.slnx --configuration Release --no-build --filter "TestCategory!=IntegrationTest"
+```
+
+Final releases additionally require the 13-package pack and Native AOT smoke checks documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
 
 ## Building & testing on Linux
 
