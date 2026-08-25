@@ -48,8 +48,8 @@ gh workflow run release.yml `
 git fetch origin
 git switch main
 git pull --ff-only
-git tag v3.0.2
-git push origin v3.0.2
+git tag v4.0.0
+git push origin v4.0.0
 ```
 
 release workflow は次を実行します。

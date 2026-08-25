@@ -9,6 +9,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-08-26
+
 ### Added
 
 - NAudio 3 の source-generated COM interop 上に、1.x 互換の
@@ -21,6 +23,7 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 - 旧 fork の `WasapiCapture.CapturePacketReceived`、`TotalPacketCount`、`SilentPacketCount` と
   `WasapiCapturePacketEventArgs` を再実装しました。
 - Native AOT smoke test に、日本語ファイル名を含むM4Aのencode・file decode・WAV出力を追加しました。
+- `SoundFont(Stream, bool leaveOpen)` を追加し、呼び出し元が stream ownership を選べるようにしました。
 
 ### Changed
 
@@ -37,9 +40,25 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 - release workflow の NuGet 認証を fork の `NUGET_API_KEY` repository secret に変更し、
   公式 NAudio package ID へ公開できない構成にしました。
 - README を fork 利用者向けに全面刷新し、変更履歴の正本を `CHANGELOG.md` へ移しました。
+- NuGet の直接依存を最新安定版へ更新し、`System.Numerics.Tensors` と
+  `System.ComponentModel.Composition` を10系へ移行しました。
+- GitHub Actions を Node.js 24 対応の `checkout` v7、`setup-dotnet` v6、
+  `upload-artifact` v7、`upload-pages-artifact` v5、`deploy-pages` v5へ更新しました。
+- NuGet と GitHub Actions を毎週監視する Dependabot 設定を追加しました。
 
 ### Fixed
 
+- capture callback 内から `WasapiCapture` / `WasapiRecorder` を破棄したとき、worker thread が
+  自分自身を待機する deadlock と、WASAPI buffer 解放前の native resource 破棄を防止しました。
+- Standard MIDI File の SysEx event を VLQ length に従って読み書きし、`F7` continuation と
+  終端されていない packet を保持できるようにしました。
+- 128 bytes 未満の短い有効な MP3 で ID3v1 tag 探索が負の位置へ seek する問題を修正しました。
+- filename から不正な AIFF を開いたとき、constructor の例外経路で file handle が leak する問題を
+  修正しました。
+- RF64 の `ds64` chunk の最小長、stream 境界、table 長を検証し、不正な長さによる過大確保を
+  防止するとともに、宣言された data 長を実際に読み取れる stream 範囲へ制限しました。
+- `AudioFileReader` が stream 入力の RF64/WAVE を Media Foundation ではなく
+  `WaveFileReader` で開くようにしました。
 - `Marshal.GetExceptionForHR(S_FALSE)` が `null` を返したとき activation Task が完了せず
   hang する問題を、常に `COMException` を返す共通変換で修正しました。
 - activation のキャンセルと native callback が競合したとき、呼び出し元へ渡らない COM object が
@@ -58,6 +77,19 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 - track 冒頭の不正な MIDI running status を、`NullReferenceException` ではなく `FormatException` として
   報告するようにしました。
 - `WaveFileWriter.WriteSample` / `WriteSamples` でも通常 RIFF の 4 GiB 上限を一貫して検査するようにしました。
+- `MixingSampleProvider` が形式不一致や `null` の入力を内部リストへ残す問題を修正しました。
+  入力の `Read` と `MixerInputEnded` は source list の lock 外で実行し、callback からの自己削除による
+  リスト破損と、別 thread からの入力追加が外部 `Read` の完了待ちになる問題も防止しました。
+- AIFF / AIFC の短すぎる `COMM` chunk を後続 chunk まで読み越す問題と、奇数長 `SSND` の
+  pad byte を音声データとして数える問題を修正しました。
+- `WaveFileReader` / `AiffFileReader` が負の `Position` を受け入れ、container header を音声として
+  読める状態になる問題を修正しました。
+- 17 bytes の WAV `fmt` chunk で `cbSize` を後続 chunk から読み越す問題を修正しました。
+- SoundFont の必須 INFO / sample data / preset data chunk が欠落したとき、
+  `NullReferenceException` ではなく `InvalidDataException` で原因を報告するようにしました。
+- SoundFont の必須 `pdta` chunk、zone 範囲、instrument / sample 参照を読み込み時に検証し、
+  壊れた SF2 を `IndexOutOfRangeException`、`OverflowException`、過大確保ではなく
+  `InvalidDataException` として拒否するようにしました。
 
 ### Compatibility
 
@@ -69,8 +101,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 ### Validation
 
 - Release solution build: warning 0 / error 0。
-- 非 Integration test: 2,056 passed / 30 skipped / 0 failed。
-- Grok audit 回帰 test: 12 passed / 0 failed。
+- 非 Integration test: 2,098 passed / 30 skipped / 0 failed。
+- Grok audit 対象 test: 80 passed / 1 skipped / 0 failed。
 - `win-x64` Native AOT publish と native EXE 実行に成功しました。
 - Native AOT 上で Process Loopback、Core Audio callback、Media FoundationのM4A file decode、
   DirectSound を確認しました。
@@ -82,4 +114,5 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/71007e4fd85d2de6cccb3ededed9a02871c889b4...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/71007e4fd85d2de6cccb3ededed9a02871c889b4...v4.0.0
