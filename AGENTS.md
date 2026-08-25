@@ -12,19 +12,19 @@ This file provides guidance to Claude Code and other coding agents working in th
 
 ```bash
 # ビルド (Debug)
-rtk dotnet build NAudio/NAudio.csproj
+dotnet build NAudio/NAudio.csproj
 
 # ビルド (Release、NuGet パッケージ生成含む)
-rtk dotnet build NAudio/NAudio.csproj -c Release
+dotnet build NAudio/NAudio.csproj -c Release
 
 # テスト全体 (Integration 含む、実機デバイス必要)
-rtk dotnet test Tests/NAudioTests.csproj
+dotnet test Tests/NAudioTests.csproj
 
 # 単体テストのみ (CI / 通常の動作確認はこちら)
-rtk dotnet test Tests/NAudioTests.csproj --filter "TestCategory!=IntegrationTest"
+dotnet test Tests/NAudioTests.csproj --filter "TestCategory!=IntegrationTest"
 
 # 特定テストクラス実行 (例: ActivateAudioInterfaceCompletionHandlerTests)
-rtk dotnet test Tests/NAudioTests.csproj --filter "FullyQualifiedName~ActivateAudioInterfaceCompletionHandlerTests"
+dotnet test Tests/NAudioTests.csproj --filter "FullyQualifiedName~ActivateAudioInterfaceCompletionHandlerTests"
 ```
 
 `IntegrationTest` カテゴリのテストは以下の環境変数でテストデータを指定:
