@@ -201,15 +201,17 @@ public class WaveFormat
     public static WaveFormat FromFormatChunk(BinaryReader br, int formatChunkLength)
     {
         var waveFormat = new WaveFormatExtraData();
-        waveFormat.ReadWaveFormat(br, formatChunkLength);
-        waveFormat.ReadExtraData(br);
+        int extraDataLength = waveFormat.ReadWaveFormat(br, formatChunkLength);
+        waveFormat.ReadExtraData(br, extraDataLength);
         return waveFormat;
     }
 
-    private void ReadWaveFormat(BinaryReader br, int formatChunkLength)
+    internal int ReadWaveFormat(BinaryReader br, int formatChunkLength)
     {
         if (formatChunkLength < 16 || formatChunkLength == 17)
             throw new InvalidDataException("Invalid WaveFormat Structure");
+        extraSize = 0;
+        int formatChunkExtraSize = 0;
         waveFormatTag = (WaveFormatEncoding)br.ReadUInt16();
         channels = br.ReadInt16();
         sampleRate = br.ReadInt32();
@@ -218,13 +220,15 @@ public class WaveFormat
         bitsPerSample = br.ReadInt16();
         if (formatChunkLength > 16)
         {
-            extraSize = br.ReadInt16();
-            if (extraSize != formatChunkLength - 18)
+            int declaredExtraSize = br.ReadUInt16();
+            formatChunkExtraSize = formatChunkLength - 18;
+            if (declaredExtraSize != formatChunkExtraSize)
             {
                 Debug.WriteLine("Format chunk mismatch");
-                extraSize = (short)(formatChunkLength - 18);
             }
+            extraSize = (short)Math.Min(formatChunkExtraSize, short.MaxValue);
         }
+        return formatChunkExtraSize;
     }
 
     /// <summary>

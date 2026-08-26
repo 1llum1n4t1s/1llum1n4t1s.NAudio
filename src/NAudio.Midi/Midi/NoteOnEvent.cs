@@ -81,10 +81,7 @@ public class NoteOnEvent : NoteEvent
         set
         {
             base.NoteNumber = value;
-            if (OffEvent != null)
-            {
-                OffEvent.NoteNumber = NoteNumber;
-            }
+            OffEvent?.NoteNumber = NoteNumber;
         }
     }
 
@@ -100,10 +97,7 @@ public class NoteOnEvent : NoteEvent
         set
         {
             base.Channel = value;
-            if (OffEvent != null)
-            {
-                OffEvent.Channel = Channel;
-            }
+            OffEvent?.Channel = Channel;
         }
     }
 

@@ -115,10 +115,7 @@ public partial class FadeInOutPanel : UserControl
 
     private void volumeSlider1_VolumeChanged(object sender, EventArgs e)
     {
-        if (this.file != null)
-        {
-            this.file.Volume = volumeSlider1.Volume;
-        }
+        this.file?.Volume = volumeSlider1.Volume;
     }
 
     private void buttonOpen_Click(object sender, EventArgs e)

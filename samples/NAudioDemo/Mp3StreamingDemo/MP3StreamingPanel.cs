@@ -28,10 +28,7 @@ public partial class Mp3StreamingPanel : UserControl
 
     private void OnVolumeSliderChanged(object sender, EventArgs e)
     {
-        if (volumeProvider != null)
-        {
-            volumeProvider.Volume = volumeSlider1.Volume;
-        }
+        volumeProvider?.Volume = volumeSlider1.Volume;
     }
 
     private BufferedWaveProvider bufferedWaveProvider;

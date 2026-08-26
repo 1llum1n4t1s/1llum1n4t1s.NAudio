@@ -18,6 +18,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
 {
     private const long ReftimesPerSec = 10000000;
     private const long ReftimesPerMillisec = 10000;
+    private readonly object captureStateLock = new();
     private volatile CaptureState captureState;
     private Thread captureThread;
     private AudioClient audioClient;
@@ -326,11 +327,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// </summary>
     public void StartRecording()
     {
-        if (captureState != CaptureState.Stopped)
-        {
-            throw new InvalidOperationException("Previous recording still in progress");
-        }
-        captureState = CaptureState.Starting;
+        TransitionToStarting();
         try
         {
             InitializeCaptureDevice();
@@ -345,7 +342,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         {
             captureThread = null;
             try { audioClient?.Stop(); } catch { /* initialization may not have completed */ }
-            captureState = CaptureState.Stopped;
+            TransitionToStopped();
             throw;
         }
     }
@@ -355,8 +352,11 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// </summary>
     public void StopRecording()
     {
-        if (captureState != CaptureState.Stopped)
-            captureState = CaptureState.Stopping;
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                captureState = CaptureState.Stopping;
+        }
     }
 
     private void CaptureThread(AudioClient client)
@@ -379,7 +379,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
             try { client.Stop(); } catch { /* device already gone */ }
             // don't dispose - the AudioClient only gets disposed when WasapiCapture is disposed
         }
-        captureState = CaptureState.Stopped;
+        TransitionToStopped();
         try
         {
             RaiseRecordingStopped(exception);
@@ -405,11 +405,8 @@ public class WasapiCapture : IWaveIn, IWaveLatency
 
         var capture = client.AudioCaptureClient;
         client.Start();
-        // avoid race condition where we stop immediately after starting
-        if (captureState == CaptureState.Starting)
-        {
-            captureState = CaptureState.Capturing;
-        }
+        if (!TryTransitionToCapturing())
+            return;
         while (captureState == CaptureState.Capturing)
         {
             if (isUsingEventSync)
@@ -508,5 +505,32 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         audioClient = null;
         frameEventWaitHandle?.Dispose();
         frameEventWaitHandle = null;
+    }
+
+    private void TransitionToStarting()
+    {
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                throw new InvalidOperationException("Previous recording still in progress");
+            captureState = CaptureState.Starting;
+        }
+    }
+
+    private bool TryTransitionToCapturing()
+    {
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Starting)
+                return false;
+            captureState = CaptureState.Capturing;
+            return true;
+        }
+    }
+
+    private void TransitionToStopped()
+    {
+        lock (captureStateLock)
+            captureState = CaptureState.Stopped;
     }
 }

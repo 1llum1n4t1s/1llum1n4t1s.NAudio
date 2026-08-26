@@ -97,11 +97,8 @@ public partial class VolumeMixerPanel : UserControl
 
     private void UnsubscribeFromSessionManager()
     {
-        if (subscribedSessionManager != null)
-        {
-            subscribedSessionManager.OnSessionCreated -= OnSessionCreated;
-            subscribedSessionManager = null;
-        }
+        subscribedSessionManager?.OnSessionCreated -= OnSessionCreated;
+        subscribedSessionManager = null;
     }
 
     private bool ProcessExists(uint processId)

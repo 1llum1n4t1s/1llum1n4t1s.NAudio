@@ -99,10 +99,7 @@ public sealed class AlsaOut : IWavePlayer, IWaveLatency
         set
         {
             volume = value;
-            if (channel != null)
-            {
-                channel.Volume = value;
-            }
+            channel?.Volume = value;
         }
     }
 

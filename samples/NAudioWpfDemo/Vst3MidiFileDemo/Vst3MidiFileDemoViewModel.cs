@@ -112,7 +112,7 @@ internal class Vst3MidiFileDemoViewModel : ViewModelBase, IDisposable
             volumeDb = value;
             OnPropertyChanged(nameof(VolumeDb));
             OnPropertyChanged(nameof(VolumeText));
-            if (volumeProvider != null) volumeProvider.Volume = GainFromDb(value);
+            volumeProvider?.Volume = GainFromDb(value);
         }
     }
 

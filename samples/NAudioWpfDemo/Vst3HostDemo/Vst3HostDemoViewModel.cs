@@ -16,9 +16,7 @@ namespace NAudioWpfDemo.Vst3HostDemo;
 /// <summary>
 /// Hosts a chosen VST 3 effect plug-in, embeds its editor, and plays a looping drum one-shot
 /// through it via <see cref="WasapiPlayer"/>. Host-side bypass and output gain are surfaced and
-/// work. The embedded editor <i>renders and resizes</i>, but <b>interacting with its controls
-/// currently crashes the host on .NET 9</b> — a known, unresolved issue documented in
-/// <c>Docs/Architecture/Vst3Hosting.md</c> (Phase 6). Treat the editor as display-only for now.
+/// work. The embedded editor renders, resizes, and forwards user interaction to the plug-in.
 /// </summary>
 internal class Vst3HostDemoViewModel : ViewModelBase, IDisposable
 {
@@ -133,7 +131,7 @@ internal class Vst3HostDemoViewModel : ViewModelBase, IDisposable
         set
         {
             bypass = value;
-            if (effect != null) effect.Bypass = value;
+            effect?.Bypass = value;
             OnPropertyChanged(nameof(Bypass));
         }
     }
@@ -144,7 +142,7 @@ internal class Vst3HostDemoViewModel : ViewModelBase, IDisposable
         set
         {
             gainDb = value;
-            if (volume != null) volume.Volume = DbToLinear(value);
+            volume?.Volume = DbToLinear(value);
             OnPropertyChanged(nameof(GainDb));
         }
     }

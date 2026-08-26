@@ -31,24 +31,61 @@ public class WaveFormatExtraData : WaveFormat
     /// Reads this structure from a BinaryReader
     /// </summary>
     public WaveFormatExtraData(BinaryReader reader)
-        : base(reader)
     {
-        ReadExtraData(reader);
+        int formatChunkLength = reader.ReadInt32();
+        int extraDataLength = ReadWaveFormat(reader, formatChunkLength);
+        ReadExtraData(reader, extraDataLength);
     }
 
-    internal void ReadExtraData(BinaryReader reader)
+    internal void ReadExtraData(BinaryReader reader, int extraDataLength)
     {
-        if (extraSize > extraData.Length)
+        if (extraDataLength > extraData.Length)
         {
             // The fmt chunk declares more extra bytes than our fixed buffer can hold.
             // Consume them so the stream stays aligned for the next chunk, then discard.
-            Debug.WriteLine($"Discarding {extraSize} bytes of fmt extra data exceeding the {extraData.Length}-byte buffer");
-            reader.ReadBytes(extraSize);
+            Debug.WriteLine($"Discarding {extraDataLength} bytes of fmt extra data exceeding the {extraData.Length}-byte buffer");
+            SkipBytes(reader, extraDataLength);
             extraSize = 0;
+            return;
         }
-        if (extraSize > 0)
+        if (extraDataLength > 0)
         {
-            reader.Read(extraData, 0, extraSize);
+            ReadExactly(reader, extraData, extraDataLength);
+            extraSize = (short)extraDataLength;
+        }
+    }
+
+    private static void ReadExactly(BinaryReader reader, byte[] destination, int count)
+    {
+        int offset = 0;
+        while (offset < count)
+        {
+            int read = reader.Read(destination, offset, count - offset);
+            if (read == 0)
+                throw new EndOfStreamException();
+            offset += read;
+        }
+    }
+
+    private static void SkipBytes(BinaryReader reader, int count)
+    {
+        var stream = reader.BaseStream;
+        if (stream.CanSeek)
+        {
+            if (stream.Length - stream.Position < count)
+                throw new EndOfStreamException();
+            stream.Position += count;
+            return;
+        }
+
+        var buffer = new byte[System.Math.Min(4096, count)];
+        int remaining = count;
+        while (remaining > 0)
+        {
+            int read = reader.Read(buffer, 0, System.Math.Min(buffer.Length, remaining));
+            if (read == 0)
+                throw new EndOfStreamException();
+            remaining -= read;
         }
     }
 

@@ -81,7 +81,7 @@ internal class EqualizationDemoViewModel : ViewModelBase, IDisposable
         {
             if (volumeDb == value) return;
             volumeDb = value;
-            if (volumeProvider != null) volumeProvider.Volume = TransportFormatting.GainFromDb(value);
+            volumeProvider?.Volume = TransportFormatting.GainFromDb(value);
             OnPropertyChanged(nameof(VolumeDb));
             OnPropertyChanged(nameof(VolumeText));
         }
@@ -206,7 +206,7 @@ internal class EqualizationDemoViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         positionTimer.Stop();
-        if (player != null) player.PlaybackStopped -= OnPlaybackStopped;
+        player?.PlaybackStopped -= OnPlaybackStopped;
         player?.Dispose();
         reader?.Dispose();
     }

@@ -154,7 +154,7 @@ public partial class MainForm : Form
         }
     }
 
-    protected override void OnClosing(CancelEventArgs e)
+    protected override void OnFormClosing(FormClosingEventArgs e)
     {
         if (workQueued)
         {
@@ -169,7 +169,7 @@ public partial class MainForm : Form
             settings.ProductVersion = Application.ProductVersion;
             settings.Save();
         }
-        base.OnClosing(e);
+        base.OnFormClosing(e);
     }
 
     private void ConvertThreadProc(object state)

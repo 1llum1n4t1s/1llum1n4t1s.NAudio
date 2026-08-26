@@ -177,10 +177,7 @@ public partial class AudioPlaybackPanel : UserControl
         {
             MessageBox.Show(e.Exception.Message, "Playback Device Error");
         }
-        if (audioFileReader != null)
-        {
-            audioFileReader.Position = 0;
-        }
+        audioFileReader?.Position = 0;
     }
 
     private void CloseWaveOut()

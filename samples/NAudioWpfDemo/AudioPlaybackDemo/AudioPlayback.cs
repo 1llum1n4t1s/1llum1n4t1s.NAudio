@@ -34,7 +34,7 @@ internal class AudioPlayback : IDisposable
         set
         {
             volume = value;
-            if (volumeProvider != null) volumeProvider.Volume = value;
+            volumeProvider?.Volume = value;
         }
     }
 
@@ -43,7 +43,7 @@ internal class AudioPlayback : IDisposable
         get => fileStream?.CurrentTime ?? TimeSpan.Zero;
         set
         {
-            if (fileStream != null) fileStream.CurrentTime = value;
+            fileStream?.CurrentTime = value;
         }
     }
 
@@ -123,10 +123,7 @@ internal class AudioPlayback : IDisposable
     public void Stop()
     {
         playbackDevice?.Stop();
-        if (fileStream != null)
-        {
-            fileStream.Position = 0;
-        }
+        fileStream?.Position = 0;
     }
 
     public void Dispose()

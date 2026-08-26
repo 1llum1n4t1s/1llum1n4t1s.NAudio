@@ -126,11 +126,8 @@ public partial class MixDiffForm : Form
             selectedButton.BackColor = SystemColors.Control;
             selectedButton.ForeColor = SystemColors.ControlText;
             info = selectedButton.Tag as MixdownInfo;
-            if (info != null)
-            {
-                // can be null if active button is cleared
-                info.Stream.Mute = true;
-            }
+            // Can be null if the active button is cleared.
+            info?.Stream.Mute = true;
         }
         info = button.Tag as MixdownInfo;
         button.ForeColor = Color.DarkGreen;

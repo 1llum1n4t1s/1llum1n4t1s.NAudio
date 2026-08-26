@@ -96,7 +96,7 @@ internal class DrumMachineDemoViewModel : ViewModelBase, IDisposable
         {
             if (tempo == value) return;
             tempo = value;
-            if (engine != null) engine.Tempo = value;
+            engine?.Tempo = value;
             OnPropertyChanged(nameof(Tempo));
         }
     }
@@ -109,7 +109,7 @@ internal class DrumMachineDemoViewModel : ViewModelBase, IDisposable
         {
             if (swing == value) return;
             swing = value;
-            if (engine != null) engine.Swing = value;
+            engine?.Swing = value;
             OnPropertyChanged(nameof(Swing));
         }
     }

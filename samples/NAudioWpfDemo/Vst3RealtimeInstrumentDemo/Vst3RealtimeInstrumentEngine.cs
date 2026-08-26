@@ -47,7 +47,7 @@ internal sealed class Vst3RealtimeInstrumentEngine : IDisposable
     public float MasterGain
     {
         get => volumeProvider?.Volume ?? 1f;
-        set { if (volumeProvider != null) volumeProvider.Volume = value; }
+        set => volumeProvider?.Volume = value;
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ internal sealed class Vst3RealtimeInstrumentEngine : IDisposable
         plugin = null;
         module?.Dispose();
         module = null;
-        if (meterProvider != null) meterProvider.StreamVolume -= OnStreamVolume;
+        meterProvider?.StreamVolume -= OnStreamVolume;
         meterProvider = null;
         volumeProvider = null;
         outputLevel = 0f;

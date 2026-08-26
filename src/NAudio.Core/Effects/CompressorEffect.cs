@@ -80,8 +80,7 @@ public sealed class CompressorEffect : AudioEffect, IParameterized
         set
         {
             attackMs = value;
-            if (reductionFollower != null)
-                reductionFollower.AttackMilliseconds = value;
+            reductionFollower?.AttackMilliseconds = value;
         }
     }
 
@@ -92,8 +91,7 @@ public sealed class CompressorEffect : AudioEffect, IParameterized
         set
         {
             releaseMs = value;
-            if (reductionFollower != null)
-                reductionFollower.ReleaseMilliseconds = value;
+            reductionFollower?.ReleaseMilliseconds = value;
         }
     }
 

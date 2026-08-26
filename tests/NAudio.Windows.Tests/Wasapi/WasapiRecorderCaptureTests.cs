@@ -66,6 +66,143 @@ public class WasapiRecorderCaptureTests
     }
 
     [Test]
+    public async Task RecorderDisposeDuringStartDoesNotHang()
+    {
+        using var startEntered = new ManualResetEventSlim();
+        using var continueStart = new ManualResetEventSlim();
+        using var client = new FakeCaptureClient(Array.Empty<byte>(), frames: 0, default);
+        var audioClient = new FakeAudioClient
+        {
+            StartEntered = startEntered,
+            ContinueStart = continueStart
+        };
+        var recorder = CreateRecorder(audioClient, client);
+
+        recorder.StartRecording();
+        Assert.That(startEntered.Wait(TimeSpan.FromSeconds(2)), Is.True,
+            "Capture thread did not enter IAudioClient.Start().");
+
+        var disposeTask = Task.Run(recorder.Dispose);
+        Assert.That(SpinWait.SpinUntil(
+                () => recorder.CaptureState == CaptureState.Stopping,
+                TimeSpan.FromSeconds(2)),
+            Is.True,
+            "Dispose did not request capture shutdown.");
+
+        continueStart.Set();
+        var completedBeforeCleanup = await Task.WhenAny(
+            disposeTask,
+            Task.Delay(TimeSpan.FromSeconds(2))) == disposeTask;
+
+        if (!completedBeforeCleanup)
+        {
+            // Let the buggy implementation exit so the regression test itself does not leak a
+            // capture thread after recording the failed assertion.
+            recorder.StopRecording();
+            await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(2)));
+        }
+
+        Assert.That(completedBeforeCleanup, Is.True,
+            "Dispose hung because the capture thread overwrote Stopping with Capturing.");
+    }
+
+    [Test]
+    public async Task RecorderStopDuringAsyncStartCompletesEnumeration()
+    {
+        using var startEntered = new ManualResetEventSlim();
+        using var continueStart = new ManualResetEventSlim();
+        using var client = new FakeCaptureClient(Array.Empty<byte>(), frames: 0, default);
+        var recorder = CreateRecorder(new FakeAudioClient
+        {
+            StartEntered = startEntered,
+            ContinueStart = continueStart
+        }, client);
+        await using var enumerator = recorder.CaptureAsync().GetAsyncEnumerator();
+
+        var moveNextTask = Task.Run(async () => await enumerator.MoveNextAsync());
+        Assert.That(startEntered.Wait(TimeSpan.FromSeconds(2)), Is.True,
+            "Async capture did not enter IAudioClient.Start().");
+
+        recorder.StopRecording();
+        continueStart.Set();
+        var completedBeforeCleanup = await Task.WhenAny(
+            moveNextTask,
+            Task.Delay(TimeSpan.FromSeconds(2))) == moveNextTask;
+
+        if (!completedBeforeCleanup)
+        {
+            recorder.StopRecording();
+            await Task.WhenAny(moveNextTask, Task.Delay(TimeSpan.FromSeconds(2)));
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(completedBeforeCleanup, Is.True,
+                "CaptureAsync ignored the stop requested while IAudioClient.Start was in progress.");
+            Assert.That(moveNextTask.IsCompletedSuccessfully, Is.True);
+            Assert.That(moveNextTask.Result, Is.False);
+        });
+
+        await recorder.DisposeAsync();
+    }
+
+    [Test]
+    public async Task RecorderDisposeDuringAsyncCaptureDoesNotReleaseResourcesEarly()
+    {
+        using var capture = new FakeCaptureClient(Array.Empty<byte>(), frames: 0, default);
+        var recorder = CreateRecorder(new FakeAudioClient(), capture,
+            useEventSync: false, bufferMilliseconds: 500);
+        await using var enumerator = recorder.CaptureAsync().GetAsyncEnumerator();
+
+        var moveNextTask = enumerator.MoveNextAsync().AsTask();
+        Assert.That(SpinWait.SpinUntil(
+                () => recorder.CaptureState == CaptureState.Capturing,
+                TimeSpan.FromSeconds(2)),
+            Is.True,
+            "Async capture did not enter the capture loop.");
+
+        recorder.Dispose();
+
+        Assert.That(await moveNextTask.WaitAsync(TimeSpan.FromSeconds(2)), Is.False);
+    }
+
+    [Test]
+    public async Task RecorderDisposeAsyncDuringAsyncCaptureWaitsForSafeShutdown()
+    {
+        using var capture = new FakeCaptureClient(Array.Empty<byte>(), frames: 0, default);
+        var recorder = CreateRecorder(new FakeAudioClient(), capture,
+            useEventSync: false, bufferMilliseconds: 500);
+        await using var enumerator = recorder.CaptureAsync().GetAsyncEnumerator();
+
+        var moveNextTask = enumerator.MoveNextAsync().AsTask();
+        Assert.That(SpinWait.SpinUntil(
+                () => recorder.CaptureState == CaptureState.Capturing,
+                TimeSpan.FromSeconds(2)),
+            Is.True,
+            "Async capture did not enter the capture loop.");
+
+        var disposeTask = recorder.DisposeAsync().AsTask();
+
+        Assert.That(await moveNextTask.WaitAsync(TimeSpan.FromSeconds(2)), Is.False);
+        await disposeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [Test]
+    public async Task RecorderDisposeAsyncWhileIteratorIsYieldingDoesNotDeadlock()
+    {
+        using var capture = new FakeCaptureClient(new byte[] { 1, 2, 3, 4 },
+            frames: 1, default);
+        var recorder = CreateRecorder(new FakeAudioClient(), capture,
+            useEventSync: false, bufferMilliseconds: 1);
+        await using var enumerator = recorder.CaptureAsync().GetAsyncEnumerator();
+
+        Assert.That(await enumerator.MoveNextAsync(), Is.True);
+
+        await recorder.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.That(await enumerator.MoveNextAsync(), Is.False);
+    }
+
+    [Test]
     public async Task RecorderAsyncInitializationFailureRestoresStoppedState()
     {
         using var recorder = CreateRecorder(new FakeAudioClient { InitializeResult = EFail });
@@ -117,6 +254,37 @@ public class WasapiRecorderCaptureTests
             Assert.That(packet.BufferFlags.HasFlag(AudioClientBufferFlags.DataDiscontinuity), Is.True);
             Assert.That(capture.TotalPacketCount, Is.EqualTo(1));
             Assert.That(capture.SilentPacketCount, Is.EqualTo(1));
+        });
+#pragma warning restore CS0618
+    }
+
+    [Test]
+    public void LegacyCaptureDoesNotReviveAfterStopRequestedBeforeWorkerStarts()
+    {
+        using var client = new AudioClient(new FakeAudioClient());
+#pragma warning disable CS0618 // This test protects the legacy WasapiCapture lifecycle.
+        using var capture = new WasapiCapture(client, useEventSync: false,
+            audioBufferMillisecondsLength: 1, isProcessLoopback: false);
+        var type = typeof(WasapiCapture);
+        var stateField = type.GetField("captureState",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var tryTransition = type.GetMethod("TryTransitionToCapturing",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(stateField, Is.Not.Null);
+            Assert.That(tryTransition, Is.Not.Null);
+        });
+
+        stateField.SetValue(capture, CaptureState.Starting);
+        capture.StopRecording();
+        var transitioned = (bool)tryTransition.Invoke(capture, null)!;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(transitioned, Is.False);
+            Assert.That(capture.CaptureState, Is.EqualTo(CaptureState.Stopping));
         });
 #pragma warning restore CS0618
     }
@@ -208,13 +376,14 @@ public class WasapiRecorderCaptureTests
     }
 
     private static WasapiRecorder CreateRecorder(FakeAudioClient client,
-        FakeCaptureClient capture = null)
+        FakeCaptureClient capture = null, bool useEventSync = true,
+        int bufferMilliseconds = 1)
     {
         var audioClient = capture == null
             ? new AudioClient(client)
             : new AudioClient(client, capture);
-        return new WasapiRecorder(audioClient, useEventSync: true,
-            bufferMilliseconds: 1, Format, mmcssTaskName: null);
+        return new WasapiRecorder(audioClient, useEventSync,
+            bufferMilliseconds, Format, mmcssTaskName: null);
     }
 
     private sealed class FakeAudioClient : IAudioClient
@@ -234,7 +403,15 @@ public class WasapiRecorderCaptureTests
         public int GetMixFormat(out IntPtr deviceFormatPointer) { deviceFormatPointer = IntPtr.Zero; return EFail; }
         public int GetDevicePeriod(out long defaultDevicePeriod, out long minimumDevicePeriod)
         { defaultDevicePeriod = 0; minimumDevicePeriod = 0; return 0; }
-        public int Start() => 0;
+        public ManualResetEventSlim StartEntered { get; init; }
+        public ManualResetEventSlim ContinueStart { get; init; }
+
+        public int Start()
+        {
+            StartEntered?.Set();
+            ContinueStart?.Wait();
+            return 0;
+        }
         public int Stop() => 0;
         public int Reset() => 0;
         public int SetEventHandle(IntPtr eventHandle) => 0;

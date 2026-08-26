@@ -14,6 +14,7 @@ public class WaveIn : IWaveIn, IWaveLatency
 {
     private AutoResetEvent callbackEvent;
     private readonly SynchronizationContext syncContext;
+    private readonly object captureStateLock = new();
     private IntPtr waveInHandle;
     private volatile CaptureState captureState;
     private WaveInBuffer[] buffers;
@@ -109,28 +110,34 @@ public class WaveIn : IWaveIn, IWaveLatency
     /// </summary>
     public void StartRecording()
     {
-        if (captureState != CaptureState.Stopped)
-            throw new InvalidOperationException("Already recording");
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                throw new InvalidOperationException("Already recording");
+        }
         WaitForCaptureThread();
         OpenWaveInDevice();
-        MmException.Try(WaveInterop.waveInStart(waveInHandle), "waveInStart");
-        captureState = CaptureState.Starting;
-        var thread = new Thread(RecordThread)
-        {
-            IsBackground = true,
-            Name = "NAudio WaveIn Recording",
-            Priority = ThreadPriority.AboveNormal
-        };
-        captureThread = thread;
+        TransitionToStarting();
+        Thread thread = null;
         try
         {
+            MmException.Try(WaveInterop.waveInStart(waveInHandle), "waveInStart");
+            thread = new Thread(RecordThread)
+            {
+                IsBackground = true,
+                Name = "NAudio WaveIn Recording",
+                Priority = ThreadPriority.AboveNormal
+            };
+            captureThread = thread;
             thread.Start();
         }
         catch
         {
-            Interlocked.CompareExchange(ref captureThread, null, thread);
-            captureState = CaptureState.Stopped;
-            WaveInterop.waveInReset(waveInHandle);
+            if (thread != null)
+                Interlocked.CompareExchange(ref captureThread, null, thread);
+            TransitionToStopped();
+            if (waveInHandle != IntPtr.Zero)
+                WaveInterop.waveInReset(waveInHandle);
             throw;
         }
     }
@@ -148,7 +155,7 @@ public class WaveIn : IWaveIn, IWaveLatency
         }
         finally
         {
-            captureState = CaptureState.Stopped;
+            TransitionToStopped();
             try
             {
                 RaiseRecordingStoppedEvent(exception);
@@ -164,7 +171,8 @@ public class WaveIn : IWaveIn, IWaveLatency
 
     private void DoRecording()
     {
-        captureState = CaptureState.Capturing;
+        if (!TryTransitionToCapturing())
+            return;
         foreach (var buffer in buffers)
         {
             if (!buffer.InQueue)
@@ -218,16 +226,19 @@ public class WaveIn : IWaveIn, IWaveLatency
     /// </summary>
     public void StopRecording()
     {
-        if (captureState != CaptureState.Stopped)
+        lock (captureStateLock)
         {
+            if (captureState == CaptureState.Stopped)
+                return;
             captureState = CaptureState.Stopping;
-            MmException.Try(WaveInterop.waveInStop(waveInHandle), "waveInStop");
-
-            //Reset, triggering the buffers to be returned
-            MmException.Try(WaveInterop.waveInReset(waveInHandle), "waveInReset");
-
-            callbackEvent.Set(); // signal the thread to exit
         }
+
+        MmException.Try(WaveInterop.waveInStop(waveInHandle), "waveInStop");
+
+        //Reset, triggering the buffers to be returned
+        MmException.Try(WaveInterop.waveInReset(waveInHandle), "waveInReset");
+
+        callbackEvent.Set(); // signal the thread to exit
     }
 
     /// <summary>
@@ -314,6 +325,33 @@ public class WaveIn : IWaveIn, IWaveLatency
         CloseWaveInDevice();
         callbackEvent?.Dispose();
         callbackEvent = null;
+    }
+
+    private void TransitionToStarting()
+    {
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                throw new InvalidOperationException("Already recording");
+            captureState = CaptureState.Starting;
+        }
+    }
+
+    private bool TryTransitionToCapturing()
+    {
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Starting)
+                return false;
+            captureState = CaptureState.Capturing;
+            return true;
+        }
+    }
+
+    private void TransitionToStopped()
+    {
+        lock (captureStateLock)
+            captureState = CaptureState.Stopped;
     }
 
     private void CloseWaveInDevice()

@@ -291,11 +291,11 @@ public class WaveFileReaderTests
     // Regression: a fmt chunk can declare more extra (cbSize) bytes than NAudio's fixed
     // 100-byte buffer. The reader used to throw ArgumentException; it must now discard the
     // surplus and carry on reading the rest of the file. See issue #482.
-    [Test]
+    [TestCase(200)]
+    [TestCase(40000)]
     [Category("UnitTest")]
-    public void OversizedFmtExtraDataIsDiscardedNotThrown()
+    public void OversizedFmtExtraDataIsDiscardedNotThrown(int extraSize)
     {
-        const int extraSize = 200; // larger than WaveFormatExtraData's 100-byte buffer
         var audio = new byte[] { 1, 0, 2, 0, 3, 0, 4, 0 };
 
         using var ms = new MemoryStream();
@@ -313,7 +313,7 @@ public class WaveFileReaderTests
             w.Write(64000);               // average bytes per second
             w.Write((short)4);            // block align
             w.Write((short)16);           // bits per sample
-            w.Write((short)extraSize);    // cbSize
+            w.Write(unchecked((short)extraSize)); // cbSize is an unsigned 16-bit field on disk
             w.Write(new byte[extraSize]); // oversized extra data
 
             w.Write(Encoding.ASCII.GetBytes("data"));

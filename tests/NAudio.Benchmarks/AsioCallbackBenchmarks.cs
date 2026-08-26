@@ -69,12 +69,12 @@ public class AsioCallbackBenchmarks
             // Seed the input pinned bytes with random samples in the right format so the converter has real work.
             if (Format == AsioSampleType.Float32LSB)
             {
-                var floats = MemoryMarshal.Cast<byte, float>(inputNativePinned[c]);
+                var floats = MemoryMarshal.Cast<byte, float>(inputNativePinned[c].AsSpan());
                 for (int i = 0; i < Frames; i++) floats[i] = (float)(rng.NextDouble() * 2 - 1);
             }
             else if (Format == AsioSampleType.Int32LSB)
             {
-                var ints = MemoryMarshal.Cast<byte, int>(inputNativePinned[c]);
+                var ints = MemoryMarshal.Cast<byte, int>(inputNativePinned[c].AsSpan());
                 for (int i = 0; i < Frames; i++) ints[i] = rng.Next(int.MinValue, int.MaxValue);
             }
         }

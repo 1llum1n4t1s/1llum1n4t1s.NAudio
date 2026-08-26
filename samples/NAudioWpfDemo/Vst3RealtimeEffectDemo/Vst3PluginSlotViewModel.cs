@@ -51,7 +51,7 @@ internal class Vst3PluginSlotViewModel : ViewModelBase, IDisposable
         set
         {
             bypass = value;
-            if (liveSlot != null) liveSlot.Bypass = value;
+            liveSlot?.Bypass = value;
             OnPropertyChanged(nameof(Bypass));
         }
     }

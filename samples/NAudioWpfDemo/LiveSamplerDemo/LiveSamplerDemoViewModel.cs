@@ -118,7 +118,7 @@ internal class LiveSamplerDemoViewModel : ViewModelBase, IDisposable
             masterVolumeDb = value;
             OnPropertyChanged(nameof(MasterVolumeDb));
             OnPropertyChanged(nameof(MasterVolumeText));
-            if (sampler != null) sampler.MasterGain = GainFromDb(value);
+            sampler?.MasterGain = GainFromDb(value);
         }
     }
 

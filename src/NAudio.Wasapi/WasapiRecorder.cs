@@ -38,8 +38,10 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     private AudioClient audioClient;
     private int bytesPerFrame;
     private readonly WaveFormat waveFormat;
+    private readonly object captureStateLock = new();
     private volatile CaptureState captureState;
     private Thread captureThread;
+    private TaskCompletionSource<object> asyncCaptureCompletion;
     private EventWaitHandle frameEvent;
     private byte[] silenceBuffer = Array.Empty<byte>();
     private bool isDisposed;
@@ -237,10 +239,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     /// </summary>
     public void StartRecording()
     {
-        if (captureState != CaptureState.Stopped)
-            throw new InvalidOperationException("Already recording");
-
-        captureState = CaptureState.Starting;
+        TransitionToStarting();
         try
         {
             InitializeAudioClient();
@@ -251,7 +250,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
         {
             captureThread = null;
             SafeStopAndReset();
-            captureState = CaptureState.Stopped;
+            TransitionToStopped();
             throw;
         }
     }
@@ -261,8 +260,11 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     /// </summary>
     public void StopRecording()
     {
-        if (captureState != CaptureState.Stopped)
-            captureState = CaptureState.Stopping;
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                captureState = CaptureState.Stopping;
+        }
     }
 
     /// <summary>
@@ -273,10 +275,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     public async IAsyncEnumerable<AudioBuffer> CaptureAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (captureState != CaptureState.Stopped)
-            throw new InvalidOperationException("Already recording");
-
-        captureState = CaptureState.Starting;
+        var completion = TransitionToAsyncStarting();
 
         IntPtr mmcssHandle = IntPtr.Zero;
         try
@@ -292,7 +291,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             bytesPerFrame = waveFormat.BlockAlign;
             var capture = audioClient.AudioCaptureClient;
             audioClient.Start();
-            captureState = CaptureState.Capturing;
+            TryTransitionToCapturing();
 
             while (!cancellationToken.IsCancellationRequested && captureState == CaptureState.Capturing)
             {
@@ -305,6 +304,9 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
                 {
                     await Task.Delay(bufferMilliseconds / 2, cancellationToken);
                 }
+
+                if (captureState != CaptureState.Capturing)
+                    break;
 
                 // Read all available packets using IntPtr API (ref struct can't cross yield)
                 int packetSize = capture.GetNextPacketSize();
@@ -335,7 +337,18 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
                     // GetBuffer lease. Holding it across yield risks packet loss and violates the
                     // requirement to release within the same engine processing period.
                     if (hasPacket)
+                    {
+                        // Yield is a resource-safe suspension point: no native lease is held, and
+                        // a disposal request can release the client without waiting for the caller
+                        // to ask the iterator for another item.
+                        CompleteAsyncCapture(completion);
+                        completion = null;
                         yield return packet;
+
+                        completion = TryResumeAsyncCapture();
+                        if (completion == null || cancellationToken.IsCancellationRequested)
+                            yield break;
+                    }
 
                     packetSize = capture.GetNextPacketSize();
                 }
@@ -346,9 +359,10 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             // See SafeStopAndReset: the device may have gone away mid-capture, so cleanup must not
             // throw and mask the real exception flowing out of the iterator to the caller.
             SafeStopAndReset();
-            captureState = CaptureState.Stopped;
+            TransitionToStopped();
             if (mmcssHandle != IntPtr.Zero)
                 NativeMethods.AvRevertMmThreadCharacteristics(mmcssHandle);
+            CompleteAsyncCapture(completion);
         }
     }
 
@@ -548,7 +562,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             var capture = audioClient.AudioCaptureClient;
 
             audioClient.Start();
-            captureState = CaptureState.Capturing;
+            TryTransitionToCapturing();
 
             int waitMilliseconds = isUsingEventSync
                 ? 3 * bufferMilliseconds
@@ -578,7 +592,7 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
             // or, worse, throw an unhandled exception on the capture thread and tear down the whole
             // process — RecordingStopped must always fire so callers can recover (issue #672).
             SafeStopAndReset();
-            captureState = CaptureState.Stopped;
+            TransitionToStopped();
             if (mmcssHandle != IntPtr.Zero)
                 NativeMethods.AvRevertMmThreadCharacteristics(mmcssHandle);
             try
@@ -650,17 +664,15 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     /// </summary>
     public void Dispose()
     {
-        if (isDisposed)
+        if (!TryBeginDispose(out var thread, out var asyncCaptureTask))
             return;
 
-        isDisposed = true;
         GC.SuppressFinalize(this);
-        StopRecording();
-        var thread = captureThread;
         if (thread == Thread.CurrentThread)
             return;
         thread?.Join();
-        DisposeResources();
+        if (thread != null || asyncCaptureTask == null)
+            DisposeResources();
     }
 
     /// <summary>
@@ -668,17 +680,16 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        if (isDisposed)
+        if (!TryBeginDispose(out var thread, out var asyncCaptureTask))
             return;
 
-        isDisposed = true;
         GC.SuppressFinalize(this);
-        StopRecording();
-        var thread = captureThread;
         if (thread == Thread.CurrentThread)
             return;
         if (thread != null)
             await Task.Run(thread.Join).ConfigureAwait(false);
+        else if (asyncCaptureTask != null)
+            await asyncCaptureTask.ConfigureAwait(false);
         DisposeResources();
     }
 
@@ -688,6 +699,100 @@ public class WasapiRecorder : IDisposable, IAsyncDisposable, IWaveLatency
         audioClient = null;
         frameEvent?.Dispose();
         frameEvent = null;
+    }
+
+    private void TransitionToStarting()
+    {
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                throw new InvalidOperationException("Already recording");
+            captureState = CaptureState.Starting;
+        }
+    }
+
+    private TaskCompletionSource<object> TransitionToAsyncStarting()
+    {
+        lock (captureStateLock)
+        {
+            if (captureState != CaptureState.Stopped)
+                throw new InvalidOperationException("Already recording");
+            captureState = CaptureState.Starting;
+            asyncCaptureCompletion = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            return asyncCaptureCompletion;
+        }
+    }
+
+    private TaskCompletionSource<object> TryResumeAsyncCapture()
+    {
+        lock (captureStateLock)
+        {
+            if (isDisposed || captureState != CaptureState.Capturing)
+                return null;
+            asyncCaptureCompletion = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            return asyncCaptureCompletion;
+        }
+    }
+
+    private void TryTransitionToCapturing()
+    {
+        lock (captureStateLock)
+        {
+            // StopRecording may run after StartRecording has spawned the worker but before
+            // IAudioClient.Start returns. Preserve that stop request instead of reviving capture.
+            if (captureState == CaptureState.Starting)
+                captureState = CaptureState.Capturing;
+        }
+    }
+
+    private void TransitionToStopped()
+    {
+        lock (captureStateLock)
+            captureState = CaptureState.Stopped;
+    }
+
+    private void CompleteAsyncCapture(TaskCompletionSource<object> completion)
+    {
+        if (completion == null)
+            return;
+
+        bool disposeResources;
+        lock (captureStateLock)
+        {
+            if (ReferenceEquals(asyncCaptureCompletion, completion))
+                asyncCaptureCompletion = null;
+            disposeResources = isDisposed;
+        }
+
+        try
+        {
+            if (disposeResources)
+                DisposeResources();
+        }
+        finally
+        {
+            completion.TrySetResult(null);
+        }
+    }
+
+    private bool TryBeginDispose(out Thread thread, out Task asyncCaptureTask)
+    {
+        lock (captureStateLock)
+        {
+            thread = null;
+            asyncCaptureTask = null;
+            if (isDisposed)
+                return false;
+
+            isDisposed = true;
+            if (captureState != CaptureState.Stopped)
+                captureState = CaptureState.Stopping;
+            thread = captureThread;
+            asyncCaptureTask = asyncCaptureCompletion?.Task;
+            return true;
+        }
     }
 }
 
