@@ -2,7 +2,7 @@
 
 [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Asio)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Asio/)
 
-ASIO driver support for [NAudio](https://github.com/naudio/NAudio). Windows-only (`net9.0-windows`).
+ASIO driver support for [NAudio](https://github.com/naudio/NAudio). Windows-only (`net10.0-windows`).
 
 ## What's included
 

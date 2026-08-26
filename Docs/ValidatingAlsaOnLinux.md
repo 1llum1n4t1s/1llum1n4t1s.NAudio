@@ -17,7 +17,7 @@ Inside the Ubuntu shell:
 ```bash
 sudo apt update
 # Ubuntu 24.04 "noble" (the current WSL2 default):
-sudo apt install -y dotnet-sdk-9.0 libasound2t64 libasound2-plugins alsa-utils
+sudo apt install -y dotnet-sdk-10.0 libasound2t64 libasound2-plugins alsa-utils
 # Older Ubuntu / Debian: the package is libasound2 (not -t64)
 ```
 

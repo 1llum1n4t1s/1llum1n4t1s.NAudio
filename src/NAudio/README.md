@@ -6,7 +6,7 @@
 
 This is the main 1llum1n4t1s.NAudio meta-package. Installing it pulls in everything you need to play, record and manipulate audio on .NET, and adds `AudioFileReader` — the one-line "just open this audio file" reader that picks the right decoder for you — along with `Mp3FileReader`.
 
-Requires `net9.0` or later. If you need .NET Framework or .NET Standard 2.0, use NAudio 2.x.
+Requires `net10.0` or later. If you need .NET Framework or .NET Standard 2.0, use NAudio 2.x.
 
 ## What it pulls in
 

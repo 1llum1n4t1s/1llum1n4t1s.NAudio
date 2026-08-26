@@ -1,13 +1,13 @@
 # Migrating from NAudio 2 to NAudio 3
 
 NAudio 3 is a major release. The single `NAudio` assembly has been split into
-focused packages, the minimum target framework is now `net9.0`, the core is
+focused packages, the minimum target framework is now `net10.0`, the core is
 cross-platform and Native-AOT compatible, and several APIs have been modernised.
 This guide walks through the breaking changes and how to update your code.
 
 Most applications that reference the `NAudio` meta-package and use the common
 playback/recording/file APIs will need only small changes — usually just
-re-targeting to `net9.0` and adjusting any custom `IWaveProvider` /
+re-targeting to `net10.0` and adjusting any custom `IWaveProvider` /
 `ISampleProvider` implementations to the new `Span<T>` `Read` signature.
 
 > Tip: build with warnings visible. Removed members fail to compile, and almost
@@ -18,7 +18,7 @@ re-targeting to `net9.0` and adjusting any custom `IWaveProvider` /
 
 For a typical NAudio 2 app, these five are what you will actually hit:
 
-1. **Re-target to `net9.0`** (or later).
+1. **Re-target to `net10.0`** (or later).
 2. **`WaveOutEvent` is now called `WaveOut`**, and `WaveInEvent` is now `WaveIn`. The old
    names still work as `[Obsolete]` subclasses, so this is a warning, not a break.
 3. **`WaveOut.DesiredLatency` is gone** — use `BufferMilliseconds`, which sizes each
@@ -32,8 +32,8 @@ Everything else is detailed below.
 
 ## Target framework and packages
 
-- **Minimum target framework is now `net9.0`.** Legacy .NET Framework and .NET
-  Standard 2.0 are no longer supported. Re-target your project to `net9.0` (or
+- **Minimum target framework is now `net10.0`.** Legacy .NET Framework and .NET
+  Standard 2.0 are no longer supported. Re-target your project to `net10.0` (or
   later) before upgrading the package.
 - **`NAudio` is now a set of focused packages.** The shipping libraries are
   `NAudio.Core`, `NAudio.Midi`, `NAudio.WinMM`, `NAudio.Wasapi`, `NAudio.Asio`,
@@ -264,7 +264,7 @@ player.Init(new SampleToWaveProvider16(sampleProvider));
 
 - **`MidiIn`, `MidiOut`, `MidiInCapabilities` and `MidiOutCapabilities` moved
   from `NAudio.Midi` to `NAudio.WinMM`.** `NAudio.Midi` is now cross-platform —
-  its `net9.0` target no longer P/Invokes `winmm.dll`. If you use the classic
+  its `net10.0` target no longer P/Invokes `winmm.dll`. If you use the classic
   Windows MIDI I/O classes, add a reference to `NAudio.WinMM` (the `NAudio`
   meta-package already includes it).
 - **`MmResult`, `MmException` and `Manufacturers` moved from `NAudio.Core` to

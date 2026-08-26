@@ -40,11 +40,11 @@ be driven) use one of:
 
 ```bash
 # Trim publish — fastest, no MSVC required
-dotnet publish NAudioAotSmokeTest/NAudioAotSmokeTest.csproj -c Release -p:PublishAot=false -p:PublishTrimmed=true
+dotnet publish tests/NAudioAotSmokeTest/NAudioAotSmokeTest.csproj -c Release -p:PublishAot=false -p:PublishTrimmed=true
 
 # Native AOT publish — needs MSVC link.exe on PATH (a Visual Studio
 # Developer Command Prompt is the easiest way to get this)
-dotnet publish NAudioAotSmokeTest/NAudioAotSmokeTest.csproj -c Release
+dotnet publish tests/NAudioAotSmokeTest/NAudioAotSmokeTest.csproj -c Release
 ```
 
 Then run the produced `NAudioAotSmokeTest.exe` from the publish directory.

@@ -2,7 +2,7 @@
 
 [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Core)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Core/)
 
-The cross-platform core of [NAudio](https://github.com/naudio/NAudio). Contains everything that is independent of the underlying audio API, so it targets plain `net9.0` and can be used on Windows, Linux, and macOS.
+The cross-platform core of [NAudio](https://github.com/naudio/NAudio). Contains everything that is independent of the underlying audio API, so it targets plain `net10.0` and can be used on Windows, Linux, and macOS.
 
 ## What's included
 

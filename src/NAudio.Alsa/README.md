@@ -26,7 +26,7 @@ sudo apt install libasound2     # older Debian/Ubuntu
 ```
 
 This package is **not** pulled in by the `NAudio` meta-package (there is
-no `net9.0-linux` TFM). Reference it explicitly:
+no `net10.0-linux` TFM). Reference it explicitly:
 
 ```sh
 dotnet add package NAudio.Alsa

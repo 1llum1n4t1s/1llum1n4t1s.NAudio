@@ -2,7 +2,7 @@
 
 [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.WinMM)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.WinMM/)
 
-Windows Multimedia (WinMM / `winmm.dll`) bindings for [NAudio](https://github.com/naudio/NAudio). Windows-only (`net9.0-windows`).
+Windows Multimedia (WinMM / `winmm.dll`) bindings for [NAudio](https://github.com/naudio/NAudio). Windows-only (`net10.0-windows`).
 
 ## What's included
 

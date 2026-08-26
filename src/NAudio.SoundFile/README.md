@@ -18,7 +18,7 @@ Foundation off Windows).
 
 ## Platform
 
-Truly cross-platform — `net9.0`, no `[SupportedOSPlatform]`. It
+Truly cross-platform — `net10.0`, no `[SupportedOSPlatform]`. It
 P/Invokes a **system libsndfile**, resolved automatically per OS
 (`libsndfile.so.1` / `libsndfile.1.dylib` / `sndfile.dll` /
 `libsndfile-1.dll`). You must provide it:

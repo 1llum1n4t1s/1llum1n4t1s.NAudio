@@ -4,7 +4,7 @@ NAudio ships two MIDI backends on Windows. Both implement the same `IMidiInput` 
 
 | Backend | Package | Class | Notes |
 | --- | --- | --- | --- |
-| WinRT (`Windows.Devices.Midi`) | `NAudio.Midi` (Windows build) | `WinRTMidiIn`, `WinRTMidiOut` | Recommended. Async device enumeration, full `TimeSpan` timestamp resolution. Ships in `NAudio.Midi`'s `net9.0-windows10.0.19041.0` target, so requires that TFM or later. |
+| WinRT (`Windows.Devices.Midi`) | `NAudio.Midi` (Windows build) | `WinRTMidiIn`, `WinRTMidiOut` | Recommended. Async device enumeration, full `TimeSpan` timestamp resolution. Ships in `NAudio.Midi`'s `net10.0-windows10.0.19041.0` target, so requires that TFM or later. |
 | Legacy winmm (`midiIn*` / `midiOut*`) | `NAudio.WinMM` | `MidiIn`, `MidiOut` | Synchronous, index-based device enumeration. Timestamps are millisecond-resolution. Also fires an `ErrorReceived` event for malformed messages. |
 
 Application code can be backend-agnostic by referencing only the interfaces:

@@ -2,7 +2,7 @@
 
 [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Wasapi)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Wasapi/)
 
-WASAPI and Media Foundation support for [NAudio](https://github.com/naudio/NAudio). Targets `net9.0` and is Windows-only at runtime (guarded by `[SupportedOSPlatform("windows")]`), so cross-platform apps can reference it and build on any OS without `EnableWindowsTargeting`. Live WinRT MIDI moved to the [NAudio.Midi](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Midi/) package.
+WASAPI and Media Foundation support for [NAudio](https://github.com/naudio/NAudio). Targets `net10.0` and is Windows-only at runtime (guarded by `[SupportedOSPlatform("windows")]`), so cross-platform apps can reference it and build on any OS without `EnableWindowsTargeting`. Live WinRT MIDI moved to the [NAudio.Midi](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Midi/) package.
 
 ## What's included
 

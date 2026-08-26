@@ -20,7 +20,7 @@ Native AOT検証、`docfx/` と `Docs/` は公開documentationを担います。
 | --- | --- |
 | `NAudio.Core` | provider interface、wave format、managed file reader/writer、DSP、effects、SF2/SFZ parser |
 | `NAudio.Midi` | MIDI file/event model。Windows legだけWinRT MIDI I/Oを追加 |
-| `NAudio.Wasapi` | WASAPI、Core Audio、Media Foundation、Process Loopback。compile時は`net9.0`、実行時はWindows限定 |
+| `NAudio.Wasapi` | WASAPI、Core Audio、Media Foundation、Process Loopback。compile時は`net10.0`、実行時はWindows限定 |
 | `NAudio.WinMM` | WaveOut/WaveIn、ACM、mixer、legacy MIDI |
 | `NAudio.Dmo` | DMO、DirectSound、Windows codec/resampler |
 | `NAudio.Asio` | ASIO playback/capture |
@@ -54,11 +54,11 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 
 - 13個のshipping packageはroot [Directory.Build.props](Directory.Build.props) の`VersionPrefix`を共有し、
   packageごとのversionを持ちません。sample/tool appの独立versionはこの規則の対象外です。
-- `NAudio.Core`は`net9.0`のcross-platform基盤です。OS固有device APIをCoreへ持ち込みません。
-- `NAudio`と`NAudio.Extras`の`net9.0` / `net9.0-windows` /
-  `net9.0-windows10.0.19041.0`の3 legを維持します。plain Windows TFM consumerをportable assetへ
+- `NAudio.Core`は`net10.0`のcross-platform基盤です。OS固有device APIをCoreへ持ち込みません。
+- `NAudio`と`NAudio.Extras`の`net10.0` / `net10.0-windows` /
+  `net10.0-windows10.0.19041.0`の3 legを維持します。plain Windows TFM consumerをportable assetへ
   誤fallbackさせず、versioned legではWinRT MIDIを提供するためです。
-- `NAudio.Wasapi`はsource-generated COMとP/Invokeでcompileできるため`net9.0`を使用し、
+- `NAudio.Wasapi`はsource-generated COMとP/Invokeでcompileできるため`net10.0`を使用し、
   `[SupportedOSPlatform("windows")]`でruntime境界を表します。
 - Process LoopbackはWindows 10 build 19041以降がruntime要件です。include/exclude modeのnative値、
   cancellation、HRESULT変換とCOM ownershipをmanaged/native境界で変えません。

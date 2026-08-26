@@ -3,21 +3,21 @@
     <!-- During docs generation (DocsBuild=true) collapse to a single TFM: DocFX
          cannot read a multi-targeted project, and this one is pulled in both directly
          (it owns AudioFileReader and Mp3FileReader) and transitively via NAudio.Extras.
-         Collapse to the *Windows* leg rather than net9.0, because that is the superset:
+         Collapse to the *Windows* leg rather than net10.0, because that is the superset:
          Mp3FileReader only exists under WINDOWS, and AudioFileReader's Media Foundation
-         fallback is similarly gated, so documenting the net9.0 leg would silently drop
+         fallback is similarly gated, so documenting the net10.0 leg would silently drop
          them. The Windows backends themselves are documented from their own projects. -->
     <!-- Three legs, because NuGet only hands a consumer an asset whose target platform
          *version* is <= its own. A default `netX.0-windows` project (the WinForms/WPF
          template default) infers TargetPlatformVersion 7.0, so it cannot see a
-         `-windows10.0.19041.0` asset and silently falls back to the portable `net9.0`
+         `-windows10.0.19041.0` asset and silently falls back to the portable `net10.0`
          one — losing the entire Windows stack and compiling AudioFileReader without its
-         Media Foundation path (#1407). The plain `net9.0-windows` leg is what those
+         Media Foundation path (#1407). The plain `net10.0-windows` leg is what those
          consumers land on; it carries the same code and the same backend references as
          the 19041 leg. The 19041 leg is kept so consumers who do target it still resolve
          NAudio.Midi's WinRT MIDI asset, which is the only thing that needs the floor. -->
-    <TargetFrameworks Condition=" '$(DocsBuild)' != 'true' ">net9.0;net9.0-windows;net9.0-windows10.0.19041.0</TargetFrameworks>
-    <TargetFramework Condition=" '$(DocsBuild)' == 'true' ">net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetFrameworks Condition=" '$(DocsBuild)' != 'true' ">net10.0;net10.0-windows;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFramework Condition=" '$(DocsBuild)' == 'true' ">net10.0-windows10.0.19041.0</TargetFramework>
     <Authors>Mark Heath, Contributors, ゆろち</Authors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>NAudio is an open source .NET audio library — playback and recording, file readers and writers, MIDI, DSP and effects, with platform-specific backends auto-selected by target framework.</Description>
@@ -41,16 +41,16 @@
     <ProjectReference Include="..\NAudio.Dmo\NAudio.Dmo.csproj" />
     <ProjectReference Include="..\NAudio.WinMM\NAudio.WinMM.csproj" />
     <ProjectReference Include="..\NAudio.WinForms\NAudio.WinForms.csproj" />
-    <!-- NAudio.Wasapi is plain net9.0 (Windows-only at runtime via
+    <!-- NAudio.Wasapi is plain net10.0 (Windows-only at runtime via
          [SupportedOSPlatform]), so it imposes no version floor and just joins the
          other Windows backends. It's still gated to the Windows legs so the
          cross-platform surface doesn't expose Windows-only WASAPI/MF types.
-         Every backend referenced here targets net9.0 or net9.0-windows, so this
-         whole group resolves from the plain net9.0-windows leg too. -->
+         Every backend referenced here targets net10.0 or net10.0-windows, so this
+         whole group resolves from the plain net10.0-windows leg too. -->
     <ProjectReference Include="..\NAudio.Wasapi\NAudio.Wasapi.csproj" />
   </ItemGroup>
   <!-- WASAPI marks "Media Foundation codecs available" for AudioFileReader. It lights
-       up with either Windows leg (same as WINDOWS) — NAudio.Wasapi is plain net9.0, so
+       up with either Windows leg (same as WINDOWS) — NAudio.Wasapi is plain net10.0, so
        Media Foundation has no version floor of its own. -->
   <PropertyGroup Condition=" $(TargetFramework.Contains('-windows')) ">
     <DefineConstants>$(DefineConstants);WASAPI</DefineConstants>

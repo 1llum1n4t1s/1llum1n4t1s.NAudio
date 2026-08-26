@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Plain net9.0: the WASAPI/CoreAudio and Media Foundation layers are all
+    <!-- Plain net10.0: the WASAPI/CoreAudio and Media Foundation layers are all
          COM interop ([GeneratedComInterface]) and P/Invoke, which compile on any
          platform. Windows-only usage is enforced at runtime/analysis time by the
          assembly-level [SupportedOSPlatform("windows")] attribute below (the same
          model as NAudio.Alsa). This lets cross-platform apps reference the package
          and build on Linux/macOS without EnableWindowsTargeting. The WinRT MIDI
          backend, which needed the versioned Windows TFM, now lives in NAudio.Midi. -->
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

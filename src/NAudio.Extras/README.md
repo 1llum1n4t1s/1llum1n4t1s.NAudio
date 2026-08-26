@@ -2,7 +2,7 @@
 
 [![Nuget](https://img.shields.io/nuget/v/1llum1n4t1s.NAudio.Extras)](https://www.nuget.org/packages/1llum1n4t1s.NAudio.Extras/)
 
-Extra, opinionated helpers built on top of [NAudio](https://github.com/naudio/NAudio). Targets `net9.0` and `net9.0-windows10.0.19041.0`.
+Extra, opinionated helpers built on top of [NAudio](https://github.com/naudio/NAudio). Targets `net10.0`, `net10.0-windows`, and `net10.0-windows10.0.19041.0`.
 
 ## What's included
 

@@ -155,7 +155,7 @@ jobs:
       # ship the tool/sample apps. Tools (MixDiff, AudioFileInspector,
       # MidiFileConverter) keep their own <Version> in csproj but we never
       # publish them to NuGet. NAudio.Alsa and NAudio.SoundFile are the
-      # cross-platform backend/codec packages — net9.0 (no -windows TFM),
+      # cross-platform backend/codec packages — net10.0 (no -windows TFM),
       # so they build and pack fine on the windows-latest runner; their
       # *.Tests projects are IsPackable=false and excluded here.
       - name: Pack
