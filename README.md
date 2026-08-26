@@ -25,7 +25,7 @@ Process Loopback Capture と Native AOT 対応を強化したフォークです�
 
 | 用途 | 要件 |
 | --- | --- |
-| 共通 API / file・DSP・MIDI | .NET 9 以降 |
+| 共通 API / file・DSP・MIDI | .NET 10 以降 |
 | WASAPI / Media Foundation | Windows |
 | Process Loopback Capture | Windows 10 version 2004（build 19041）以降 |
 | このリポジトリでの Native AOT 検証 | Windows x64 / `win-x64` |
@@ -38,18 +38,18 @@ Linux では `1llum1n4t1s.NAudio.Alsa`、cross-platform file I/O では
 通常の Windows アプリでは、Windows backend 一式を参照する meta-package が簡単です。
 
 ```powershell
-dotnet add package 1llum1n4t1s.NAudio --version 4.0.0
+dotnet add package 1llum1n4t1s.NAudio --version 4.0.1
 ```
 
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="4.0.0" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="4.0.1" />
 ```
 
 Native AOT アプリでは必要な package だけを参照してください。Process Loopback と
 Media Foundation が目的なら `1llum1n4t1s.NAudio.Wasapi` が `NAudio.Core` を推移参照します。
 
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio.Wasapi" Version="4.0.0" />
+<PackageReference Include="1llum1n4t1s.NAudio.Wasapi" Version="4.0.1" />
 ```
 
 ## 再生
@@ -129,7 +129,7 @@ smoke test と同じ最小構成です。
 
 ```xml
 <PropertyGroup>
-  <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+  <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
   <PublishAot>true</PublishAot>
   <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
@@ -174,7 +174,7 @@ trim/AOT warning と配布サイズを抑えられます。
 ではありません。
 
 - 単一 assembly から複数 package / assembly へ分割されています
-- 最小 TFM は .NET 9 で、core package は Windows 以外でも利用できます
+- 最小 TFM は .NET 10 で、core package は Windows 以外でも利用できます
 - `IWaveProvider` / `ISampleProvider` など一部 API は Span ベースになっています
 - Process Loopback は `WasapiRecorderBuilder.BuildAsync` が推奨経路です
 - `includeProcessTree: true` は対象プロセスと子プロセスを含み、`false` は除外します

@@ -9,6 +9,20 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-08-26
+
+### Changed
+
+- 全shipping package、sample、test、CIの最小target frameworkを.NET 10へ統一しました。
+
+### Fixed
+
+- `WasapiRecorder` の開始処理中に停止・破棄すると、capture threadが停止要求を
+  `Capturing` で上書きして`Dispose` / `DisposeAsync`が完了しない競合を修正しました。
+- `WaveIn` と旧 `WasapiCapture` の開始直後に停止・破棄すると停止要求が上書きされる競合を修正しました。
+- `WasapiRecorder.CaptureAsync` の実行中に破棄するとWASAPI資源が早期解放される競合を修正しました。
+- 32,767 byteを超えるWAV `fmt`拡張データで後続chunkを正しく読めない問題を修正しました。
+
 ## [4.0.0] - 2026-08-26
 
 ### Added
@@ -114,5 +128,6 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.1...HEAD
+[4.0.1]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/71007e4fd85d2de6cccb3ededed9a02871c889b4...v4.0.0
