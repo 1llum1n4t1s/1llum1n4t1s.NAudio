@@ -24,11 +24,30 @@ public class WaveFormatConversionStream : WaveStream
     /// <param name="sourceStream">Source stream</param>
     public WaveFormatConversionStream(WaveFormat targetFormat, WaveStream sourceStream)
     {
+        ArgumentNullException.ThrowIfNull(targetFormat);
+        ArgumentNullException.ThrowIfNull(sourceStream);
+        ValidateFormatForPositionScaling(sourceStream.WaveFormat, "source");
+        ValidateFormatForPositionScaling(targetFormat, "target");
+
         this.sourceStream = sourceStream;
         this.targetFormat = targetFormat;
         conversionProvider = new WaveFormatConversionProvider(targetFormat, sourceStream);
-        length = EstimateSourceToDest((int)sourceStream.Length);
+        length = EstimateSourceToDest(sourceStream.Length);
         position = 0;
+    }
+
+    private static void ValidateFormatForPositionScaling(WaveFormat format, string role)
+    {
+        if (format.AverageBytesPerSecond <= 0)
+        {
+            throw new System.IO.InvalidDataException(
+                $"Invalid {role} wave format - average bytes per second is {format.AverageBytesPerSecond}.");
+        }
+        if (format.BlockAlign <= 0)
+        {
+            throw new System.IO.InvalidDataException(
+                $"Invalid {role} wave format - block align is {format.BlockAlign}.");
+        }
     }
 
     /// <summary>
@@ -90,7 +109,7 @@ public class WaveFormatConversionStream : WaveStream
     {
         var source = ((dest * sourceStream.WaveFormat.AverageBytesPerSecond) / targetFormat.AverageBytesPerSecond);
         source -= (source % sourceStream.WaveFormat.BlockAlign);
-        return (int)source;
+        return source;
     }
     /// <summary>
     /// Returns the stream length

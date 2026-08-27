@@ -3,6 +3,7 @@ using NUnit.Framework;
 using NAudio.Wave;
 using NAudio.Wave.Compression;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using NAudio.Tests.Shared;
 
@@ -135,6 +136,65 @@ public class WaveFormatConversionStreamTests
         {
             driver.Close();
         }
+    }
+
+    [Test]
+    public void LengthPreservesValuesBeyondInt32Range()
+    {
+        var sourceFormat = WaveFormat.CreateALawFormat(8000, 1);
+        var targetFormat = new WaveFormat(8000, 16, 1);
+        const long sourceLength = 3L * 1024 * 1024 * 1024;
+        using var inputStream = new NullWaveStream(sourceFormat, sourceLength);
+
+        using var stream = new WaveFormatConversionStream(targetFormat, inputStream);
+
+        Assert.That(stream.Length, Is.EqualTo(sourceLength * 2));
+    }
+
+    [Test]
+    public void PositionPreservesValuesBeyondInt32Range()
+    {
+        var sourceFormat = WaveFormat.CreateALawFormat(8000, 1);
+        var targetFormat = new WaveFormat(8000, 16, 1);
+        const long sourceLength = 3L * 1024 * 1024 * 1024;
+        const long targetPosition = 5L * 1024 * 1024 * 1024;
+        using var inputStream = new NullWaveStream(sourceFormat, sourceLength);
+        using var stream = new WaveFormatConversionStream(targetFormat, inputStream);
+
+        stream.Position = targetPosition;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(inputStream.Position, Is.EqualTo(targetPosition / 2));
+            Assert.That(stream.Position, Is.EqualTo(targetPosition));
+        });
+    }
+
+    [TestCase(false, 0, 1)]
+    [TestCase(false, 8000, 0)]
+    [TestCase(true, 0, 2)]
+    [TestCase(true, 16000, 0)]
+    public void RejectsFormatsThatCannotScalePositions(bool invalidTarget, int averageBytesPerSecond, int blockAlign)
+    {
+        var sourceFormat = WaveFormat.CreateALawFormat(8000, 1);
+        var targetFormat = new WaveFormat(8000, 16, 1);
+        var invalidFormat = WaveFormat.CreateCustomFormat(
+            invalidTarget ? WaveFormatEncoding.Pcm : WaveFormatEncoding.ALaw,
+            8000,
+            1,
+            averageBytesPerSecond,
+            blockAlign,
+            invalidTarget ? 16 : 8);
+        if (invalidTarget)
+            targetFormat = invalidFormat;
+        else
+            sourceFormat = invalidFormat;
+        using var inputStream = new NullWaveStream(sourceFormat, 1000);
+
+        Assert.Throws<InvalidDataException>(() =>
+        {
+            using var stream = new WaveFormatConversionStream(targetFormat, inputStream);
+        });
     }
 
     private void CanCreateConversionStream(WaveFormat inputFormat, WaveFormat outputFormat)

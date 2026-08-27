@@ -125,6 +125,63 @@ public class AudioFileReaderTests
         Assert.Throws<ArgumentException>(() => new AudioFileReader(unseekable));
     }
 
+    [TestCase(24)]
+    [TestCase(32)]
+    public void AudioFileReader_StreamConstructor_ExtensibleWaveMatchesFileConstructor(int bitsPerSample)
+    {
+        var wav = BuildExtensibleMonoWav(bitsPerSample);
+        var path = Path.Combine(Path.GetTempPath(), $"naudio-extensible-{bitsPerSample}-{Guid.NewGuid()}.wav");
+        File.WriteAllBytes(path, wav);
+        try
+        {
+            byte[] fromFile;
+            using (var fileReader = new AudioFileReader(path))
+                fromFile = ReadAllViaSpan(fileReader, 2048);
+
+            using var stream = new MemoryStream(wav);
+            using var streamReader = new AudioFileReader(stream);
+            var innerReader = typeof(AudioFileReader)
+                .GetField("readerStream", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.GetValue(streamReader);
+
+            Assert.That(innerReader, Is.TypeOf<WaveFileReader>());
+            Assert.That(ReadAllViaSpan(streamReader, 2048), Is.EqualTo(fromFile));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public void AudioFileReader_FileConstructorFailureReleasesOwnedWaveFile()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"naudio-unsupported-pcm-{Guid.NewGuid()}.wav");
+        try
+        {
+            File.WriteAllBytes(path, BuildUnsupported20BitPcmWav());
+
+            Assert.Throws<InvalidOperationException>(() => new AudioFileReader(path));
+            Assert.DoesNotThrow(() =>
+            {
+                using var reopened = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            });
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Test]
+    public void AudioFileReader_StreamConstructorFailureDoesNotDisposeCallerStream()
+    {
+        using var stream = new MemoryStream(BuildUnsupported20BitPcmWav());
+
+        Assert.Throws<InvalidOperationException>(() => new AudioFileReader(stream));
+        Assert.DoesNotThrow(() => { _ = stream.Length; });
+    }
+
     /// <summary>
     /// A read-only wrapper that reports CanSeek == false, to exercise the stream-constructor guard.
     /// </summary>
@@ -160,6 +217,32 @@ public class AudioFileReaderTests
             }
         }
         return ms.ToArray();
+    }
+
+    private static byte[] BuildExtensibleMonoWav(int bitsPerSample, int sampleCount = 256, int sampleRate = 44100)
+    {
+        WaveFormat format = bitsPerSample == 32
+            ? new WaveFormatExtensible(sampleRate, 32, 1)
+            : new WaveFormatExtensible(sampleRate, 24, 1);
+        var stream = new MemoryStream();
+        using (var writer = new WaveFileWriter(new IgnoreDisposeStream(stream), format))
+        {
+            for (int i = 0; i < sampleCount; i++)
+            {
+                writer.WriteSample((float)(Math.Sin(2 * Math.PI * 1000.0 * i / sampleRate) * 0.5));
+            }
+        }
+        return stream.ToArray();
+    }
+
+    private static byte[] BuildUnsupported20BitPcmWav()
+    {
+        var stream = new MemoryStream();
+        using (var writer = new WaveFileWriter(new IgnoreDisposeStream(stream), new WaveFormat(44100, 20, 1)))
+        {
+            writer.Write(new byte[16], 0, 16);
+        }
+        return stream.ToArray();
     }
 
     private static byte[] Build16BitMonoPcmRf64()

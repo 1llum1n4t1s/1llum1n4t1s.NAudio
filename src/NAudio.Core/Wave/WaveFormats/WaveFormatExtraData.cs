@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System;
 using System.IO;
 using System.Diagnostics;
 
@@ -52,6 +53,20 @@ public class WaveFormatExtraData : WaveFormat
         {
             ReadExactly(reader, extraData, extraDataLength);
             extraSize = (short)extraDataLength;
+        }
+    }
+
+    internal void ReadExtraData(IntPtr source, int extraDataLength)
+    {
+        if (extraDataLength > extraData.Length)
+        {
+            Debug.WriteLine($"Discarding {extraDataLength} bytes of native format extra data exceeding the {extraData.Length}-byte buffer");
+            extraSize = 0;
+            return;
+        }
+        if (extraDataLength > 0)
+        {
+            Marshal.Copy(source, extraData, 0, extraDataLength);
         }
     }
 

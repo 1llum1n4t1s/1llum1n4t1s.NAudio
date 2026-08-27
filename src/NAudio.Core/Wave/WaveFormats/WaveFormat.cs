@@ -171,7 +171,20 @@ public class WaveFormat
             default:
                 if (waveFormat.ExtraSize > 0)
                 {
-                    waveFormat = Marshal.PtrToStructure<WaveFormatExtraData>(pointer);
+                    var extraDataFormat = new WaveFormatExtraData
+                    {
+                        waveFormatTag = waveFormat.waveFormatTag,
+                        channels = waveFormat.channels,
+                        sampleRate = waveFormat.sampleRate,
+                        averageBytesPerSecond = waveFormat.averageBytesPerSecond,
+                        blockAlign = waveFormat.blockAlign,
+                        bitsPerSample = waveFormat.bitsPerSample,
+                        extraSize = waveFormat.extraSize,
+                    };
+                    extraDataFormat.ReadExtraData(
+                        IntPtr.Add(pointer, Marshal.SizeOf<WaveFormat>()),
+                        waveFormat.ExtraSize);
+                    waveFormat = extraDataFormat;
                 }
                 break;
         }

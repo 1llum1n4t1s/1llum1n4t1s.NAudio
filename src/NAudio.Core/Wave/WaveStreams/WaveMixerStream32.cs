@@ -58,30 +58,29 @@ public class WaveMixerStream32 : WaveStream
     /// <param name="waveStream">The wave input to add</param>
     public void AddInputStream(WaveStream waveStream)
     {
-        if (waveStream.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
+        ArgumentNullException.ThrowIfNull(waveStream);
+        var inputFormat = waveStream.WaveFormat;
+        if (inputFormat.Encoding != WaveFormatEncoding.IeeeFloat)
             throw new ArgumentException("Must be IEEE floating point", "waveStream");
-        if (waveStream.WaveFormat.BitsPerSample != 32)
+        if (inputFormat.BitsPerSample != 32)
             throw new ArgumentException("Only 32 bit audio currently supported", "waveStream");
-
-        if (inputStreams.Count == 0)
-        {
-            // first one - set the format
-            int sampleRate = waveStream.WaveFormat.SampleRate;
-            int channels = waveStream.WaveFormat.Channels;
-            waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, channels);
-        }
-        else
-        {
-            if (!waveStream.WaveFormat.Equals(waveFormat))
-                throw new ArgumentException("All incoming channels must have the same format", "waveStream");
-        }
 
         lock (inputsLock)
         {
+            if (inputStreams.Count == 0)
+            {
+                // first one - set the format
+                waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(inputFormat.SampleRate, inputFormat.Channels);
+            }
+            else if (!inputFormat.Equals(waveFormat))
+            {
+                throw new ArgumentException("All incoming channels must have the same format", "waveStream");
+            }
+
             inputStreams.Add(waveStream);
             length = Math.Max(length, waveStream.Length);
             // get to the right point in this input file
-            waveStream.Position = Position;
+            waveStream.Position = position;
         }
     }
 
@@ -102,6 +101,7 @@ public class WaveMixerStream32 : WaveStream
                     newLength = Math.Max(newLength, inputStream.Length);
                 }
                 length = newLength;
+                position = Math.Min(position, length);
             }
         }
     }
@@ -109,7 +109,16 @@ public class WaveMixerStream32 : WaveStream
     /// <summary>
     /// The number of inputs to this mixer
     /// </summary>
-    public int InputCount => inputStreams.Count;
+    public int InputCount
+    {
+        get
+        {
+            lock (inputsLock)
+            {
+                return inputStreams.Count;
+            }
+        }
+    }
 
     /// <summary>
     /// Automatically stop when all inputs have been read
@@ -125,11 +134,11 @@ public class WaveMixerStream32 : WaveStream
         int count = buffer.Length;
         if (AutoStop)
         {
-            if (position + count > length)
-                count = (int)(length - position);
-
-            // was a bug here, should be fixed now
-            System.Diagnostics.Debug.Assert(count >= 0, "length and position mismatch");
+            long remaining = length - position;
+            if (remaining <= 0)
+                return 0;
+            if (count > remaining)
+                count = (int)remaining;
         }
 
 
@@ -143,23 +152,25 @@ public class WaveMixerStream32 : WaveStream
 
         // sum the channels in
         readBuffer = BufferHelpers.Ensure(readBuffer, count);
+        WaveStream[] inputSnapshot;
         lock (inputsLock)
         {
-            foreach (var inputStream in inputStreams)
+            inputSnapshot = inputStreams.ToArray();
+        }
+        foreach (var inputStream in inputSnapshot)
+        {
+            if (inputStream.HasData(count))
             {
-                if (inputStream.HasData(count))
-                {
-                    int readFromThisStream = inputStream.Read(readBuffer, 0, count);
-                    // don't worry if input stream returns less than we requested - may indicate we have got to the end
-                    bytesRead = Math.Max(bytesRead, readFromThisStream);
-                    if (readFromThisStream > 0)
-                        Sum32BitAudio(dest, readBuffer.AsSpan(0, readFromThisStream));
-                }
-                else
-                {
-                    bytesRead = Math.Max(bytesRead, count);
-                    inputStream.Position += count;
-                }
+                int readFromThisStream = inputStream.Read(readBuffer, 0, count);
+                // don't worry if input stream returns less than we requested - may indicate we have got to the end
+                bytesRead = Math.Max(bytesRead, readFromThisStream);
+                if (readFromThisStream > 0)
+                    Sum32BitAudio(dest, readBuffer.AsSpan(0, readFromThisStream));
+            }
+            else
+            {
+                bytesRead = Math.Max(bytesRead, count);
+                inputStream.Position += count;
             }
         }
         position += count;

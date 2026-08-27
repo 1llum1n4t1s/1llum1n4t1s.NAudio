@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using System;
+using System.Runtime.InteropServices;
 using NAudio.Utils;
 using NAudio.Wave;
 using NUnit.Framework;
@@ -51,6 +53,46 @@ public class WaveFormatSerializeTests
 
         Assert.Throws<InvalidDataException>(() => WaveFormat.FromFormatChunk(reader, 17));
         Assert.That(ms.Position, Is.Zero);
+    }
+
+    [Test]
+    public void MarshalFromPtrCopiesOnlyDeclaredExtraData()
+    {
+        const int waveFormatExSize = 18;
+        var nativeBytes = new byte[waveFormatExSize + 100];
+        Array.Fill(nativeBytes, (byte)0xCC);
+
+        using (var stream = new MemoryStream(nativeBytes, writable: true))
+        using (var writer = new BinaryWriter(stream))
+        {
+            writer.Write((short)WaveFormatEncoding.MuLaw);
+            writer.Write((short)1);
+            writer.Write(8000);
+            writer.Write(8000);
+            writer.Write((short)1);
+            writer.Write((short)8);
+            writer.Write((short)2);
+            writer.Write((byte)0xAA);
+            writer.Write((byte)0xBB);
+        }
+
+        var handle = GCHandle.Alloc(nativeBytes, GCHandleType.Pinned);
+        try
+        {
+            var format = WaveFormat.MarshalFromPtr(handle.AddrOfPinnedObject());
+            Assert.That(format, Is.TypeOf<WaveFormatExtraData>());
+            var extra = (WaveFormatExtraData)format;
+
+            Assert.That(extra.ExtraSize, Is.EqualTo(2));
+            Assert.That(extra.ExtraData[0], Is.EqualTo(0xAA));
+            Assert.That(extra.ExtraData[1], Is.EqualTo(0xBB));
+            Assert.That(extra.ExtraData[2], Is.Zero,
+                "Bytes beyond cbSize must not be copied from adjacent native memory");
+        }
+        finally
+        {
+            handle.Free();
+        }
     }
 
     [Test]

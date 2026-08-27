@@ -35,8 +35,16 @@ public class AudioFileReader : WaveStream, ISampleProvider
     {
         lockObject = new object();
         FileName = fileName;
-        CreateReaderStream(fileName);
-        Init();
+        try
+        {
+            CreateReaderStream(fileName);
+            Init();
+        }
+        catch
+        {
+            readerStream?.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -57,8 +65,16 @@ public class AudioFileReader : WaveStream, ISampleProvider
     {
         ArgumentNullException.ThrowIfNull(inputStream);
         lockObject = new object();
-        CreateReaderStream(inputStream);
-        Init();
+        try
+        {
+            CreateReaderStream(inputStream);
+            Init();
+        }
+        catch
+        {
+            readerStream?.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -133,7 +149,8 @@ public class AudioFileReader : WaveStream, ISampleProvider
         {
             case StreamAudioFormat.Wave:
                 readerStream = new WaveFileReader(inputStream);
-                if (readerStream.WaveFormat.Encoding != WaveFormatEncoding.Pcm && readerStream.WaveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
+                var waveFormat = readerStream.WaveFormat.AsStandardWaveFormat();
+                if (waveFormat.Encoding != WaveFormatEncoding.Pcm && waveFormat.Encoding != WaveFormatEncoding.IeeeFloat)
                 {
 #if !WINDOWS
                     throw new NotSupportedException("Non-PCM WAV is not supported by the cross-platform build of NAudio");
