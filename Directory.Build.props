@@ -3,7 +3,7 @@
     <!-- Lockstep version for all NAudio NuGet packages. CI overrides
          <VersionSuffix> on pre-release builds (e.g. preview.NN). Sample/tool
          apps with their own <Version> in the csproj override this. -->
-    <VersionPrefix>4.0.1</VersionPrefix>
+    <VersionPrefix>4.0.2</VersionPrefix>
 
     <!-- The sample/tool apps target net10.0. LatestMajor lets the host run them
          on a newer major runtime when the .NET 10 runtime is not installed.

@@ -9,6 +9,17 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.2] - 2026-08-28
+
+### Fixed
+
+- `AudioFileReader(Stream)` が WAVEFORMATEXTENSIBLE の PCM / IEEE float WAV を不要な ACM 変換へ渡す問題を修正しました。
+- `AudioFileReader` の初期化失敗時に、内部で作成した reader とファイルハンドルを解放しない問題を修正しました。
+- `WaveMixerStream32` で入力が Read 中に自身を削除すると列挙例外になり、最長入力の削除後に AutoStop 読み込みが範囲外になる問題を修正しました。
+- `WaveMixerStream32` の最初の入力を並行追加した際に、異なる形式を同時に受け入れる競合を修正しました。
+- `WaveFormat.MarshalFromPtr` が宣言された拡張データ長を越えて native memory を読み取る問題を修正しました。
+- `WaveFormatConversionStream` が 2 GiB を超える音源の長さとシーク位置を 32 bit に切り詰める問題を修正しました。
+
 ## [4.0.1] - 2026-08-26
 
 ### Changed
@@ -128,6 +139,7 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.2...HEAD
+[4.0.2]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/71007e4fd85d2de6cccb3ededed9a02871c889b4...v4.0.0
