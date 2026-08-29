@@ -405,16 +405,17 @@ public class WaveFileWriter : Stream
     {
         ThrowIfDisposed();
         EnsureHeaderFinalized();
+        float pcmSample = Math.Clamp(sample, -1.0f, 1.0f);
         if (WaveFormat.BitsPerSample == 16)
         {
             EnsureDataCanBeWritten(2);
-            writer.Write((Int16)(Int16.MaxValue * sample));
+            writer.Write((Int16)(Int16.MaxValue * pcmSample));
             dataChunkSize += 2;
         }
         else if (WaveFormat.BitsPerSample == 24)
         {
             EnsureDataCanBeWritten(3);
-            var value = BitConverter.GetBytes((Int32)(Int32.MaxValue * sample));
+            var value = BitConverter.GetBytes((Int32)(Int32.MaxValue * pcmSample));
             value24[0] = value[1];
             value24[1] = value[2];
             value24[2] = value[3];
@@ -434,7 +435,7 @@ public class WaveFileWriter : Stream
             }
             else
             {
-                writer.Write((Int32)(Int32.MaxValue * sample));
+                writer.Write((Int32)(Int32.MaxValue * pcmSample));
             }
             dataChunkSize += 4;
         }

@@ -21,8 +21,14 @@ public class OffsetSampleProvider : ISampleProvider
 
     private int TimeSpanToSamples(TimeSpan time)
     {
-        var samples = (int)(time.TotalSeconds * WaveFormat.SampleRate) * WaveFormat.Channels;
-        return samples;
+        double sampleFrames = Math.Truncate(time.TotalSeconds * WaveFormat.SampleRate);
+        double samples = sampleFrames * WaveFormat.Channels;
+        if (samples < int.MinValue || samples > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(nameof(time), time,
+                "The duration exceeds the supported sample count range.");
+        }
+        return (int)samples;
     }
 
     private TimeSpan SamplesToTimeSpan(int samples)

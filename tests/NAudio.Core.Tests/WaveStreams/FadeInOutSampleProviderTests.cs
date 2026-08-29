@@ -195,4 +195,46 @@ public class FadeInOutSampleProviderTests
         Assert.That(read, Is.EqualTo(20));
         Assert.That(buffer[0], Is.EqualTo(0));
     }
+
+    [TestCase(0.0)]
+    [TestCase(1.0)]
+    public void SubSampleFadeInCompletesWithoutNaN(double durationMilliseconds)
+    {
+        var source = new TestSampleProvider(10, 1) { UseConstValue = true, ConstValue = 100 };
+        var fade = new FadeInOutSampleProvider(source, initiallySilent: true);
+        int completionCount = 0;
+        fade.FadeInComplete += (_, _) => completionCount++;
+        fade.BeginFadeIn(durationMilliseconds);
+        var buffer = new float[4];
+
+        fade.Read(buffer);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(buffer, Is.All.EqualTo(100f));
+            Assert.That(buffer, Has.All.Matches<float>(float.IsFinite));
+            Assert.That(completionCount, Is.EqualTo(1));
+        });
+    }
+
+    [TestCase(0.0)]
+    [TestCase(1.0)]
+    public void SubSampleFadeOutCompletesWithoutNaN(double durationMilliseconds)
+    {
+        var source = new TestSampleProvider(10, 1) { UseConstValue = true, ConstValue = 100 };
+        var fade = new FadeInOutSampleProvider(source);
+        int completionCount = 0;
+        fade.FadeOutComplete += (_, _) => completionCount++;
+        fade.BeginFadeOut(durationMilliseconds);
+        var buffer = new float[4];
+
+        fade.Read(buffer);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(buffer, Is.All.Zero);
+            Assert.That(buffer, Has.All.Matches<float>(float.IsFinite));
+            Assert.That(completionCount, Is.EqualTo(1));
+        });
+    }
 }

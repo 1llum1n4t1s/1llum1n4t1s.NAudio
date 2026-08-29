@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using NAudio.Wave;
 using System.IO;
+using System.Linq;
 using NAudio.Utils;
 using NAudio.Tests.Shared;
 
@@ -15,7 +16,7 @@ public class WaveFileWriterTests
     public void ReaderShouldReadBackSameDataWrittenWithWrite()
     {
         var ms = new MemoryStream();
-        var testSequence = new byte[] { 0x1, 0x2, 0xFF, 0xFE };
+        var testSequence = new byte[] { 0x1, 0x2, 0xFF, 0xFE, 0x03, 0x04 };
         using (var writer = new WaveFileWriter(new IgnoreDisposeStream(ms), new WaveFormat(16000, 24, 1)))
         {
             writer.Write(testSequence, 0, testSequence.Length);
@@ -41,7 +42,7 @@ public class WaveFileWriterTests
     public void FlushUpdatesHeaderEvenIfDisposeNotCalled()
     {
         var ms = new MemoryStream();
-        var testSequence = new byte[] { 0x1, 0x2, 0xFF, 0xFE };
+        var testSequence = new byte[] { 0x1, 0x2, 0xFF, 0xFE, 0x03, 0x04 };
         var testSequence2 = new byte[] { 0x3, 0x4, 0x5 };
         var writer = new WaveFileWriter(new IgnoreDisposeStream(ms), new WaveFormat(16000, 24, 1));
         writer.Write(testSequence, 0, testSequence.Length);
@@ -250,6 +251,64 @@ public class WaveFileWriterTests
         {
             float expected = samples[n] / (float)(short.MaxValue + 1);
             Assert.That(BitConverter.ToSingle(buffer, n * 4), Is.EqualTo(expected), $"Sample {n} ({samples[n]})");
+        }
+    }
+
+    [TestCase(16)]
+    [TestCase(24)]
+    [TestCase(32)]
+    public void WriteSampleClipsIntegerPcmAtFullScale(int bitsPerSample)
+    {
+        WaveFormat format = bitsPerSample == 32
+            ? new WaveFormatExtensible(8000, 32, 1, useIeeeFloat: false, validBitsPerSample: 32, channelMask: 0)
+            : new WaveFormat(8000, bitsPerSample, 1);
+        var samples = new[] { 1.0f, 1.1f, -1.0f, -1.1f };
+        using var stream = new MemoryStream();
+
+        using (var writer = new WaveFileWriter(new IgnoreDisposeStream(stream), format))
+        {
+            foreach (float sample in samples)
+            {
+                writer.WriteSample(sample);
+            }
+        }
+
+        stream.Position = 0;
+        using var reader = new WaveFileReader(stream);
+        var buffer = new byte[samples.Length * bitsPerSample / 8];
+        Assert.That(reader.Read(buffer, 0, buffer.Length), Is.EqualTo(buffer.Length));
+
+        int[] actual = bitsPerSample switch
+        {
+            16 => Enumerable.Range(0, samples.Length)
+                .Select(index => (int)BitConverter.ToInt16(buffer, index * 2)).ToArray(),
+            24 => Enumerable.Range(0, samples.Length)
+                .Select(index => ReadInt24(buffer, index * 3)).ToArray(),
+            32 => Enumerable.Range(0, samples.Length)
+                .Select(index => BitConverter.ToInt32(buffer, index * 4)).ToArray(),
+            _ => throw new AssertionException($"Unexpected bit depth {bitsPerSample}")
+        };
+        int maximum = bitsPerSample switch
+        {
+            16 => short.MaxValue,
+            24 => 0x7FFFFF,
+            32 => int.MaxValue,
+            _ => throw new AssertionException($"Unexpected bit depth {bitsPerSample}")
+        };
+        int minimum = bitsPerSample switch
+        {
+            16 => -short.MaxValue,
+            24 => -0x800000,
+            32 => int.MinValue,
+            _ => throw new AssertionException($"Unexpected bit depth {bitsPerSample}")
+        };
+
+        Assert.That(actual, Is.EqualTo(new[] { maximum, maximum, minimum, minimum }));
+
+        static int ReadInt24(byte[] bytes, int offset)
+        {
+            int value = bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
+            return (value & 0x800000) == 0 ? value : value | unchecked((int)0xFF000000);
         }
     }
 

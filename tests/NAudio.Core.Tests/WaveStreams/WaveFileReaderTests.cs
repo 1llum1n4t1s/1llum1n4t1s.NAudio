@@ -5,6 +5,7 @@ using NAudio.Wave;
 using NUnit.Framework;
 using System.Diagnostics;
 using System;
+using System.Linq;
 using NAudio.Core.Tests.Utils;
 
 namespace NAudio.Core.Tests.WaveStreams;
@@ -395,6 +396,27 @@ public class WaveFileReaderTests
         Assert.That(read, Is.EqualTo(audio.Length));
         Assert.That(buffer, Is.EqualTo(audio));
         Assert.That(reader.Read(buffer, 0, buffer.Length), Is.EqualTo(0));
+    }
+
+    [Test]
+    [Category("UnitTest")]
+    public void IncompleteTrailingFrameIsNotReturned()
+    {
+        var format = new WaveFormat(8000, 16, 2);
+        var audio = new byte[] { 1, 0, 2, 0, 0x7F };
+        var bytes = WaveFileBuilder.Build(format, audio);
+        using var reader = new WaveFileReader(new MemoryStream(bytes));
+        var buffer = Enumerable.Repeat((byte)0xCC, 8).ToArray();
+
+        int read = reader.Read(buffer, 0, buffer.Length);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(read, Is.EqualTo(format.BlockAlign));
+            Assert.That(buffer[..read], Is.EqualTo(audio[..format.BlockAlign]));
+            Assert.That(buffer[read], Is.EqualTo(0xCC));
+            Assert.That(reader.Read(buffer, 0, buffer.Length), Is.Zero);
+        });
     }
 
 }

@@ -103,6 +103,22 @@ public class OffsetSampleProviderTests
     }
 
     [Test]
+    public void TimeSpanPropertiesRejectDurationsThatExceedSampleCountCapacity()
+    {
+        var source = new TestSampleProvider(48000, 2);
+        var osp = new OffsetSampleProvider(source);
+        var duration = TimeSpan.FromHours(7);
+
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => osp.DelayBy = duration);
+            Assert.Throws<ArgumentOutOfRangeException>(() => osp.SkipOver = duration);
+            Assert.Throws<ArgumentOutOfRangeException>(() => osp.Take = duration);
+            Assert.Throws<ArgumentOutOfRangeException>(() => osp.LeadOut = duration);
+        });
+    }
+
+    [Test]
     public void CanAddLeadOut()
     {
         var source = new TestSampleProvider(32000, 1, 10);

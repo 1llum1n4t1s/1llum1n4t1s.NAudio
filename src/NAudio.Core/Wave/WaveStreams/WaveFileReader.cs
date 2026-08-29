@@ -183,8 +183,11 @@ public class WaveFileReader : WaveStream
             if (Position + count > dataChunkLength)
             {
                 count = (int)(dataChunkLength - Position);
+                count -= count % waveFormat.BlockAlign;
             }
-            return waveStream.Read(buffer.Slice(0, count));
+            var destination = buffer.Slice(0, count);
+            int length = waveStream.ReadAtLeast(destination, count, throwOnEndOfStream: false);
+            return length - (length % waveFormat.BlockAlign);
         }
     }
 

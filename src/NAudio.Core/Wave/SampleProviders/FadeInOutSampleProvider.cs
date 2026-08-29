@@ -110,6 +110,13 @@ public class FadeInOutSampleProvider : ISampleProvider
 
     private void FadeOut(Span<float> buffer, int sourceSamplesRead)
     {
+        if (fadeSampleCount <= 0)
+        {
+            buffer.Slice(0, sourceSamplesRead).Clear();
+            fadeState = FadeState.Silence;
+            return;
+        }
+
         int sample = 0;
         while (sample < sourceSamplesRead)
         {
@@ -130,6 +137,12 @@ public class FadeInOutSampleProvider : ISampleProvider
 
     private void FadeIn(Span<float> buffer, int sourceSamplesRead)
     {
+        if (fadeSampleCount <= 0)
+        {
+            fadeState = FadeState.FullVolume;
+            return;
+        }
+
         int sample = 0;
         while (sample < sourceSamplesRead)
         {
