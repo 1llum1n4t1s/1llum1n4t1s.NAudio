@@ -1,10 +1,10 @@
 # NAudio 3 — Release strategy
 
 > **1llum1n4t1s fork note:** This document records the upstream NAudio 3 release migration and its
-> historical OIDC setup. The fork's current `.github/workflows/release.yml` packs 13 packages under
-> the `1llum1n4t1s.NAudio.*` ID family and authenticates with the scoped `NUGET_API_KEY` repository
-> secret. Fork releases are generated from `CHANGELOG.md`; the upstream `RELEASE_NOTES.md`,
-> `NUGET_USER`, and trusted-publishing references below are historical rather than fork instructions.
+> OIDC setup. The fork's current `.github/workflows/release.yml` packs 13 packages under
+> the `1llum1n4t1s.NAudio.*` ID family and authenticates through NuGet.org Trusted Publishing.
+> Fork releases are generated from `CHANGELOG.md`; the upstream `RELEASE_NOTES.md` references below
+> are historical, while the trusted-publishing contract also applies to the fork.
 
 **Goal:** Replace the current manual `publish.ps1` flow with an automated GitHub Actions pipeline that publishes both regular pre-release builds (cheap, frequent, on demand) and final releases (tag-driven, with GitHub Releases attached). Rebrand `naudio3dev` as the default branch, retire NAudio 2 to a maintenance branch, and put a lightweight discipline around release notes that keeps the maintainer in control without blocking PRs.
 

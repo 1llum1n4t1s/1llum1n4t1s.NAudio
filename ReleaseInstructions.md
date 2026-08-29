@@ -7,7 +7,8 @@ fork の preview / final package を GitHub Actions から公開する手順で�
 ## 前提
 
 - GitHub CLI `gh` が `1llum1n4t1s/1llum1n4t1s.NAudio` へ認証済み
-- repository secret `NUGET_API_KEY` に fork package だけを公開できる scoped key を設定済み
+- NuGet.org Trusted Publishing policy が `.github/workflows/release.yml` と fork package 13件だけを許可している
+- repository variable `NUGET_USER` に NuGet.org の profile name を設定済み
 - `main` の build / test が成功している
 - `Directory.Build.props` の `VersionPrefix` と [CHANGELOG.md](CHANGELOG.md) が同期している
 
@@ -57,7 +58,7 @@ release workflow は次を実行します。
 - tag と `VersionPrefix` の一致を検証
 - `CHANGELOG.md` の matching version section と35,000文字上限を検証
 - `1llum1n4t1s.NAudio.*` の13 package と symbol package を生成
-- `NUGET_API_KEY` で NuGet.org へ公開
+- Trusted Publishing で取得した短期資格情報を使って NuGet.org へ公開
 - `1llum1n4t1s.NAudio x.y.z` の GitHub Release を作成
 
 ### 3. 次 version
@@ -90,7 +91,7 @@ NuGet 上ではすべて `1llum1n4t1s.` prefix が付きます。project を追�
 
 - **`CHANGELOG.md has no ... section`**: tag version と同じ `## [x.y.z] - YYYY-MM-DD` を追加します
 - **tag と `VersionPrefix` が不一致**: version を修正した commit に tag を作り直します
-- **NuGet authentication error**: repository secret `NUGET_API_KEY` の期限、scope、package ownership を確認します
+- **NuGet authentication error**: Trusted Publishing policy の repository / workflow / package scope と `NUGET_USER`、package ownership を確認します
 - **package が不足する**: workflow の `Pack` list と `artifacts/*.nupkg` を照合します
 - **35,000文字超過**: changelog は利用者向け要点へ絞り、詳細は commit / PR へ残します
 

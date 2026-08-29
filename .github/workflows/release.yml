@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write    # for `gh release create`
+  id-token: write    # for NuGet.org Trusted Publishing
 
 jobs:
   release:
@@ -197,6 +198,12 @@ jobs:
             artifacts/*.snupkg
           if-no-files-found: error
 
+      - name: Authenticate to NuGet.org
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
       # dotnet nuget push does not expand globs on its own, and PowerShell
       # does not expand wildcards in arguments to external commands. So loop
       # over the artifacts explicitly. This also gives per-package error
@@ -205,6 +212,8 @@ jobs:
       # by `dotnet nuget push` in the same call.
       - name: Push to NuGet
         shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
           $packages = Get-ChildItem -Path "artifacts\*.nupkg"
           if (-not $packages) {
@@ -214,7 +223,7 @@ jobs:
           foreach ($pkg in $packages) {
             Write-Host "Pushing $($pkg.Name)"
             dotnet nuget push $pkg.FullName `
-              --api-key ${{ secrets.NUGET_API_KEY }} `
+              --api-key $env:NUGET_API_KEY `
               --source https://api.nuget.org/v3/index.json `
               --skip-duplicate
             if ($LASTEXITCODE -ne 0) {
