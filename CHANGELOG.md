@@ -9,6 +9,15 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.3] - 2026-08-30
+
+### Fixed
+
+- `WaveFileWriter.WriteSample` が範囲外のfloatを16-bit整数PCMへ書くと符号反転する問題を修正しました。
+- `OffsetSampleProvider` のTimeSpan指定が長時間音源でsample数をオーバーフローする問題を修正しました。
+- `FadeInOutSampleProvider` の0ミリ秒未満のsample数になるfadeでNaNを出力する問題を修正しました。
+- `WaveFileReader` が末尾の不完全なsample frameを返す問題を修正しました。
+
 ## [4.0.2] - 2026-08-28
 
 ### Fixed
@@ -139,7 +148,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.2...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.3...HEAD
+[4.0.3]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/71007e4fd85d2de6cccb3ededed9a02871c889b4...v4.0.0
