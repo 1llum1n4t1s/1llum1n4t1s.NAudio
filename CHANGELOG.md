@@ -9,6 +9,10 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+### Changed
+
+- NuGet パッケージとドキュメントサイトのアイコンを他のライブラリと共通のデザインに統一しました。
+
 ## [4.0.3] - 2026-08-30
 
 ### Fixed
