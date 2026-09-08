@@ -34,6 +34,8 @@ When opening a PR (where you have permission), apply one of: `breaking`, `enhanc
 
 Package versions are centralised in [Directory.Build.props](Directory.Build.props) as `<VersionPrefix>`. Do **not** add a per-csproj `<Version>` to NAudio packages — they're meant to stay in lockstep. The tool/sample apps (MixDiff, AudioFileInspector, MidiFileConverter) keep their own explicit `<Version>` and are exempt.
 
+The direct consumers, mutable paths, restore constraints, and verification commands for `1llum1n4t1s.NAudio` and `1llum1n4t1s.NAudio.Wasapi` are defined in the root `vava.config.json`. When a direct consumer is added or removed, update `consumerUpdates.targets` in the same change.
+
 ## Language
 
 Write code comments and commit messages in Japanese unless an upstream file already establishes a local English convention. Public API XML documentation should follow the surrounding project style so generated documentation remains consistent.

@@ -1,0 +1,45 @@
+{
+  "consumerUpdates": {
+    "targets": [
+      {
+        "name": "RealTimeTranslator",
+        "path": "../RealTimeTranslator",
+        "remote": "origin",
+        "reference": "1llum1n4t1s.NAudio",
+        "ready": "dotnet package search 1llum1n4t1s.NAudio --exact-match --source https://api.nuget.org/v3/index.json --format json",
+        "update": "pwsh -NoProfile -File ../1llum1n4t1s.NAudio/scripts/update-nuget-consumer.ps1 -PackageId 1llum1n4t1s.NAudio -ProjectPaths 'src/RealTimeTranslator.Core/RealTimeTranslator.Core.csproj' -OldVersion {{OLD_VERSION}} -Version {{NEW_VERSION}} && dotnet restore RealTimeTranslator.slnx --force-evaluate --source https://api.nuget.org/v3/index.json --no-http-cache -r win-x64 -p:Configuration=Release -p:Platform=x64",
+        "allowedPaths": [
+          "src/RealTimeTranslator.Core/RealTimeTranslator.Core.csproj",
+          "src/RealTimeTranslator.Core/packages.lock.json",
+          "src/RealTimeTranslator.Tests/packages.lock.json",
+          "src/RealTimeTranslator.UI/packages.lock.json"
+        ],
+        "verify": [
+          "dotnet restore RealTimeTranslator.slnx -r win-x64 --locked-mode --source https://api.nuget.org/v3/index.json --no-http-cache -p:Configuration=Release -p:Platform=x64",
+          "dotnet build RealTimeTranslator.slnx --configuration Release -p:Platform=x64 --no-restore",
+          "dotnet test RealTimeTranslator.slnx --configuration Release -p:Platform=x64 --no-restore --no-build --filter \"TestCategory!=Integration\""
+        ],
+        "commitMessage": "1llum1n4t1s.NAudioを{{NEW_VERSION}}へ更新する"
+      },
+      {
+        "name": "Sonireva",
+        "path": "../Sonireva",
+        "remote": "origin",
+        "reference": "1llum1n4t1s.NAudio.Wasapi",
+        "ready": "dotnet package search 1llum1n4t1s.NAudio.Wasapi --exact-match --source https://api.nuget.org/v3/index.json --format json",
+        "update": "pwsh -NoProfile -File ../1llum1n4t1s.NAudio/scripts/update-nuget-consumer.ps1 -PackageId 1llum1n4t1s.NAudio.Wasapi -ProjectPaths 'Sonireva.csproj;tests/Sonireva.IntegrationTests/Sonireva.IntegrationTests.csproj' -OldVersion {{OLD_VERSION}} -Version {{NEW_VERSION}} && dotnet restore Sonireva.slnx --force-evaluate --source https://api.nuget.org/v3/index.json --no-http-cache",
+        "allowedPaths": [
+          "Sonireva.csproj",
+          "tests/Sonireva.IntegrationTests/Sonireva.IntegrationTests.csproj"
+        ],
+        "verify": [
+          "dotnet restore Sonireva.slnx --source https://api.nuget.org/v3/index.json --no-http-cache",
+          "dotnet build Sonireva.slnx --configuration Release --no-restore",
+          "dotnet build tests/Sonireva.IntegrationTests/Sonireva.IntegrationTests.csproj --configuration Release --no-restore"
+        ],
+        "commitMessage": "1llum1n4t1s.NAudio.Wasapiを{{NEW_VERSION}}へ更新する"
+      }
+    ]
+  }
+}
+
