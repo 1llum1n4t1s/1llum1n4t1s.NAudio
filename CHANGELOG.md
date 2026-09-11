@@ -9,6 +9,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.4] - 2026-09-12
+
 ### Added
 
 - preview の `1llum1n4t1s.NAudio.MacOS` を追加し、Core Audio の再生・録音と Audio Toolbox のfile I/Oを利用できるようにしました。(#1398, #1438)
@@ -166,7 +168,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.3...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.4...HEAD
+[4.0.4]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.3...v4.0.4
 [4.0.3]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.0...v4.0.1
