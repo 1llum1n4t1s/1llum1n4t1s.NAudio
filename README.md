@@ -19,6 +19,7 @@ Process Loopback Capture と Native AOT 対応を強化したフォークです�
 - 特定プロセスまたはプロセスツリーだけを録音する Process Loopback Capture
 - WASAPI / Media Foundation の source-generated COM interop と Native AOT 対応
 - WASAPI 非同期 activation のキャンセル、HRESULT 変換、COM lifetime の堅牢化
+- macOS Core Audio の再生・録音と Audio Toolbox の file I/O（preview）
 - WASAPI、WaveOut / WaveIn、ASIO、DirectSound、MIDI、DSP、各種 audio file をサポート
 
 ## 動作要件
@@ -198,6 +199,9 @@ trim/AOT warning と配布サイズを抑えられます。
 ## ドキュメント
 
 - [Process Loopback / WasapiRecorder](Docs/WasapiRecorder.md)
+- [macOS での再生](Docs/PlayAudioFileMacOS.md)
+- [macOS での録音](Docs/RecordAudioFileMacOS.md)
+- [VB.NET からの利用](Docs/UsingNAudioFromVB.md)
 - [NAudio 2 から 3 への移行](Docs/MigratingFromNAudio2.md)
 - [出力 API の選び方](Docs/OutputDeviceTypes.md)
 - [fork の変更履歴](CHANGELOG.md)

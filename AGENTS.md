@@ -10,6 +10,7 @@ This file gives coding agents the conventions for contributing to the 1llum1n4t1
 - **Architecture docs.** [DESIGN.md](DESIGN.md) is the source of truth for the current package boundaries, data flows and invariants. [Docs/Architecture/](Docs/Architecture/) retains detailed decision records and migration history:
   - [ReleaseStrategy.md](Docs/Architecture/ReleaseStrategy.md) — release/branch/version flow
   - [NAudio3AssemblyLayoutPlan.md](Docs/Architecture/NAudio3AssemblyLayoutPlan.md) — package structure
+  - [MacOSWrappersDesign.md](Docs/Architecture/MacOSWrappersDesign.md) — macOS interop, buffer and device-I/O design
   - [MODERNIZATION.md](Docs/Architecture/MODERNIZATION.md) — modernisation phases
 
 ## Changelog

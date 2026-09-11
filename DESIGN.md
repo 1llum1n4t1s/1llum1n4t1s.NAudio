@@ -18,7 +18,7 @@ Native AOT検証、`docfx/` と `Docs/` は公開documentationを担います。
 
 | Package | 責務と境界 |
 | --- | --- |
-| `NAudio.Core` | provider interface、wave format、managed file reader/writer、DSP、effects、SF2/SFZ parser |
+| `NAudio.Core` | provider interfaceと配列互換base class、wave format、managed file reader/writer、DSP、effects、SF2/SFZ parser |
 | `NAudio.Midi` | MIDI file/event model。Windows legだけWinRT MIDI I/Oを追加 |
 | `NAudio.Wasapi` | WASAPI、Core Audio、Media Foundation、Process Loopback。compile時は`net10.0`、実行時はWindows限定 |
 | `NAudio.WinMM` | WaveOut/WaveIn、ACM、mixer、legacy MIDI |
@@ -66,6 +66,8 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 - Process LoopbackはWindows 10 build 19041以降がruntime要件です。include/exclude modeのnative値、
   cancellation、HRESULT変換とCOM ownershipをmanaged/native境界で変えません。
 - providerの`Read`はcaller supplied bufferへ書き込み、返したcountだけを有効とします。
+  `WaveProviderBase` / `SampleProviderBase`は`Span<T>`をsource上で表現できない言語向けの配列bridgeであり、
+  direct interface実装より1回多いcopyを許容します。
   mixerは外部providerの`Read`やevent callback中にsource list lockを保持しません。
 - caller supplied streamのownershipはconstructorの`leaveOpen`契約に従います。COM/native resourceは
   明示的な`Dispose` / `IAsyncDisposable`経路で解放します。
@@ -80,6 +82,9 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
   dependency混同を防ぎます。
 - **source-generated COM**: trimmingとNative AOTでreflection-based COM metadataが失われる問題を避けます。
   代わりにpointer ownership、CCW/RCWの向き、release回数を各interop境界で明示します。
+- **Span APIと配列互換base classの併存**: C#の通常経路はbridge copyのない`Span<T>` interfaceを維持し、
+  VB.NETやNAudio 2由来のproviderにはpooled arrayを使うbridgeを提供します。言語互換性と移行容易性の代わりに、
+  bridge経路ではreadごとのcopyを受け入れます。
 - **tag駆動のfinal release**: versionとsource SHAを一意にし、同じCHANGELOG本文をNuGetとGitHub Releaseで
   共有します。previewだけは`workflow_dispatch`でsuffixを付与します。
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
