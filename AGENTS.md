@@ -32,7 +32,7 @@ When opening a PR (where you have permission), apply one of: `breaking`, `enhanc
 
 ## Versioning
 
-Package versions are centralised in [Directory.Build.props](Directory.Build.props) as `<VersionPrefix>`. Do **not** add a per-csproj `<Version>` to NAudio packages — they're meant to stay in lockstep. The tool/sample apps (MixDiff, AudioFileInspector, MidiFileConverter) keep their own explicit `<Version>` and are exempt.
+Package versions are centralised in [Directory.Build.props](Directory.Build.props) as `<VersionPrefix>`. Do **not** add a per-csproj `<Version>` to NAudio packages — they're meant to stay in lockstep. The tool/sample apps (MixDiff, AudioFileInspector, MidiFileConverter) keep their own explicit `<Version>` and are exempt, as is the `<VersionSuffix>` in `NAudio.MacOS.csproj` that keeps that package pre-release ([why](Docs/Architecture/ReleaseStrategy.md#naudiomacos-the-one-package-that-stays-pre-release)).
 
 The direct consumers, mutable paths, restore constraints, and verification commands for `1llum1n4t1s.NAudio` and `1llum1n4t1s.NAudio.Wasapi` are defined in the root `vava.config.json`. When a direct consumer is added or removed, update `consumerUpdates.targets` in the same change.
 
@@ -50,7 +50,7 @@ dotnet build NAudio.slnx --configuration Release --no-restore
 dotnet test --solution NAudio.slnx --configuration Release --no-build --filter "TestCategory!=IntegrationTest"
 ```
 
-Final releases additionally require the 13-package pack and Native AOT smoke checks documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
+Final releases additionally require the 14-package pack and Native AOT smoke checks documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
 
 ## Building & testing on Linux
 

@@ -120,4 +120,22 @@ public ref struct RenderBufferLease
     {
         Release();
     }
+
+    /// <summary>
+    /// Abandons the lease without submitting frames. Used when filling the buffer failed, while
+    /// <see cref="Dispose"/> retains the public 4.x contract of submitting a fully written buffer.
+    /// </summary>
+    internal void Discard()
+    {
+        var currentOwner = owner;
+        owner = null;
+        try
+        {
+            currentOwner?.ReleaseBuffer(0, AudioClientBufferFlags.None);
+        }
+        catch
+        {
+            // An exception from the source is already in flight; do not replace it during cleanup.
+        }
+    }
 }

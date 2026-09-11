@@ -28,10 +28,12 @@ Process Loopback Capture と Native AOT 対応を強化したフォークです�
 | 共通 API / file・DSP・MIDI | .NET 10 以降 |
 | WASAPI / Media Foundation | Windows |
 | Process Loopback Capture | Windows 10 version 2004（build 19041）以降 |
+| Core Audio playback / recording | macOS |
 | このリポジトリでの Native AOT 検証 | Windows x64 / `win-x64` |
 
 Linux では `1llum1n4t1s.NAudio.Alsa`、cross-platform file I/O では
-`1llum1n4t1s.NAudio.SoundFile` を利用できます。macOS 向けの出力 backend はありません。
+`1llum1n4t1s.NAudio.SoundFile` を利用できます。macOS では preview の
+`1llum1n4t1s.NAudio.MacOS` が Core Audio の再生・録音と native file I/O を提供します。
 
 ## インストール
 
@@ -162,6 +164,7 @@ M4A decode を非AOT helper processへ分離する必要はありません。
 | `1llum1n4t1s.NAudio.Sampler` | SoundFont / SFZ software sampler | cross-platform |
 | `1llum1n4t1s.NAudio.SoundFile` | libsndfile による FLAC / Ogg / Opus / MP3 等 | cross-platform |
 | `1llum1n4t1s.NAudio.Alsa` | ALSA playback / capture | Linux |
+| `1llum1n4t1s.NAudio.MacOS`（preview） | Core Audio playback / capture、Audio Toolbox file I/O | macOS |
 | `1llum1n4t1s.NAudio.Vst3` | VST 3 host | Windows |
 | `1llum1n4t1s.NAudio.Extras` | playback engine などの補助 API | cross-platform / Windows |
 

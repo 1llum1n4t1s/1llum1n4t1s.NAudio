@@ -168,10 +168,6 @@ public class WasapiOut : IWavePlayer, IWavePosition, IWaveLatency
                 // behavior of waiting briefly for the last buffer to play
                 Thread.Sleep(isUsingEventSync ? latencyMilliseconds : latencyMilliseconds / 2);
             }
-            audioClient.Stop();
-            // set if we got here by reaching the end
-            playbackState = PlaybackState.Stopped;
-            audioClient.Reset();
         }
         catch (Exception e)
         {
@@ -179,6 +175,10 @@ public class WasapiOut : IWavePlayer, IWavePosition, IWaveLatency
         }
         finally
         {
+            // Always stop, reset and report Stopped, however the thread left the loop - reaching the
+            // end of the source, an exception from Read, or the zero-length-stream early return above.
+            // Otherwise PlaybackState stays Playing with no thread behind it (issue #1442).
+            SafeStopAndReset();
             playbackState = PlaybackState.Stopped;
             try
             {
@@ -189,6 +189,17 @@ public class WasapiOut : IWavePlayer, IWavePosition, IWaveLatency
                 Interlocked.CompareExchange(ref playThread, null, Thread.CurrentThread);
             }
         }
+    }
+
+    /// <summary>
+    /// Best-effort stop and reset of the audio client during teardown. A device that has been
+    /// removed mid-playback fails these calls (AUDCLNT_E_DEVICE_INVALIDATED); the failure is not
+    /// actionable here, and must not mask the real exception or escape and kill the play thread.
+    /// </summary>
+    private void SafeStopAndReset()
+    {
+        try { audioClient?.Stop(); } catch { /* device already gone */ }
+        try { audioClient?.Reset(); } catch { /* device already gone */ }
     }
 
     private void RaisePlaybackStopped(Exception e)
@@ -381,7 +392,8 @@ public class WasapiOut : IWavePlayer, IWavePosition, IWaveLatency
         if (shareMode == AudioClientShareMode.Exclusive)
         {
             flags = AudioClientStreamFlags.None;
-            if (!audioClient.IsFormatSupported(shareMode, OutputWaveFormat, out WaveFormatExtensible closestSampleRateFormat))
+            if (!audioClient.IsFormatSupportedWithClosestMatch(shareMode, OutputWaveFormat,
+                    out WaveFormat closestSampleRateFormat))
             {
                 // The device won't take the source format natively. Adapt bit depth/channels (never the
                 // sample rate) to a supported format if we can — this restores the most common NAudio 2

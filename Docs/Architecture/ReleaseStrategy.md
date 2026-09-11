@@ -1,7 +1,7 @@
 # NAudio 3 — Release strategy
 
 > **1llum1n4t1s fork note:** This document records the upstream NAudio 3 release migration and its
-> OIDC setup. The fork's current `.github/workflows/release.yml` packs 13 packages under
+> OIDC setup. The fork's current `.github/workflows/release.yml` packs 14 packages under
 > the `1llum1n4t1s.NAudio.*` ID family and authenticates through NuGet.org Trusted Publishing.
 > Fork releases are generated from `CHANGELOG.md`; the upstream `RELEASE_NOTES.md` references below
 > are historical, while the trusted-publishing contract also applies to the fork.
@@ -26,7 +26,7 @@
 | 9. First public preview + retire Azure Pipelines | ✅ done | `3.0.0-preview.2` shipped to NuGet via the new flow. PR #1274 deleted `azure-pipelines.yml` and `publish.ps1`, dropped `<GeneratePackageOnBuild>` from all 8 NAudio packages, refreshed badges and READMEs, and consolidated duplicated csproj boilerplate into `Directory.Build.props` and `Directory.Build.targets`. Contributor announcement and stale-PR triage remain as non-blocking manual steps (see §"Communication"). Azure DevOps cleanup is in §"Retiring Azure DevOps". |
 | 10. SourceLink + symbol packages + deterministic CI | ✅ done | PR #1275 merged. `.NET 8+` SDK SourceLink activated via `<PublishRepositoryUrl>` (no PackageReference needed). `.snupkg` symbol packages produced via `<IncludeSymbols>` + `<SymbolPackageFormat>snupkg`; pushed alongside the `.nupkg` by `dotnet nuget push`. `<ContinuousIntegrationBuild>` gated on `GITHUB_ACTIONS=true` for reproducible CI binaries. `3.0.0-preview.3` shipped with all three active. |
 | 11. Embed `PackageReleaseNotes` in the nupkg | ✅ done | The release workflow extracts the appropriate `RELEASE_NOTES.md` section (`### Unreleased` for previews, `### <version>` for finals) into a file before pack runs, then passes the file path via `-p:PackageReleaseNotesFile=...`. A small MSBuild target in `Directory.Build.targets` reads the file and sets `<PackageReleaseNotes>` so NuGet displays the content on the package page. The same file is reused for the GitHub Release body on finals. The extract step also enforces NuGet's 35,000-character limit, so an oversized section fails the run before pack rather than at push. |
-| 12. First final 3.0.0 release | ⏳ in progress | Pre-flight underway: `docfx.json` extended to cover `NAudio.Sampler` and the `NAudio` meta-package (`AudioFileReader` / `Mp3FileReader` were missing from the API reference), `README.md` and the meta-package NuGet README rewritten for the NAudio 3 shape, `Docs/MigratingFromNAudio2.md` completed against the breaking-change tables in [MODERNIZATION.md](MODERNIZATION.md), and `RELEASE_NOTES.md` trimmed to headline features + breaking changes. `AudioMediaSubtypes` moved out of the `NAudio.Dmo` namespace into `NAudio.Wave`, and seven members that had been `[Obsolete]` since NAudio 2 were removed (`AsioOut.Volume` kept — it is an `IWavePlayer` interface member). `EffectsDesign.md`'s licence policy was amended to settle on in-file attribution as the sole mechanism, dropping its reference to a central `THIRD-PARTY-NOTICES.txt` that was never added. Pre-flight is complete; next step is [ReleaseInstructions.md](../../ReleaseInstructions.md) §3 — bump `<VersionPrefix>`, rename `### Unreleased`, tag. |
+| 12. First final 3.0.0 release | ✅ done | Pre-flight was: `docfx.json` extended to cover `NAudio.Sampler` and the `NAudio` meta-package (`AudioFileReader` / `Mp3FileReader` were missing from the API reference), `README.md` and the meta-package NuGet README rewritten for the NAudio 3 shape, `Docs/MigratingFromNAudio2.md` completed against the breaking-change tables in [MODERNIZATION.md](MODERNIZATION.md), and `RELEASE_NOTES.md` trimmed to headline features + breaking changes. `AudioMediaSubtypes` moved out of the `NAudio.Dmo` namespace into `NAudio.Wave`, and seven members that had been `[Obsolete]` since NAudio 2 were removed (`AsioOut.Volume` kept — it is an `IWavePlayer` interface member). `EffectsDesign.md`'s licence policy was amended to settle on in-file attribution as the sole mechanism, dropping its reference to a central `THIRD-PARTY-NOTICES.txt` that was never added. `3.0.0` shipped on 15 Aug 2026, followed by the `3.0.1` patch on 18 Aug 2026 and `3.1.0` on 7 Sep 2026 — all three cut via [ReleaseInstructions.md](../../ReleaseInstructions.md) §3, which is now the standing checklist for every release. This rollout is complete; no further phases. |
 
 ### Findings carried forward from Phase 0
 
@@ -65,6 +65,40 @@ All packages share one version, declared once in `Directory.Build.props` as `<Ve
 - One file to edit on every bump.
 
 CI sets `<VersionSuffix>` for pre-release builds via `dotnet pack -p:VersionSuffix=preview.NN`; final-release builds set neither suffix.
+
+### `NAudio.MacOS`: the one package that stays pre-release
+
+`NAudio.MacOS` landed in #1398 as a large, brand-new native-interop surface, and it wants a settling-in period before its API is covered by the stable-release promise — while the rest of NAudio carries on shipping finals. So it is the single exception to lockstep: it tracks the shared `<VersionPrefix>` like everything else, but never packs a stable version.
+
+The obvious implementation — an explicit `<Version>` in the csproj — is the wrong one. A full `<Version>` overrides both `<VersionPrefix>` and `<VersionSuffix>`, so CI's `-p:VersionSuffix=preview.NN` would be ignored and the number would have to be hand-bumped before every release. Worse, forgetting is silent: `dotnet nuget push --skip-duplicate` turns the resulting 409 into a success, so a release would appear to ship a macOS package it had actually skipped.
+
+Pinning only the *suffix* avoids all of that. In `NAudio.MacOS.csproj`:
+
+```xml
+<VersionSuffix Condition="'$(VersionSuffix)' == '' and '$(GITHUB_RUN_NUMBER)' != ''">preview.$(GITHUB_RUN_NUMBER)</VersionSuffix>
+<VersionSuffix Condition="'$(VersionSuffix)' == ''">preview.0</VersionSuffix>
+```
+
+A command-line `-p:VersionSuffix` is a global property, so on preview runs it wins and both lines are inert. Only a final tag run — the one case where CI passes no suffix — falls through to the fallback. Reading `GITHUB_RUN_NUMBER` from the environment follows the same idiom as `<ContinuousIntegrationBuild>` in `Directory.Build.props`, and gives a counter that is unique per release-workflow run and only ever increases, so each macOS package sorts above the previous one and can never collide with a version already on NuGet.
+
+What the two triggers now produce (verified by packing the real projects at `<VersionPrefix>3.1.1</VersionPrefix>`):
+
+| Trigger | Other 13 packages | `NAudio.MacOS` |
+| --- | --- | --- |
+| `workflow_dispatch` (no milestone) | `3.1.1-preview.44` | `3.1.1-preview.44` |
+| `workflow_dispatch -f milestone=rc.1` | `3.1.1-rc.1` | `3.1.1-rc.1` |
+| `push` tag `v3.1.1` | `3.1.1` | `3.1.1-preview.<run_number>` |
+| local `dotnet pack` | `3.1.1` | `3.1.1-preview.0` |
+
+Keeping the rule in the csproj rather than special-casing the workflow's `Pack` loop matters for one concrete reason: a `-p:VersionSuffix` passed to just that `dotnet pack` invocation would be global to it, so `NAudio.Core` would evaluate with the suffix too and the packed dependency would read `NAudio.Core >= 3.1.1-preview.57` — a floor pointing at a version that was never published. Project-local, it stays `NAudio.Core >= 3.1.1`. The assembly's `AssemblyInformationalVersion` also matches the package version, because build and pack evaluate the same property; `AssemblyVersion` is unaffected by a suffix and stays `3.1.1.0` in lockstep with the rest.
+
+Constraints while this holds:
+
+- **The `NAudio` meta-package must not reference `NAudio.MacOS`.** A stable meta-package with a pre-release dependency drags pre-release semantics into everyone's graph, and plenty of shops block that outright. The meta-package has no macOS leg today; adding one is the graduation event, not a step along the way.
+- **`RELEASE_NOTES.md` bullets for macOS want a `(preview)` marker.** The same extracted section is embedded as `PackageReleaseNotes` in *every* package, so macOS entries appear on the stable packages' NuGet pages too.
+- **The `v*` GitHub Release lists the macOS `.nupkg` as an asset** alongside the stable ones, since the release step attaches everything in `artifacts/`. That is deliberate — it is an accurate record of what the run produced.
+
+**Graduating it:** delete the `<VersionSuffix>` PropertyGroup from `NAudio.MacOS.csproj`, add the `net10.0-macos` leg to the `NAudio` meta-package, and drop the pre-release wording from the package `<Description>` and README. It rejoins lockstep at the next release with no version discontinuity — the first stable `NAudio.MacOS` is simply whatever `<VersionPrefix>` is current, which sorts above every preview that came before it.
 
 ### Pre-release: manual trigger, auto-incrementing counter
 
@@ -290,6 +324,6 @@ The pragmatic path: disable the pipeline first, wait a couple of weeks, then del
 ## Out of scope
 
 - Migrating CHANGELOG generation tooling beyond the GitHub built-in (`.github/release.yml`). If we outgrow it, swap in something heavier later.
-- Per-package independent versioning. Lockstep is the chosen model; revisit only if it becomes painful.
+- Per-package independent versioning. Lockstep is the chosen model; revisit only if it becomes painful. `NAudio.MacOS` is a deliberate and self-maintaining exception — it shares the lockstep *version* and only pins the pre-release suffix, so it is not independent versioning in the sense rejected here.
 - Automatic changelog enforcement via CI block. Explicitly rejected as friction without value.
 - Appending the auto-generated PR list to GitHub Release bodies. `gh release create` makes `--notes-file` and `--generate-notes` mutually exclusive; adding both would require fetching auto-notes via `gh api` and concatenating. Possible follow-up if the curated notes alone prove insufficient.

@@ -289,15 +289,17 @@ public class WaveFileReaderTests
             () => { using var _ = new WaveFileReader(new MemoryStream(payload)); });
     }
 
-    // Regression: a fmt chunk can declare more extra (cbSize) bytes than NAudio's fixed
-    // 100-byte buffer. The reader used to throw ArgumentException; it must now discard the
-    // surplus and carry on reading the rest of the file. See issue #482.
-    [TestCase(200)]
-    [TestCase(40000)]
+    // Regression: a fmt chunk can declare a large amount of extra (cbSize) data. The reader
+    // originally threw ArgumentException, then discarded anything beyond a fixed 100-byte buffer;
+    // it now keeps all of it and carries on reading the rest of the file. See issue #482.
+    [Test]
     [Category("UnitTest")]
-    public void OversizedFmtExtraDataIsDiscardedNotThrown(int extraSize)
+    public void LargeFmtExtraDataIsPreserved()
     {
+        const int extraSize = 200; // more than the 100-byte buffer this used to be capped at
         var audio = new byte[] { 1, 0, 2, 0, 3, 0, 4, 0 };
+        var extra = new byte[extraSize];
+        for (int n = 0; n < extraSize; n++) extra[n] = (byte)(n % 251);
 
         using var ms = new MemoryStream();
         using (var w = new BinaryWriter(ms, Encoding.ASCII, leaveOpen: true))
@@ -314,8 +316,8 @@ public class WaveFileReaderTests
             w.Write(64000);               // average bytes per second
             w.Write((short)4);            // block align
             w.Write((short)16);           // bits per sample
-            w.Write(unchecked((short)extraSize)); // cbSize is an unsigned 16-bit field on disk
-            w.Write(new byte[extraSize]); // oversized extra data
+            w.Write((short)extraSize);    // cbSize
+            w.Write(extra);               // a large amount of extra data
 
             w.Write(Encoding.ASCII.GetBytes("data"));
             w.Write(audio.Length);
@@ -333,7 +335,50 @@ public class WaveFileReaderTests
         Assert.That(reader.WaveFormat.SampleRate, Is.EqualTo(16000));
         Assert.That(reader.WaveFormat.BitsPerSample, Is.EqualTo(16));
         Assert.That(reader.WaveFormat.AverageBytesPerSecond, Is.EqualTo(64000));
-        Assert.That(reader.WaveFormat.ExtraSize, Is.EqualTo(0)); // surplus discarded
+        Assert.That(reader.WaveFormat.ExtraSize, Is.EqualTo(extraSize), "cbSize preserved");
+        var readBack = (WaveFormatExtraData)reader.WaveFormat;
+        Assert.That(readBack.ExtraData.Length, Is.EqualTo(extraSize), "buffer sized from cbSize");
+        Assert.That(readBack.ExtraData, Is.EqualTo(extra), "extra bytes preserved verbatim");
+        // The point of #482: the rest of the file still parses.
+        Assert.That(reader.Length, Is.EqualTo(audio.Length));
+    }
+
+    [Test]
+    [Category("UnitTest")]
+    public void UnrepresentableFmtExtraDataIsDiscardedWithoutLosingFollowingChunks()
+    {
+        const int extraSize = 40000;
+        var audio = new byte[] { 1, 0, 2, 0, 3, 0, 4, 0 };
+
+        using var ms = new MemoryStream();
+        using (var w = new BinaryWriter(ms, Encoding.ASCII, leaveOpen: true))
+        {
+            w.Write(Encoding.ASCII.GetBytes("RIFF"));
+            w.Write(0);
+            w.Write(Encoding.ASCII.GetBytes("WAVE"));
+            w.Write(Encoding.ASCII.GetBytes("fmt "));
+            w.Write(18 + extraSize);
+            w.Write((short)1);
+            w.Write((short)2);
+            w.Write(16000);
+            w.Write(64000);
+            w.Write((short)4);
+            w.Write((short)16);
+            w.Write(unchecked((short)extraSize));
+            w.Write(new byte[extraSize]);
+            w.Write(Encoding.ASCII.GetBytes("data"));
+            w.Write(audio.Length);
+            w.Write(audio);
+
+            long fileLength = ms.Length;
+            ms.Position = 4;
+            w.Write((uint)(fileLength - 8));
+        }
+        ms.Position = 0;
+
+        using var reader = new WaveFileReader(ms);
+
+        Assert.That(reader.WaveFormat.ExtraSize, Is.Zero);
         Assert.That(reader.Length, Is.EqualTo(audio.Length));
     }
 

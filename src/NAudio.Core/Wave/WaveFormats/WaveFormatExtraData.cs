@@ -1,5 +1,3 @@
-﻿using System.Runtime.InteropServices;
-using System;
 using System.IO;
 using System.Diagnostics;
 
@@ -7,22 +5,25 @@ using System.Diagnostics;
 namespace NAudio.Wave;
 
 /// <summary>
-/// This class used for marshalling from unmanaged code
+/// A WaveFormat that keeps the format-specific extra bytes (cbSize) it was read with, without
+/// interpreting them. Reading a WAV fmt chunk produces one of these, and
+/// <see cref="WaveFormat.MarshalFromPtr"/> falls back to it for an encoding NAudio has no
+/// dedicated subclass for.
 /// </summary>
-[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 2)]
 public class WaveFormatExtraData : WaveFormat
 {
-    // try with 100 bytes for now, increase if necessary
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 100)]
-    private readonly byte[] extraData = new byte[100];
+    private const int CompatibilityBufferSize = 100;
+    private byte[] extraData = new byte[CompatibilityBufferSize];
 
     /// <summary>
-    /// Allows the extra data to be read
+    /// The extra bytes that followed the WAVEFORMATEX header. The first
+    /// <see cref="WaveFormat.ExtraSize"/> bytes contain the declared data; formats with less
+    /// than 100 bytes retain the historical zero-filled buffer tail for compatibility.
     /// </summary>
     public byte[] ExtraData => extraData;
 
     /// <summary>
-    /// parameterless constructor for marshalling
+    /// Creates an empty instance, to be filled in by <see cref="WaveFormat.FromFormatChunk"/>
     /// </summary>
     internal WaveFormatExtraData()
     {
@@ -40,34 +41,28 @@ public class WaveFormatExtraData : WaveFormat
 
     internal void ReadExtraData(BinaryReader reader, int extraDataLength)
     {
-        if (extraDataLength > extraData.Length)
+        if (extraDataLength <= 0)
         {
-            // The fmt chunk declares more extra bytes than our fixed buffer can hold.
-            // Consume them so the stream stays aligned for the next chunk, then discard.
-            Debug.WriteLine($"Discarding {extraDataLength} bytes of fmt extra data exceeding the {extraData.Length}-byte buffer");
+            extraSize = 0;
+            return;
+        }
+
+        if (extraDataLength > short.MaxValue)
+        {
+            // extraSize remains a signed short for compatibility with existing subclasses.
+            // Consume an unrepresentable fmt payload so the following chunk stays aligned.
+            Debug.WriteLine($"Discarding {extraDataLength} bytes of fmt extra data exceeding the supported {short.MaxValue}-byte maximum");
             SkipBytes(reader, extraDataLength);
             extraSize = 0;
             return;
         }
-        if (extraDataLength > 0)
-        {
-            ReadExactly(reader, extraData, extraDataLength);
-            extraSize = (short)extraDataLength;
-        }
-    }
 
-    internal void ReadExtraData(IntPtr source, int extraDataLength)
-    {
         if (extraDataLength > extraData.Length)
         {
-            Debug.WriteLine($"Discarding {extraDataLength} bytes of native format extra data exceeding the {extraData.Length}-byte buffer");
-            extraSize = 0;
-            return;
+            extraData = new byte[extraDataLength];
         }
-        if (extraDataLength > 0)
-        {
-            Marshal.Copy(source, extraData, 0, extraDataLength);
-        }
+        ReadExactly(reader, extraData, extraDataLength);
+        extraSize = (short)extraDataLength;
     }
 
     private static void ReadExactly(BinaryReader reader, byte[] destination, int count)

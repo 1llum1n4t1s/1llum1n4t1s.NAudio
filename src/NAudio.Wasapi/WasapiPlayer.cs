@@ -297,11 +297,20 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
     /// Checks whether the specified format is supported by the device in the current share mode.
     /// </summary>
     /// <param name="format">The format to check.</param>
-    /// <param name="closestMatch">In shared mode, the closest supported format if the exact format isn't supported. Always null in exclusive mode.</param>
+    /// <param name="closestMatch">In shared mode, the closest supported extensible format if the exact format isn't supported. Always null in exclusive mode.</param>
     /// <returns>True if the format is supported.</returns>
     public bool IsFormatSupported(WaveFormat format, out WaveFormatExtensible closestMatch)
     {
         return audioClient.IsFormatSupported(shareMode, format, out closestMatch);
+    }
+
+    /// <summary>
+    /// Checks whether the specified format is supported and returns the driver's closest
+    /// match using its actual WAVEFORMATEX-derived managed type.
+    /// </summary>
+    public bool IsFormatSupportedWithClosestMatch(WaveFormat format, out WaveFormat closestMatch)
+    {
+        return audioClient.IsFormatSupportedWithClosestMatch(shareMode, format, out closestMatch);
     }
 
     /// <summary>
@@ -801,10 +810,6 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
                     }
                 }
             }
-
-            audioClient.Stop();
-            playbackState = PlaybackState.Stopped;
-            audioClient.Reset();
         }
         catch (Exception e)
         {
@@ -812,6 +817,13 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
         }
         finally
         {
+            // Teardown belongs here rather than at the end of the try block: the thread also leaves
+            // without running that far when the source's Read throws, or when the source ends before
+            // the first buffer is filled. Leaving the client running - or the state reporting Playing -
+            // strands the player: a later Play() then asks for more frames than the buffer has free and
+            // fails with AUDCLNT_E_BUFFER_TOO_LARGE, and callers polling PlaybackState never see it
+            // stop (issue #1442).
+            SafeStopAndReset();
             playbackState = PlaybackState.Stopped;
             if (mmcssHandle != IntPtr.Zero)
                 NativeMethods.AvRevertMmThreadCharacteristics(mmcssHandle);
@@ -827,32 +839,51 @@ public class WasapiPlayer : IWavePlayer, IWavePosition, IWaveLatency, IAsyncDisp
     }
 
     /// <summary>
+    /// Best-effort stop and reset of the audio client during teardown. A device that has been
+    /// removed mid-playback fails these calls (AUDCLNT_E_DEVICE_INVALIDATED); the failure is not
+    /// actionable here, and must not mask the real exception or escape and kill the play thread.
+    /// </summary>
+    private void SafeStopAndReset()
+    {
+        try { audioClient?.Stop(); } catch { /* device already gone */ }
+        try { audioClient?.Reset(); } catch { /* device already gone */ }
+    }
+
+    /// <summary>
     /// Fills the WASAPI render buffer directly from the audio source using Span (zero-copy).
     /// Returns true if the source has ended.
     /// </summary>
     private bool FillBuffer(int frameCount)
     {
         using var lease = renderClient.GetBufferLease(frameCount, bytesPerFrame);
-        int bytesRead = waveProvider.Read(lease.Buffer);
-        if (bytesRead == 0)
+        try
         {
-            lease.Release(0, AudioClientBufferFlags.Silent);
-            return true;
-        }
+            int bytesRead = waveProvider.Read(lease.Buffer);
+            if (bytesRead == 0)
+            {
+                lease.Release(0, AudioClientBufferFlags.Silent);
+                return true;
+            }
 
-        int framesRead = bytesRead / bytesPerFrame;
-        if (isUsingEventSync && shareMode == AudioClientShareMode.Exclusive)
-        {
-            // In exclusive event mode, must release the full frame count
-            if (bytesRead < frameCount * bytesPerFrame)
-                lease.Buffer.Slice(bytesRead).Clear();
-            lease.Release(frameCount);
+            int framesRead = bytesRead / bytesPerFrame;
+            if (isUsingEventSync && shareMode == AudioClientShareMode.Exclusive)
+            {
+                // In exclusive event mode, must release the full frame count
+                if (bytesRead < frameCount * bytesPerFrame)
+                    lease.Buffer.Slice(bytesRead).Clear();
+                lease.Release(frameCount);
+            }
+            else
+            {
+                lease.Release(framesRead);
+            }
+            return false;
         }
-        else
+        catch
         {
-            lease.Release(framesRead);
+            lease.Discard();
+            throw;
         }
-        return false;
     }
 
     private void RaisePlaybackStopped(Exception e)

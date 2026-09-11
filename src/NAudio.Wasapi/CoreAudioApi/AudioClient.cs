@@ -571,17 +571,45 @@ public class AudioClient : IDisposable
     public bool IsFormatSupported(AudioClientShareMode shareMode,
         WaveFormat desiredFormat)
     {
-        return IsFormatSupported(shareMode, desiredFormat, out _);
+        return IsFormatSupportedWithClosestMatch(shareMode, desiredFormat, out _);
     }
 
     /// <summary>
-    /// Determines if the specified output format is supported in shared mode
+    /// Determines if the specified output format is supported in shared mode.
+    /// This overload preserves the existing 4.x API and represents PCM/IEEE
+    /// closest matches as <see cref="WaveFormatExtensible"/>.
     /// </summary>
     /// <param name="shareMode">Share Mode</param>
     /// <param name="desiredFormat">Desired Format</param>
-    /// <param name="closestMatchFormat">Output The closest match format.</param>
+    /// <param name="closestMatchFormat">The closest supported extensible format, or null if there is none. Shared mode only — always null in exclusive mode.</param>
     /// <returns>True if the format is supported</returns>
     public bool IsFormatSupported(AudioClientShareMode shareMode, WaveFormat desiredFormat, out WaveFormatExtensible closestMatchFormat)
+    {
+        bool supported = IsFormatSupportedWithClosestMatch(shareMode, desiredFormat, out var closestMatch);
+        closestMatchFormat = closestMatch switch
+        {
+            WaveFormatExtensible extensible => extensible,
+            { Encoding: WaveFormatEncoding.Pcm } pcm =>
+                new WaveFormatExtensible(pcm.SampleRate, pcm.BitsPerSample, pcm.Channels, false,
+                    pcm.BitsPerSample, 0),
+            { Encoding: WaveFormatEncoding.IeeeFloat } ieee =>
+                new WaveFormatExtensible(ieee.SampleRate, ieee.BitsPerSample, ieee.Channels, true,
+                    ieee.BitsPerSample, 0),
+            _ => null
+        };
+        return supported;
+    }
+
+    /// <summary>
+    /// Determines if the specified output format is supported and returns the driver's
+    /// closest match using its actual WAVEFORMATEX-derived managed type.
+    /// </summary>
+    /// <param name="shareMode">Share Mode</param>
+    /// <param name="desiredFormat">Desired Format</param>
+    /// <param name="closestMatchFormat">The closest supported format, or null if there is none. Shared mode only — always null in exclusive mode.</param>
+    /// <returns>True if the format is supported</returns>
+    public bool IsFormatSupportedWithClosestMatch(AudioClientShareMode shareMode, WaveFormat desiredFormat,
+        out WaveFormat closestMatchFormat)
     {
         closestMatchFormat = null;
         var formatPtr = WaveFormat.MarshalToPtr(desiredFormat);
@@ -591,7 +619,8 @@ public class AudioClient : IDisposable
 
             if (closestMatchPtr != IntPtr.Zero)
             {
-                closestMatchFormat = Marshal.PtrToStructure<WaveFormatExtensible>(closestMatchPtr);
+                // WASAPI may return either a WAVEFORMATEX or a WAVEFORMATEXTENSIBLE here.
+                closestMatchFormat = WaveFormat.MarshalFromPtr(closestMatchPtr);
                 Marshal.FreeCoTaskMem(closestMatchPtr);
             }
 

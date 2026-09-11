@@ -62,6 +62,7 @@ internal class WaveFileChunkReader
         // this -8 is so we can be sure that there are at least 8 bytes for a chunk id and length
         while (stream.Position <= stopPosition - 8)
         {
+            long chunkStartPosition = stream.Position;
             Int32 chunkIdentifier = br.ReadInt32();
             var chunkLength = br.ReadUInt32();
             if (chunkIdentifier == dataChunkId)
@@ -127,6 +128,13 @@ internal class WaveFileChunkReader
                     stream.Position--;
                 }
             }
+
+            // Every iteration reads an 8-byte header, so the position must have moved on.
+            // If a size field sent us backwards, continuing would loop forever. See #1428.
+            if (stream.Position <= chunkStartPosition)
+            {
+                break;
+            }
         }
 
         if (waveFormat == null)
@@ -156,19 +164,25 @@ internal class WaveFileChunkReader
         if (chunkSize > reader.BaseStream.Length - reader.BaseStream.Position)
             throw new EndOfStreamException("Invalid RF64 WAV file - ds64 chunk extends past the end of the stream");
 
-        ulong rf64RiffSize = reader.ReadUInt64();
-        ulong rf64DataLength = reader.ReadUInt64();
+        long rf64RiffSize = reader.ReadInt64();
+        long rf64DataLength = reader.ReadInt64();
         _ = reader.ReadUInt64(); // sample count replaces the value in the fact chunk
         uint tableLength = reader.ReadUInt32();
-        if (rf64RiffSize > long.MaxValue || rf64DataLength > long.MaxValue)
-            throw new FormatException("Invalid RF64 WAV file - ds64 sizes exceed the supported range");
+        if (rf64RiffSize < 0)
+        {
+            throw new FormatException($"Invalid RF64 WAV file - negative RIFF size ({rf64RiffSize}) in ds64 chunk");
+        }
+        if (rf64DataLength < 0)
+        {
+            throw new FormatException($"Invalid RF64 WAV file - negative data chunk length ({rf64DataLength}) in ds64 chunk");
+        }
 
         ulong tableSize = (ulong)tableLength * 12;
         if (tableSize > chunkSize - 28)
             throw new FormatException("Invalid RF64 WAV file - ds64 table is larger than the chunk");
 
-        this.riffSize = (long)rf64RiffSize;
-        this.dataChunkLength = (long)rf64DataLength;
+        this.riffSize = rf64RiffSize;
+        this.dataChunkLength = rf64DataLength;
         reader.BaseStream.Seek(chunkSize - 28, SeekOrigin.Current);
     }
 

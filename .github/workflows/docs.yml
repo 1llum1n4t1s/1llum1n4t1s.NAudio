@@ -55,6 +55,9 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: docfx/_site
+          # v3 archived dotfiles; v5 drops them unless asked. DocFX doesn't
+          # emit any today, but keep the old behaviour rather than find out.
+          include-hidden-files: true
 
   deploy:
     # Publish to GitHub Pages only from main.

@@ -9,9 +9,23 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+### Added
+
+- preview の `1llum1n4t1s.NAudio.MacOS` を追加し、Core Audio の再生・録音と Audio Toolbox のfile I/Oを利用できるようにしました。(#1398, #1438)
+- `WaveProviderBase<T>` と `SampleProviderBase<T>` を追加し、arrayを返すproviderを実装しやすくしました。(#1440)
+- `AudioClient` と `WasapiPlayer` に、deviceが返す実際のclosest format型を取得する`IsFormatSupportedWithClosestMatch`を追加しました。
+
 ### Changed
 
 - NuGet パッケージとドキュメントサイトのアイコンを他のライブラリと共通のデザインに統一しました。
+- upstream NAudio `main` の `05bf609c` までを取り込み、Windows interopのNative AOT対応とtutorialを更新しました。
+
+### Fixed
+
+- Xing/Info headerを持つMP3で`Mp3FileReaderBase`のseek位置がずれる問題を修正しました。(#1419)
+- 負のWAV chunk sizeを拒否し、不正な入力でparserが終了しない問題を修正しました。(#1428)
+- sourceの`Read`が例外を投げた後に`WasapiPlayer`が再利用不能になる問題を修正しました。(#1442)
+- `WaveOut.CurrentLatency`の監視と破棄が競合すると、解放済みnative headerを参照する問題を修正しました。
 
 ## [4.0.3] - 2026-08-30
 
