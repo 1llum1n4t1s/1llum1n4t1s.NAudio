@@ -41,18 +41,18 @@ Linux では `1llum1n4t1s.NAudio.Alsa`、cross-platform file I/O では
 通常の Windows アプリでは、Windows backend 一式を参照する meta-package が簡単です。
 
 ```powershell
-dotnet add package 1llum1n4t1s.NAudio --version 4.0.4
+dotnet add package 1llum1n4t1s.NAudio --version 4.0.5
 ```
 
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="4.0.4" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="4.0.5" />
 ```
 
 Native AOT アプリでは必要な package だけを参照してください。Process Loopback と
 Media Foundation が目的なら `1llum1n4t1s.NAudio.Wasapi` が `NAudio.Core` を推移参照します。
 
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio.Wasapi" Version="4.0.4" />
+<PackageReference Include="1llum1n4t1s.NAudio.Wasapi" Version="4.0.5" />
 ```
 
 ## 再生

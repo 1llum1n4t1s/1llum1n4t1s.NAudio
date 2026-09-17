@@ -9,6 +9,12 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.5] - 2026-09-18
+
+### Changed
+
+- 利用者向けの公開APIと動作を維持したまま、内部依存関係を最新の安定版へ更新しました。
+
 ## [4.0.4] - 2026-09-12
 
 ### Added
@@ -168,7 +174,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.4...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.5...HEAD
+[4.0.5]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.4...v4.0.5
 [4.0.4]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.3...v4.0.4
 [4.0.3]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.1...v4.0.2
