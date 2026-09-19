@@ -76,6 +76,6 @@
          flow to consumers (PrivateAssets=all). Its targets only do work during
          `pack` when GenerateSBOM is true, so test and sample/tool projects that
          are never packed to NuGet are unaffected. -->
-    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.5" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.12" PrivateAssets="all" />
   </ItemGroup>
 </Project>
