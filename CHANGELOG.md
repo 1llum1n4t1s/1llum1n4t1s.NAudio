@@ -9,6 +9,12 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.6] - 2026-09-20
+
+### Changed
+
+- NuGet パッケージに同梱する SBOM の生成基盤を最新の安定版へ更新しました。
+
 ## [4.0.5] - 2026-09-18
 
 ### Changed
