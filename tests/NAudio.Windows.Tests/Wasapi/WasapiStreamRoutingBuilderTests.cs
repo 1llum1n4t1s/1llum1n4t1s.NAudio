@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using NAudio.Wave;
 using NUnit.Framework;
 
@@ -24,18 +25,18 @@ public class WasapiStreamRoutingBuilderTests
     }
 
     [Test]
-    public void PlayerRouting_WithExclusiveMode_BuildAsyncThrows()
+    public async Task PlayerRouting_WithExclusiveMode_BuildAsyncThrows()
     {
         var builder = new WasapiPlayerBuilder().WithDefaultDeviceStreamRouting().WithExclusiveMode();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
         Assert.That(ex.Message, Does.Contain("shared mode"));
     }
 
     [Test]
-    public void PlayerRouting_WithLowLatency_BuildAsyncThrows()
+    public async Task PlayerRouting_WithLowLatency_BuildAsyncThrows()
     {
         var builder = new WasapiPlayerBuilder().WithDefaultDeviceStreamRouting().WithLowLatency();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
         Assert.That(ex.Message, Does.Contain("low latency").IgnoreCase);
     }
 
@@ -53,26 +54,26 @@ public class WasapiStreamRoutingBuilderTests
     }
 
     [Test]
-    public void RecorderRouting_WithExclusiveMode_BuildAsyncThrows()
+    public async Task RecorderRouting_WithExclusiveMode_BuildAsyncThrows()
     {
         var builder = new WasapiRecorderBuilder().WithDefaultDeviceStreamRouting().WithExclusiveMode();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
         Assert.That(ex.Message, Does.Contain("shared mode"));
     }
 
     [Test]
-    public void RecorderRouting_WithLoopbackCapture_BuildAsyncThrows()
+    public async Task RecorderRouting_WithLoopbackCapture_BuildAsyncThrows()
     {
         var builder = new WasapiRecorderBuilder().WithDefaultDeviceStreamRouting().WithLoopbackCapture();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
         Assert.That(ex.Message, Does.Contain("WithLoopbackCapture"));
     }
 
     [Test]
-    public void RecorderRouting_WithLowLatency_BuildAsyncThrows()
+    public async Task RecorderRouting_WithLowLatency_BuildAsyncThrows()
     {
         var builder = new WasapiRecorderBuilder().WithDefaultDeviceStreamRouting().WithLowLatency();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
         Assert.That(ex.Message, Does.Contain("low latency").IgnoreCase);
     }
 }

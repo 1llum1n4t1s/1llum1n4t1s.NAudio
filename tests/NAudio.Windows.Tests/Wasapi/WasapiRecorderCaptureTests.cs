@@ -208,7 +208,7 @@ public class WasapiRecorderCaptureTests
         using var recorder = CreateRecorder(new FakeAudioClient { InitializeResult = EFail });
         await using var enumerator = recorder.CaptureAsync().GetAsyncEnumerator();
 
-        Assert.ThrowsAsync<CoreAudioException>(async () => await enumerator.MoveNextAsync());
+        await Assert.ThrowsAsync<CoreAudioException>(async () => await enumerator.MoveNextAsync());
         Assert.That(recorder.CaptureState, Is.EqualTo(CaptureState.Stopped));
     }
 

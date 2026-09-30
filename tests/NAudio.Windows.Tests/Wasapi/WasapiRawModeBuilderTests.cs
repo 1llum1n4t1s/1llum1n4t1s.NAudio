@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using NAudio.Wave;
 using NUnit.Framework;
 
@@ -39,10 +40,10 @@ public class WasapiRawModeBuilderTests
     }
 
     [Test]
-    public void Recorder_RawMode_WithProcessLoopback_BuildAsyncThrows()
+    public async Task Recorder_RawMode_WithProcessLoopback_BuildAsyncThrows()
     {
         var builder = new WasapiRecorderBuilder().WithRawMode().WithProcessLoopback(1234);
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => builder.BuildAsync());
         Assert.That(ex.Message, Does.Contain("process-loopback").IgnoreCase);
     }
 }

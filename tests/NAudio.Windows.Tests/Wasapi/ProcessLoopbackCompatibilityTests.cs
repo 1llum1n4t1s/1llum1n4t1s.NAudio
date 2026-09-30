@@ -78,22 +78,22 @@ public class ProcessLoopbackCompatibilityTests
     }
 
     [Test]
-    public void LegacyFactoryRejectsInvalidProcessIdBeforeActivation()
+    public async Task LegacyFactoryRejectsInvalidProcessIdBeforeActivation()
     {
 #pragma warning disable CS0618 // This test intentionally protects the 1.x compatibility API.
-        Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
             WasapiCapture.CreateForProcessCaptureAsync(0, includeProcessTree: true));
 #pragma warning restore CS0618
     }
 
     [Test]
-    public void LegacyFactoryHonorsPreCanceledTokenWithoutCallingWindows()
+    public async Task LegacyFactoryHonorsPreCanceledTokenWithoutCallingWindows()
     {
         using var source = new CancellationTokenSource();
         source.Cancel();
 
 #pragma warning disable CS0618 // This test intentionally protects the 1.x compatibility API.
-        Assert.ThrowsAsync<OperationCanceledException>(() =>
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             WasapiCapture.CreateForProcessCaptureAsync(1, includeProcessTree: true, source.Token));
 #pragma warning restore CS0618
     }
