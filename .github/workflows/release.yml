@@ -41,6 +41,13 @@ jobs:
             exit 1
           }
 
+      - name: Prepare temporary output
+        shell: pwsh
+        run: |
+          $outputPath = Join-Path $env:RUNNER_TEMP "Codex\NAudio-release-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force -Path $outputPath | Out-Null
+          "RELEASE_OUTPUT_DIR=$outputPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
       - name: Determine version
         id: version
         shell: pwsh
@@ -90,6 +97,8 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.version }}'
           $isFinal = '${{ steps.version.outputs.is_final }}' -eq 'true'
+          New-Item -ItemType Directory -Force -Path $env:RELEASE_OUTPUT_DIR | Out-Null
+          $notesPath = Join-Path $env:RELEASE_OUTPUT_DIR 'release-body.md'
 
           if ($isFinal) {
             $pattern = "^## \[$([regex]::Escape($version))\](\s|$)"
@@ -117,7 +126,7 @@ jobs:
               exit 1
             } else {
               Write-Warning "CHANGELOG.md has no '$label' section; package release notes will be empty."
-              "" | Out-File -FilePath release-body.md -Encoding utf8
+              "" | Out-File -FilePath $notesPath -Encoding utf8
             }
           } else {
             $body = $lines[$start..($end - 1)] -join "`n"
@@ -135,7 +144,7 @@ jobs:
               exit 1
             }
 
-            $body | Out-File -FilePath release-body.md -Encoding utf8
+            $body | Out-File -FilePath $notesPath -Encoding utf8
             Write-Host "Extracted '$label' ($($body.Length) of $limit chars) to release-body.md."
           }
 
@@ -182,13 +191,13 @@ jobs:
             'NAudio',
             'NAudio.Extras'
           )
-          $notesPath = Join-Path $env:GITHUB_WORKSPACE "release-body.md"
-          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $notesPath = Join-Path $env:RELEASE_OUTPUT_DIR "release-body.md"
+          New-Item -ItemType Directory -Force -Path $env:RELEASE_OUTPUT_DIR | Out-Null
           foreach ($pkg in $packages) {
             dotnet pack "src/$pkg/$pkg.csproj" `
               --configuration Release `
               --no-build `
-              --output artifacts `
+              --output $env:RELEASE_OUTPUT_DIR `
               -p:PackageReleaseNotesFile="$notesPath" `
               ${{ steps.version.outputs.pack_args }}
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -199,8 +208,8 @@ jobs:
         with:
           name: nupkg-${{ steps.version.outputs.version }}
           path: |
-            artifacts/*.nupkg
-            artifacts/*.snupkg
+            ${{ env.RELEASE_OUTPUT_DIR }}/*.nupkg
+            ${{ env.RELEASE_OUTPUT_DIR }}/*.snupkg
           if-no-files-found: error
 
       - name: Authenticate to NuGet.org
@@ -220,9 +229,9 @@ jobs:
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
-          $packages = Get-ChildItem -Path "artifacts\*.nupkg"
+          $packages = Get-ChildItem -LiteralPath $env:RELEASE_OUTPUT_DIR -Filter '*.nupkg'
           if (-not $packages) {
-            Write-Error "No .nupkg files found in artifacts/"
+            Write-Error "No .nupkg files found in $env:RELEASE_OUTPUT_DIR"
             exit 1
           }
           foreach ($pkg in $packages) {
@@ -242,7 +251,7 @@ jobs:
       # release-body.md file was already produced by the earlier
       # "Extract CHANGELOG.md section" step.
       #
-      # The .nupkg files are attached as release assets. artifacts/ is still
+      # The .nupkg files are attached as release assets. The package directory is still
       # on disk from the Pack step, so there is no artifact round-trip. This
       # also gives a permanent copy of exactly what shipped: Actions artifacts
       # expire (90 days by default), release assets do not. Symbol packages
@@ -258,14 +267,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          $assets = @(Get-ChildItem -Path "artifacts\*.nupkg" | ForEach-Object { $_.FullName })
+          $assets = @(Get-ChildItem -LiteralPath $env:RELEASE_OUTPUT_DIR -Filter '*.nupkg' | ForEach-Object { $_.FullName })
           if ($assets.Count -eq 0) {
-            Write-Error "No .nupkg files found in artifacts/ to attach to the release"
+            Write-Error "No .nupkg files found in $env:RELEASE_OUTPUT_DIR to attach to the release"
             exit 1
           }
           Write-Host "Attaching $($assets.Count) package(s) to the release"
           gh release create "v${{ steps.version.outputs.version }}" `
             --title "1llum1n4t1s.NAudio ${{ steps.version.outputs.version }}" `
-            --notes-file release-body.md `
+            --notes-file (Join-Path $env:RELEASE_OUTPUT_DIR 'release-body.md') `
             --verify-tag `
             @assets
