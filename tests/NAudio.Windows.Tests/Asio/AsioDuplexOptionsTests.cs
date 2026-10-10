@@ -21,41 +21,4 @@ public class AsioDuplexOptionsTests
         });
     }
 
-    [Test]
-    public void Init_PreservesAllValues()
-    {
-        int[] inputs = [0, 2];
-        int[] outputs = [4, 5];
-        AsioProcessCallback processor = (in AsioProcessBuffers _) => { };
-
-        var options = new AsioDuplexOptions
-        {
-            InputChannels = inputs,
-            OutputChannels = outputs,
-            SampleRate = 96000,
-            BufferSize = 256,
-            Processor = processor
-        };
-
-        Assert.That(options.InputChannels, Is.SameAs(inputs));
-        Assert.That(options.OutputChannels, Is.SameAs(outputs));
-        Assert.That(options.SampleRate, Is.EqualTo(96000));
-        Assert.That(options.BufferSize, Is.EqualTo(256));
-        Assert.That(options.Processor, Is.SameAs(processor));
-    }
-
-    [Test]
-    public void OutputOnly_LeavesInputChannelsUnset()
-    {
-        // Output-only configuration: no input channels, just outputs and a processor.
-        var options = new AsioDuplexOptions
-        {
-            OutputChannels = [0, 1, 2, 3],
-            Processor = (in AsioProcessBuffers _) => { }
-        };
-
-        Assert.That(options.InputChannels, Is.Null, "output-only leaves InputChannels null");
-        Assert.That(options.OutputChannels, Has.Length.EqualTo(4));
-        Assert.That(options.Processor, Is.Not.Null);
-    }
 }

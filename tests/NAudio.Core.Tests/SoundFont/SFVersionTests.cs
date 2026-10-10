@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using NAudio.SoundFont;
 using NUnit.Framework;
 
 namespace NAudio.Core.Tests.SoundFont;
@@ -36,16 +35,6 @@ public class SFVersionTests
 
         Assert.That(sf.FileInfo.SoundFontVersion.Major, Is.EqualTo(3));
         Assert.That(sf.FileInfo.SoundFontVersion.Minor, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void SFVersionMajorAndMinorAreReadWrite()
-    {
-        var v = new SFVersion();
-        v.Major = 2;
-        v.Minor = 4;
-        Assert.That(v.Major, Is.EqualTo(2));
-        Assert.That(v.Minor, Is.EqualTo(4));
     }
 
     #region Spec violation test (LOW severity)

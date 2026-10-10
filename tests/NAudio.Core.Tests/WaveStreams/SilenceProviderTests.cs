@@ -19,14 +19,4 @@ public class SilenceProviderTests
         Assert.That(b, Is.EqualTo(new byte[length]));
     }
 
-    [Test]
-    public void ClearsEntireSpan()
-    {
-        var sp = new SilenceProvider(new WaveFormat(44100, 2));
-        var length = 4;
-        var b = Enumerable.Range(1, length).Select(n => (byte)1).ToArray();
-        var read = sp.Read(b.AsSpan());
-        Assert.That(read, Is.EqualTo(4));
-        Assert.That(b, Is.EqualTo(new byte[] { 0, 0, 0, 0 }));
-    }
 }

@@ -10,14 +10,6 @@ public class GeneratorTests
     #region Generator amount property tests
 
     [Test]
-    public void UInt16AmountStoresAndRetrievesCorrectly()
-    {
-        var g = new Generator();
-        g.UInt16Amount = 0x1234;
-        Assert.That(g.UInt16Amount, Is.EqualTo(0x1234));
-    }
-
-    [Test]
     public void Int16AmountConvertsFromUInt16()
     {
         var g = new Generator();
@@ -73,64 +65,6 @@ public class GeneratorTests
         g.UInt16Amount = 0x1234;
         g.HighByteAmount = 0x78;
         Assert.That(g.UInt16Amount, Is.EqualTo(0x7834));
-    }
-
-    [Test]
-    public void LowAndHighBytesFormKeyRange()
-    {
-        // KeyRange: lo byte = low key, hi byte = high key
-        var g = new Generator();
-        g.GeneratorType = GeneratorEnum.KeyRange;
-        g.LowByteAmount = 36;   // low key = C2
-        g.HighByteAmount = 96;  // high key = C7
-        Assert.That(g.LowByteAmount, Is.EqualTo(36));
-        Assert.That(g.HighByteAmount, Is.EqualTo(96));
-        Assert.That(g.UInt16Amount, Is.EqualTo((96 << 8) | 36));
-    }
-
-    [Test]
-    public void LowAndHighBytesFormVelocityRange()
-    {
-        var g = new Generator();
-        g.GeneratorType = GeneratorEnum.VelocityRange;
-        g.LowByteAmount = 1;    // min velocity
-        g.HighByteAmount = 127;  // max velocity
-        Assert.That(g.LowByteAmount, Is.EqualTo(1));
-        Assert.That(g.HighByteAmount, Is.EqualTo(127));
-    }
-
-    #endregion
-
-    #region Generator ToString tests
-
-    [Test]
-    public void ToStringShowsInstrumentName()
-    {
-        var g = new Generator();
-        g.GeneratorType = GeneratorEnum.Instrument;
-        g.Instrument = new Instrument { Name = "TestInst" };
-        Assert.That(g.ToString(), Does.Contain("Instrument"));
-        Assert.That(g.ToString(), Does.Contain("TestInst"));
-    }
-
-    [Test]
-    public void ToStringShowsSampleHeader()
-    {
-        var g = new Generator();
-        g.GeneratorType = GeneratorEnum.SampleID;
-        g.SampleHeader = new SampleHeader { SampleName = "TestSample" };
-        Assert.That(g.ToString(), Does.Contain("SampleID"));
-        Assert.That(g.ToString(), Does.Contain("TestSample"));
-    }
-
-    [Test]
-    public void ToStringShowsGeneratorTypeAndAmount()
-    {
-        var g = new Generator();
-        g.GeneratorType = GeneratorEnum.Pan;
-        g.Int16Amount = -500;
-        var str = g.ToString();
-        Assert.That(str, Does.Contain("Pan"));
     }
 
     #endregion

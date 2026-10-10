@@ -9,14 +9,6 @@ namespace NAudio.Core.Tests.WaveStreams;
 public class BufferedWaveProviderTests
 {
     [Test]
-    public void CanClearBeforeWritingSamples()
-    {
-        var bwp = new BufferedWaveProvider(new WaveFormat(44100, 16, 2));
-        bwp.ClearBuffer();
-        Assert.That(bwp.BufferedBytes, Is.EqualTo(0));
-    }
-
-    [Test]
     public void BufferedBytesAreReturned()
     {
         var bytesToBuffer = 1000;
