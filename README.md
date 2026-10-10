@@ -39,6 +39,8 @@ Linux では `1llum1n4t1s.NAudio.Alsa`、cross-platform file I/O では
 ## インストール
 
 通常の Windows アプリでは、Windows backend 一式を参照する meta-package が簡単です。
+アプリの TFM は `net10.0-windows` または Windows version を含む TFM にしてください。
+`net10.0` では Core と MIDI のみが選択され、WASAPI などの Windows backend は含まれません。
 
 ```powershell
 dotnet add package 1llum1n4t1s.NAudio --version 4.0.7
@@ -201,6 +203,8 @@ trim/AOT warning と配布サイズを抑えられます。
 - [Process Loopback / WasapiRecorder](Docs/WasapiRecorder.md)
 - [macOS での再生](Docs/PlayAudioFileMacOS.md)
 - [macOS での録音](Docs/RecordAudioFileMacOS.md)
+- [macOS での音声ファイル読み込み・変換設定](Docs/ExtendedAudioFileServicesReader.md)
+- [macOS での音声ファイル作成](Docs/ExtendedAudioFileServicesWriter.md)
 - [VB.NET からの利用](Docs/UsingNAudioFromVB.md)
 - [NAudio 2 から 3 への移行](Docs/MigratingFromNAudio2.md)
 - [出力 API の選び方](Docs/OutputDeviceTypes.md)

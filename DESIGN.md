@@ -48,7 +48,13 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
    作成します。成功後は通常のWASAPI capture loopへ合流します。
 4. **Sampler**: SF2/SFZ parserがinstrument/regionを構築し、MIDI eventとsample dataをsampler engineへ
    入力します。出力は`ISampleProvider`として通常のmix/playback chainへ接続されます。
-5. **Release**: root `VersionPrefix`とCHANGELOGを同期し、`v*` tagでGitHub Actionsを起動します。
+5. **macOS file I/O**: `ExtendedAudioFileServicesReader`はAudio ToolboxでfileをPCM/IEEE floatへdecodeし、
+   client formatを`WaveFormat`として公開します。`Position`はclient側のbyte数、native seekと
+   `CurrentTime` / `TotalTime`はsource側のframe数とsample rateを基準にします。resampling時の
+   `Length`は推定値のため、終端は`Read`の戻り値で判断します。writerは`ProvidingFormat`の音声を
+   native encoderへ渡します。具体的な設定は[reader](Docs/ExtendedAudioFileServicesReader.md)と
+   [writer](Docs/ExtendedAudioFileServicesWriter.md)の利用ガイドを参照してください。
+6. **Release**: root `VersionPrefix`とCHANGELOGを同期し、`v*` tagでGitHub Actionsを起動します。
    workflowは14 packageをbuild/test/packし、NuGetへpushした後にGitHub Releaseを作成します。
 
 ## 重要な不変条件
@@ -61,6 +67,10 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
   誤fallbackさせず、versioned legではWinRT MIDIを提供するためです。
 - `NAudio.Wasapi`はsource-generated COMとP/Invokeでcompileできるため`net10.0`を使用し、
   `[SupportedOSPlatform("windows")]`でruntime境界を表します。
+- `WaveFormat`のmanaged object layoutはnativeの`WAVEFORMATEX`ではありません。DirectSoundを含む
+  native境界では`ToWaveFormatExBytes` / `MarshalToPtr` / `MarshalFromPtr`で明示的にserializeし、
+  `MarshalToPtr`のallocationは`Marshal.FreeHGlobal`で解放します。継承classの直接marshalやpinは
+  Native AOTでbase fieldが欠落したりAuto layoutが並べ替わったりするため、使用しません。
 - `NAudio.MacOS`は`net10.0`でcompileし、`[SupportedOSPlatform("macos")]`でruntime境界を表します。
   stable meta-packageには含めず、preview packageを明示参照します。
 - Process LoopbackはWindows 10 build 19041以降がruntime要件です。include/exclude modeのnative値、
@@ -88,4 +98,6 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 - **tag駆動のfinal release**: versionとsource SHAを一意にし、同じCHANGELOG本文をNuGetとGitHub Releaseで
   共有します。previewだけは`workflow_dispatch`でsuffixを付与します。
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
-  build/analyzerと非Integration testを正本とし、Native AOT executableのend-to-end実行は実機で行います。
+  build/analyzer、非Integration testとNative AOT smoke projectのpublishを行います。publishはILCompilerの
+  whole-program解析とnative linkまで検証し、analyzerだけでは検出できない問題を補います。
+  executableのend-to-end実行は実機で行います。

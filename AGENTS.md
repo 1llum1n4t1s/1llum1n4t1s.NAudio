@@ -49,9 +49,10 @@ On Windows, use the same sequence as CI:
 dotnet restore NAudio.slnx
 dotnet build NAudio.slnx --configuration Release --no-restore
 dotnet test --solution NAudio.slnx --configuration Release --no-build --filter "TestCategory!=IntegrationTest"
+dotnet publish tests/NAudioAotSmokeTest/NAudioAotSmokeTest.csproj --configuration Release
 ```
 
-Final releases additionally require the 14-package pack and Native AOT smoke checks documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
+The final command matches CI's separate `aot-publish` job; it compiles and links the Native AOT executable without running it. Final releases additionally require the 14-package pack and real-device Native AOT smoke execution documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
 
 ## Building & testing on Linux
 
