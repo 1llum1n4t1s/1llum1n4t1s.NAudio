@@ -9,6 +9,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.7] - 2026-10-10
+
 ### Added
 
 - macOSのreader設定に `AllowNonPowerOfTwoBitDepths`、writerに `CreateToURL` / `CreateToFilePath` / `CreateToStream` を追加し、従来のAPI名も引き続き利用できるようにしました。(#1447)
@@ -193,7 +195,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.6...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.7...HEAD
+[4.0.7]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.6...v4.0.7
 [4.0.6]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.5...v4.0.6
 [4.0.5]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.4...v4.0.5
 [4.0.4]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.3...v4.0.4
