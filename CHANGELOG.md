@@ -9,6 +9,19 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+### Added
+
+- macOSのreader設定に `AllowNonPowerOfTwoBitDepths`、writerに `CreateToURL` / `CreateToFilePath` / `CreateToStream` を追加し、従来のAPI名も引き続き利用できるようにしました。(#1447)
+
+### Changed
+
+- upstream NAudio `main` の `603d4d24` までを取り込み、AIFFの読み書き、MIDI処理とmacOSのtutorialを更新しました。(#1447, #1449, #1453, #1455)
+
+### Fixed
+
+- `DirectSoundOut` が不正な `WAVEFORMATEX` を渡して再生に失敗する問題を修正しました。(#1456)
+- macOSの `ExtendedAudioFileServicesReader` の破棄後に `CurrentTime` / `TotalTime` がnative例外を起こす問題を修正し、`ObjectDisposedException` を返すようにしました。(#1451)
+
 ## [4.0.6] - 2026-09-20
 
 ### Changed

@@ -1,4 +1,4 @@
-
+﻿
 using NAudio.Wave;
 
 namespace NAudio.MacOS.AudioToolbox;
@@ -30,7 +30,16 @@ public class ExtendedAudioFileReaderSettings
     /// it will take precendence over this one and the reader will go 
     /// ahead and specify IEEE 32-bit depth.
     /// </remarks>
-    public bool AllowNonPowerOfTwoBitRates { get; set; }
+    public bool AllowNonPowerOfTwoBitDepths { get; set; }
+
+    /// <summary>
+    /// Gets or sets <see cref="AllowNonPowerOfTwoBitDepths"/> using its original property name.
+    /// </summary>
+    public bool AllowNonPowerOfTwoBitRates
+    {
+        get => AllowNonPowerOfTwoBitDepths;
+        set => AllowNonPowerOfTwoBitDepths = value;
+    }
 
     /// <summary>
     /// A completely specified PCM or IEEE floating-point <see cref="WaveFormat"/>
@@ -41,7 +50,7 @@ public class ExtendedAudioFileReaderSettings
     /// </summary>
     /// <remarks>
     /// Note that this property, when appropriately defined, is exclusive to both
-    /// <see cref="RequestIeeeFloat"/> and <see cref="AllowNonPowerOfTwoBitRates"/>
+    /// <see cref="RequestIeeeFloat"/> and <see cref="AllowNonPowerOfTwoBitDepths"/>
     /// properties as they are purely existing to manipulate the default built-in logic
     /// of the reader.
     /// </remarks>
