@@ -38,6 +38,15 @@ jobs:
           --report-trx
           --results-directory ${{ runner.temp }}/TestResults
 
+      - name: Pack shipping packages
+        # Verify packaging for the same 14 shipping projects as the release workflow.
+        shell: pwsh
+        run: |
+          foreach ($proj in Get-ChildItem src -Filter *.csproj -Recurse) {
+            dotnet pack $proj.FullName --configuration Release --no-build --output "${{ runner.temp }}/packages"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

@@ -29,7 +29,7 @@ public class PresetsChunk
         }
 
         var foundChunks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        RiffChunk c;
+        RiffChunk? c;
         while ((c = chunk.GetNextSubChunk()) != null)
         {
             switch (c.ChunkID)

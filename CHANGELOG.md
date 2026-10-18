@@ -9,6 +9,14 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+### Changed
+
+- upstream NAudio `main` の `94bce725` までを取り込み、nullable参照型、Span処理、WAV・macOSのバッファ処理を更新しました。forkのpackage構成と.NET 10対応は維持しています。
+
+### Fixed
+
+- `WasapiRecorder` の録音再開と初期化失敗後の停止状態、Media Foundationのシーク後のフレーム位置、WinMM MIDIのバッファ・ハンドル寿命を修正しました。(#1478, #1484, #1488, #1490)
+
 ## [4.0.7] - 2026-10-10
 
 ### Added

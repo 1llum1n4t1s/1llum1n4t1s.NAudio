@@ -1,4 +1,4 @@
-﻿using NAudio.CoreAudioApi.Interfaces;
+using NAudio.CoreAudioApi.Interfaces;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -24,8 +24,8 @@ IActivateAudioInterfaceCompletionHandler, IAgileObject
 
     public void ActivateCompleted(IntPtr activateOperationPtr)
     {
-        IActivateAudioInterfaceAsyncOperation activateOperation = null;
-        IAudioClient audioClient = null;
+        IActivateAudioInterfaceAsyncOperation? activateOperation = null;
+        IAudioClient? audioClient = null;
         IntPtr unkPtr = IntPtr.Zero;
         bool ownershipTransferred = false;
 
@@ -82,11 +82,11 @@ IActivateAudioInterfaceCompletionHandler, IAgileObject
             {
                 Marshal.Release(unkPtr);
             }
-            if (!ownershipTransferred && (object)audioClient is ComObject audioClientComObject)
+            if (!ownershipTransferred && (object?)audioClient is ComObject audioClientComObject)
             {
                 audioClientComObject.FinalRelease();
             }
-            if ((object)activateOperation is ComObject co)
+            if ((object?)activateOperation is ComObject co)
             {
                 co.FinalRelease();
             }

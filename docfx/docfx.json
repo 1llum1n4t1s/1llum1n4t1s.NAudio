@@ -64,7 +64,9 @@
         "src": "..",
         "files": [
           "naudio-logo.png",
-          "naudio-icon.png"
+          "naudio-icon.png",
+          "naudio-icon.svg",
+          "naudio-icon-dark.svg"
         ]
       }
     ],

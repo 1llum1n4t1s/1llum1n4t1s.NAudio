@@ -25,7 +25,7 @@ public class MidiIn : IMidiInput
     /// <summary>
     /// Called when a MIDI message is received
     /// </summary>
-    public event EventHandler<MidiInMessageEventArgs> MessageReceived;
+    public event EventHandler<MidiInMessageEventArgs>? MessageReceived;
 
     /// <summary>
     /// Raised when an invalid MIDI message is received.
@@ -34,12 +34,12 @@ public class MidiIn : IMidiInput
     /// This is winmm-specific and is not part of <see cref="IMidiInput"/>; the WinRT backend
     /// does not surface invalid-message events.
     /// </remarks>
-    public event EventHandler<MidiInMessageEventArgs> ErrorReceived;
+    public event EventHandler<MidiInMessageEventArgs>? ErrorReceived;
 
     /// <summary>
     /// Called when a Sysex MIDI message is received
     /// </summary>
-    public event EventHandler<MidiInSysexMessageEventArgs> SysexMessageReceived;
+    public event EventHandler<MidiInSysexMessageEventArgs>? SysexMessageReceived;
 
     /// <summary>
     /// Gets the number of MIDI input devices available in the system
@@ -75,9 +75,15 @@ public class MidiIn : IMidiInput
     /// </summary>
     public void Dispose()
     {
-        GC.KeepAlive(callback);
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        try
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        finally
+        {
+            GC.KeepAlive(callback);
+        }
     }
 
     /// <summary>
@@ -101,10 +107,15 @@ public class MidiIn : IMidiInput
     }
 
     /// <summary>
-    /// Reset the MIDI in device
+    /// Reset the MIDI in device, returning any pending input buffers
     /// </summary>
+    /// <remarks>
+    /// Input is stopped first: resetting a running device returns buffers while more messages can
+    /// still arrive, racing the driver against our own buffer bookkeeping.
+    /// </remarks>
     public void Reset()
     {
+        MmException.Try(MidiInterop.midiInStop(hMidiIn), "midiInStop");
         MmException.Try(MidiInterop.midiInReset(hMidiIn), "midiInReset");
     }
 
@@ -203,30 +214,54 @@ public class MidiIn : IMidiInput
         if (!this.disposed)
         {
             disposeIsRunning = true;
-            //if(disposing) Components.Dispose();
 
-            if (SysexBufferHeaders.Length > 0)
+            // The constructor throws if midiInOpen fails, but the finalizer still runs on the
+            // half-constructed object, so there may be no handle to clean up.
+            if (hMidiIn != IntPtr.Zero)
             {
-                //// When SysexMessageReceived contains event handlers (!=null) , the 'midiInReset' call generate a infinit loop of CallBack call with LONGDATA message having a zero length.
-                //SysexMessageReceived = null; // removin all event handler to avoir the infinit loop.
-
-                //  Reset in order to release any Sysex buffers
-                //  We can't Unprepare and free them until they are flushed out. Neither can we close the handle.
-                MmException.Try(MidiInterop.midiInReset(hMidiIn), "midiInReset");
-
-                //  Free up all created and allocated buffers for incoming Sysex messages
-                foreach (var lpHeader in SysexBufferHeaders)
+                if (SysexBufferHeaders.Length > 0)
                 {
-                    var hdr = Marshal.PtrToStructure<MidiInterop.MIDIHDR>(lpHeader);
-                    MmException.Try(MidiInterop.midiInUnprepareHeader(hMidiIn, lpHeader, Marshal.SizeOf<MidiInterop.MIDIHDR>()), "midiInPrepareHeader");
-                    Marshal.FreeHGlobal(hdr.lpData);
-                    Marshal.FreeHGlobal(lpHeader);
-                }
+                    //  Stop before resetting: midiInReset on a running device returns our buffers
+                    //  while more messages can still arrive.
+                    MidiInterop.midiInStop(hMidiIn);
 
-                //  Defensive protection against double disposal
-                SysexBufferHeaders = new IntPtr[0];
+                    //  Reset in order to release any Sysex buffers
+                    //  We can't Unprepare and free them until they are flushed out. Neither can we close the handle.
+                    MidiInterop.midiInReset(hMidiIn);
+
+                    //  Free up all created and allocated buffers for incoming Sysex messages
+                    for (var i = 0; i < SysexBufferHeaders.Length; i++)
+                    {
+                        var lpHeader = SysexBufferHeaders[i];
+                        if (lpHeader == IntPtr.Zero) continue;
+                        var hdr = Marshal.PtrToStructure<MidiInterop.MIDIHDR>(lpHeader);
+                        var result = MidiInterop.midiInUnprepareHeader(hMidiIn, lpHeader, Marshal.SizeOf<MidiInterop.MIDIHDR>());
+                        if (result != MmResult.NoError)
+                        {
+                            // The driver may still own this header. Retain it for a later Dispose
+                            // attempt, and prevent callbacks from requeueing any returned buffers.
+                            if (disposing) MmException.Try(result, "midiInUnprepareHeader");
+                            else GCHandle.Alloc(callback);
+                            return;
+                        }
+                        Marshal.FreeHGlobal(hdr.lpData);
+                        Marshal.FreeHGlobal(lpHeader);
+                        SysexBufferHeaders[i] = IntPtr.Zero;
+                    }
+
+                    //  Defensive protection against double disposal
+                    SysexBufferHeaders = new IntPtr[0];
+                }
+                var closeResult = MidiInterop.midiInClose(hMidiIn);
+                if (closeResult != MmResult.NoError)
+                {
+                    if (disposing) MmException.Try(closeResult, "midiInClose");
+                    // A failed finalizer cleanup must retain the callback delegate while the
+                    // driver still holds the open handle. Leak safely rather than call freed code.
+                    else GCHandle.Alloc(callback);
+                    return;
+                }
             }
-            MidiInterop.midiInClose(hMidiIn);
         }
         disposed = true;
         disposeIsRunning = false;
@@ -237,7 +272,7 @@ public class MidiIn : IMidiInput
     /// </summary>
     ~MidiIn()
     {
-        System.Diagnostics.Debug.Assert(false, "MIDI In was not finalised");
+        System.Diagnostics.Debug.Assert(hMidiIn == IntPtr.Zero, "MIDI In was not finalised");
         Dispose(false);
     }
 }

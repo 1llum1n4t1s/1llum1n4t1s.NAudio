@@ -1,13 +1,13 @@
-﻿<UserControl x:Class="NAudioWpfDemo.MediaFoundationEncode.MediaFoundationEncodeView"
+<UserControl x:Class="NAudioWpfDemo.MediaFoundationEncode.MediaFoundationEncodeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             mc:Ignorable="d" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="600">
     <Grid>
         <Button Content="Encode" Command="{Binding EncodeCommand}" HorizontalAlignment="Left" Margin="129,292,0,0" VerticalAlignment="Top" Width="75"/>
-        <TextBlock Text="Demonstrates using Media Foundation to Encode audio from PCM. Requires Windows Vista and above, and depends on the necessary encoders being installed on your PC. Currently a work in progress, do not rely on this." 
+        <TextBlock Text="Demonstrates using Media Foundation to Encode audio from PCM. Depends on the necessary encoders being installed on your PC. Currently a work in progress, do not rely on this."
                    HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="57" TextWrapping="Wrap" />
         <ComboBox Margin="129,135,49,0" VerticalAlignment="Top" ItemsSource="{Binding OutputFormats}" SelectedItem="{Binding SelectedOutputFormat, Mode=TwoWay}">
             <ComboBox.ItemTemplate>
@@ -23,8 +23,8 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
-        <TextBox Height="98" 
-                 Margin="129,189,49,0" TextWrapping="Wrap" Text="{Binding SelectedMediaType.Description}" 
+        <TextBox Height="98"
+                 Margin="129,189,49,0" TextWrapping="Wrap" Text="{Binding SelectedMediaType.Description}"
                  VerticalAlignment="Top" AcceptsReturn="True" IsReadOnly="True"  />
         <Label Content="Input File:" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top"/>
         <TextBox Height="23" Margin="129,75,49,0" TextWrapping="NoWrap" Text="{Binding InputFile}" VerticalAlignment="Top" IsReadOnly="True"/>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -20,15 +20,17 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     private const long ReftimesPerMillisec = 10000;
     private readonly object captureStateLock = new();
     private volatile CaptureState captureState;
-    private Thread captureThread;
-    private AudioClient audioClient;
+    private Thread? captureThread;
+    private AudioClient? audioClient;
+
+    private AudioClient Client => audioClient ?? throw new ObjectDisposedException(nameof(WasapiCapture));
     private int bytesPerFrame;
     private WaveFormat waveFormat;
     private bool initialized;
-    private readonly SynchronizationContext syncContext;
+    private readonly SynchronizationContext? syncContext;
     private readonly bool isUsingEventSync;
     private readonly bool isProcessLoopback;
-    private EventWaitHandle frameEventWaitHandle;
+    private EventWaitHandle? frameEventWaitHandle;
     private readonly int audioBufferMillisecondsLength;
     private long totalPacketCount;
     private long silentPacketCount;
@@ -37,12 +39,12 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// <summary>
     /// Indicates recorded data is available 
     /// </summary>
-    public event EventHandler<WaveInEventArgs> DataAvailable;
+    public event EventHandler<WaveInEventArgs>? DataAvailable;
 
     /// <summary>
     /// Indicates that all recorded data has now been received.
     /// </summary>
-    public event EventHandler<StoppedEventArgs> RecordingStopped;
+    public event EventHandler<StoppedEventArgs>? RecordingStopped;
 
     /// <summary>
     /// Raised for every packet returned by <c>IAudioCaptureClient.GetBuffer</c>.
@@ -55,7 +57,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     /// processing pipeline. New code using <see cref="WasapiRecorder"/> can inspect the flags
     /// supplied to its <c>DataAvailable</c> callback directly.
     /// </remarks>
-    public event EventHandler<WasapiCapturePacketEventArgs> CapturePacketReceived;
+    public event EventHandler<WasapiCapturePacketEventArgs>? CapturePacketReceived;
 
     /// <summary>
     /// Gets the cumulative number of capture packets received by this instance.
@@ -110,7 +112,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         isUsingEventSync = useEventSync;
         this.audioBufferMillisecondsLength = audioBufferMillisecondsLength;
 
-        waveFormat = audioClient.MixFormat;
+        waveFormat = Client.MixFormat;
 
     }
 
@@ -209,7 +211,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
                 return AverageLatency;
             try
             {
-                int padding = audioClient.CurrentPadding;
+                int padding = Client.CurrentPadding;
                 return TimeSpan.FromSeconds(padding / (double)waveFormat.SampleRate);
             }
             catch (COMException)
@@ -256,7 +258,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
 
         long requestedDuration = ReftimesPerMillisec * audioBufferMillisecondsLength;
 
-        if ((ShareMode == AudioClientShareMode.Exclusive) && !audioClient.IsFormatSupported(ShareMode, waveFormat))
+        if ((ShareMode == AudioClientShareMode.Exclusive) && !Client.IsFormatSupported(ShareMode, waveFormat))
         {
             throw new ArgumentException("Unsupported Wave Format");
         }
@@ -270,24 +272,24 @@ public class WasapiCapture : IWaveIn, IWaveLatency
             if (ShareMode == AudioClientShareMode.Shared)
             {
                 // With EventCallBack and Shared, both latencies must be set to 0
-                audioClient.Initialize(ShareMode, AudioClientStreamFlags.EventCallback | streamFlags, requestedDuration, 0,
+                Client.Initialize(ShareMode, AudioClientStreamFlags.EventCallback | streamFlags, requestedDuration, 0,
                     waveFormat, Guid.Empty);
             }
             else
             {
                 // With EventCallBack and Exclusive, both latencies must equals
-                audioClient.Initialize(ShareMode, AudioClientStreamFlags.EventCallback | streamFlags, requestedDuration, requestedDuration,
+                Client.Initialize(ShareMode, AudioClientStreamFlags.EventCallback | streamFlags, requestedDuration, requestedDuration,
                                     waveFormat, Guid.Empty);
             }
 
             // Create the Wait Event Handle
             frameEventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-            audioClient.SetEventHandle(frameEventWaitHandle.SafeWaitHandle.DangerousGetHandle());
+            Client.SetEventHandle(frameEventWaitHandle.SafeWaitHandle.DangerousGetHandle());
         }
         else
         {
             // Normal setup for both sharedMode
-            audioClient.Initialize(ShareMode,
+            Client.Initialize(ShareMode,
             streamFlags,
             requestedDuration,
             0,
@@ -331,7 +333,8 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         try
         {
             InitializeCaptureDevice();
-            captureThread = new Thread(() => CaptureThread(audioClient))
+            var client = Client;
+            captureThread = new Thread(() => CaptureThread(client))
             {
                 IsBackground = true,
                 Name = "NAudio WasapiCapture Recording",
@@ -361,7 +364,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
 
     private void CaptureThread(AudioClient client)
     {
-        Exception exception = null;
+        Exception? exception = null;
         try
         {
             DoRecording(client);
@@ -409,7 +412,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
             return;
         while (captureState == CaptureState.Capturing)
         {
-            if (isUsingEventSync)
+            if (isUsingEventSync && frameEventWaitHandle != null)
             {
                 frameEventWaitHandle.WaitOne(waitMilliseconds, false);
             }
@@ -425,7 +428,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         }
     }
 
-    private void RaiseRecordingStopped(Exception e)
+    private void RaiseRecordingStopped(Exception? e)
     {
         var handler = RecordingStopped;
         if (handler == null) return;

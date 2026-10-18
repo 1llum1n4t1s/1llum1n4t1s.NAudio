@@ -22,7 +22,8 @@ public class AiffFileReader : WaveStream
     private readonly long dataPosition;
     private readonly int dataChunkLength;
     private readonly List<AiffChunk> chunks = [];
-    private Stream waveStream;
+    private readonly Stream waveStream;
+    private bool disposed = false;
     private readonly Lock lockObject = new();
 
     /// <summary>Supports opening a AIF file</summary>
@@ -63,7 +64,6 @@ public class AiffFileReader : WaveStream
             if (ownInput)
             {
                 waveStream.Dispose();
-                waveStream = null;
             }
             throw;
         }
@@ -79,7 +79,7 @@ public class AiffFileReader : WaveStream
     /// <param name="chunks">Additional chunks found</param>
     public static void ReadAiffHeader(Stream stream, out WaveFormat format, out long dataChunkPosition, out int dataChunkLength, List<AiffChunk> chunks)
     {
-        format = null;
+        WaveFormat? formatFound = null;
         dataChunkPosition = -1;
         dataChunkLength = 0;
         chunks.Clear();
@@ -118,7 +118,7 @@ public class AiffFileReader : WaveStream
                 short sampleSize = ReadShort(stream);
                 double sampleRate = ReadIeeeExtended(stream);
 
-                format = new WaveFormat((int)sampleRate, sampleSize, numChannels);
+                formatFound = new WaveFormat((int)sampleRate, sampleSize, numChannels);
 
                 if (formType == "AIFC"u8)
                 {
@@ -163,7 +163,7 @@ public class AiffFileReader : WaveStream
             }
         }
 
-        if (format == null)
+        if (formatFound == null)
         {
             throw new FormatException("Invalid AIFF file - No COMM chunk found.");
         }
@@ -171,6 +171,8 @@ public class AiffFileReader : WaveStream
         {
             throw new FormatException("Invalid AIFF file - No SSND chunk found.");
         }
+
+        format = formatFound;
     }
 
     /// <summary>
@@ -181,14 +183,14 @@ public class AiffFileReader : WaveStream
         if (disposing)
         {
             // Release managed resources.
-            if (waveStream != null)
+            if (!disposed)
             {
                 // only dispose our source if we created it
                 if (ownInput)
                 {
                     waveStream.Dispose();
                 }
-                waveStream = null;
+                disposed = true;
             }
         }
         else
@@ -412,7 +414,7 @@ public class AiffFileReader : WaveStream
             return true;
         }
 
-        public override bool Equals([NotNullWhen(true)] object obj)
+        public override bool Equals([NotNullWhen(true)] object? obj)
         {
             return obj is ChunkName name && this.Value == name.Value;
         }

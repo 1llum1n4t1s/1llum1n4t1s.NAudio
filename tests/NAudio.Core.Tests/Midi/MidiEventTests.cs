@@ -334,6 +334,24 @@ public class MidiEventTests
         Assert.That(midiEvent.ToString(), Is.EqualTo("12 Sysex"));
     }
 
+    [Test]
+    public void RawMetaEventTreatsNullDataAsEmpty()
+    {
+        var rawMeta = new RawMetaEvent(MetaEventType.SequencerSpecific, 0, null);
+        Assert.That(rawMeta.Data, Is.Empty);
+        Assert.That(((RawMetaEvent)rawMeta.Clone()).Data, Is.Empty);
+    }
+
+    [Test]
+    public void MidiEventComparerOrdersNullsFirst()
+    {
+        var comparer = new MidiEventComparer();
+        var midiEvent = new NoteEvent(0, 1, MidiCommandCode.NoteOff, 60, 0);
+        Assert.That(comparer.Compare(null, null), Is.Zero);
+        Assert.That(comparer.Compare(null, midiEvent), Is.Negative);
+        Assert.That(comparer.Compare(midiEvent, null), Is.Positive);
+    }
+
     private static int CreateRawMessage(int status, int data1, int data2)
     {
         return (status & 0xFF) | ((data1 & 0xFF) << 8) | ((data2 & 0xFF) << 16);

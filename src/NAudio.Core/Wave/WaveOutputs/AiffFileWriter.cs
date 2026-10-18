@@ -1,6 +1,5 @@
 ﻿using NAudio.Utils;
 using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -12,14 +11,16 @@ namespace NAudio.Wave;
 /// </summary>
 public class AiffFileWriter : Stream
 {
-    private Stream outStream;
+    private readonly Stream outStream;
     private readonly BinaryWriter writer;
     private long dataSizePos;
     private long commSampleCountPos;
     private long dataChunkSize = 8;
     private readonly WaveFormat format;
-    private readonly string filename;
+    private readonly string? filename;
     private readonly bool ownsStream;
+    private bool streamDisposed = false;
+    private byte[]? writeBuffer;
 
     /// <summary>
     /// Creates an Aiff file by reading all the data from a WaveProvider
@@ -111,7 +112,7 @@ public class AiffFileWriter : Stream
     /// <summary>
     /// The aiff file name or null if not applicable
     /// </summary>
-    public string Filename
+    public string? Filename
     {
         get { return filename; }
     }
@@ -205,53 +206,37 @@ public class AiffFileWriter : Stream
     /// Appends bytes to the AiffFile (assumes they are already in the correct format)
     /// </summary>
     /// <param name="buffer">the buffer containing the wave data</param>
-    [SkipLocalsInit]
     public override void Write(ReadOnlySpan<byte> buffer)
     {
-        Span<byte> modified = stackalloc byte[512];
-        byte[] rented = null;
-        if (buffer.Length > 512)
-        {
-            rented = ArrayPool<byte>.Shared.Rent(buffer.Length);
-            modified = rented;
-        }
-        modified = modified[..buffer.Length];
+        // Reused across calls so writing doesn't allocate once the buffer is big enough
+        writeBuffer = BufferHelpers.Ensure(writeBuffer, buffer.Length);
+        Span<byte> modified = writeBuffer.AsSpan(0, buffer.Length);
 
-        try
+        int bytesPerSample = format.BitsPerSample / 8;
+        if (bytesPerSample <= 1)
         {
-            int bytesPerSample = format.BitsPerSample / 8;
-            if (bytesPerSample <= 1)
+            // AIFF 8-bit PCM is signed two's-complement, but the incoming bytes are unsigned
+            // (WAV-style, like every other path through Write, which converts WAV layout to
+            // AIFF layout). Flip the sign bit on the way out so the file is valid signed AIFF.
+            // Copy into a scratch buffer so the caller's array is not mutated. See issue #1178.
+            for (int i = 0; i < buffer.Length; i++)
             {
-                // AIFF 8-bit PCM is signed two's-complement, but the incoming bytes are unsigned
-                // (WAV-style, like every other path through Write, which converts WAV layout to
-                // AIFF layout). Flip the sign bit on the way out so the file is valid signed AIFF.
-                // Copy into a scratch buffer so the caller's array is not mutated. See issue #1178.
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    modified[i] = (byte)(buffer[i] ^ 0x80);
-                }
-            }
-            else
-            {
-                buffer.CopyTo(modified);
-
-                int completeSampleBytes = buffer.Length - (buffer.Length % bytesPerSample);
-                for (int sampleStart = 0; sampleStart < completeSampleBytes; sampleStart += bytesPerSample)
-                {
-                    modified.Slice(sampleStart, bytesPerSample).Reverse();
-                }
-            }
-
-            outStream.Write(modified);
-            dataChunkSize += buffer.Length;
-        }
-        finally
-        {
-            if (rented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rented);
+                modified[i] = (byte)(buffer[i] ^ 0x80);
             }
         }
+        else
+        {
+            buffer.CopyTo(modified);
+
+            int completeSampleBytes = buffer.Length - (buffer.Length % bytesPerSample);
+            for (int sampleStart = 0; sampleStart < completeSampleBytes; sampleStart += bytesPerSample)
+            {
+                modified.Slice(sampleStart, bytesPerSample).Reverse();
+            }
+        }
+
+        outStream.Write(modified);
+        dataChunkSize += buffer.Length;
     }
 
     /// <summary>
@@ -398,7 +383,7 @@ public class AiffFileWriter : Stream
     {
         if (disposing)
         {
-            if (outStream != null)
+            if (!streamDisposed)
             {
                 try
                 {
@@ -419,7 +404,7 @@ public class AiffFileWriter : Stream
                         // but leave the stream open for them to dispose.
                         outStream.Flush();
                     }
-                    outStream = null;
+                    streamDisposed = true;
                 }
             }
         }
