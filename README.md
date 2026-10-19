@@ -158,7 +158,7 @@ M4A decode を非AOT helper processへ分離する必要はありません。
 | --- | --- | --- |
 | `1llum1n4t1s.NAudio` | Windows backend をまとめる meta-package | cross-platform / Windows |
 | `1llum1n4t1s.NAudio.Core` | provider、WAV/AIFF、DSP、resampling、effects | cross-platform |
-| `1llum1n4t1s.NAudio.Midi` | MIDI file と event、Windows では WinRT MIDI | cross-platform / Windows |
+| `1llum1n4t1s.NAudio.Midi` | MIDI file と event、`net10.0-windows10.0.19041.0` 以降では WinRT MIDI | cross-platform / Windows |
 | `1llum1n4t1s.NAudio.Wasapi` | WASAPI、Process Loopback、Media Foundation | Windows |
 | `1llum1n4t1s.NAudio.WinMM` | WaveOut / WaveIn、ACM、legacy MIDI | Windows |
 | `1llum1n4t1s.NAudio.Asio` | ASIO playback / capture | Windows |

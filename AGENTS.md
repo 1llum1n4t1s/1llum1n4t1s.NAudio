@@ -52,13 +52,22 @@ dotnet test --solution NAudio.slnx --configuration Release --no-build --filter "
 dotnet publish tests/NAudioAotSmokeTest/NAudioAotSmokeTest.csproj --configuration Release
 ```
 
-The final command matches CI's separate `aot-publish` job; it compiles and links the Native AOT executable without running it. Final releases additionally require the 14-package pack and real-device Native AOT smoke execution documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
+Also verify all 14 shipping packages after the Release build, as CI does. Set `$packageOutputDirectory` to an absolute output directory outside the checkout before running:
+
+```powershell
+foreach ($proj in Get-ChildItem src -Filter *.csproj -Recurse) {
+    dotnet pack $proj.FullName --configuration Release --no-build --output $packageOutputDirectory
+    if ($LASTEXITCODE -ne 0) { throw "Pack failed: $($proj.FullName)" }
+}
+```
+
+The publish command matches CI's separate `aot-publish` job; it compiles and links the Native AOT executable without running it. Final releases additionally require real-device Native AOT smoke execution documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
 
 ## Building & testing on Linux
 
 Some cloud and CI environments start without a .NET SDK on the PATH — this isn't a property of the repo but of the host. The default Anthropic cloud-agent sandbox is one example, and other infrastructure (GitHub Copilot agents, fresh CI runners, etc.) may differ now or in the future. So **first check whether `dotnet` is available**; only install it if it isn't. On Debian/Ubuntu, install .NET 10 via apt: add Microsoft's feed with `wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/ms.deb && sudo dpkg -i /tmp/ms.deb && sudo apt-get update`, then `sudo apt-get install -y dotnet-sdk-10.0`.
 
-`NAudio.Core.Tests` only references the cross-platform projects (`NAudio.Core`, `NAudio.Midi`), so it builds and runs on Linux/macOS without any extra flags. Build and run the cross-platform tests with:
+`NAudio.Core.Tests` references `NAudio.Core`, `NAudio.Midi`, and the portable `net10.0` asset of the `NAudio` meta-package, so it builds and runs on Linux/macOS without any extra flags. Build and run the cross-platform tests with:
 
 ```
 dotnet build tests/NAudio.Core.Tests/NAudio.Core.Tests.csproj
@@ -71,4 +80,4 @@ The `TestCategory!=IntegrationTest` filter skips tests needing real audio hardwa
 
 ## CI
 
-Every PR runs build + test on `windows-latest` via [.github/workflows/build.yml](.github/workflows/build.yml). Tests requiring real audio hardware should be marked with `TestCategory=IntegrationTest` so they're filtered out of the headless run.
+Every PR and push to `main` runs the verification sequence above on `windows-latest` via [.github/workflows/build.yml](.github/workflows/build.yml). Tests requiring real audio hardware should be marked with `TestCategory=IntegrationTest` so they're filtered out of the headless run.

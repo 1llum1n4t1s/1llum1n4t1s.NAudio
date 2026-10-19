@@ -75,6 +75,9 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
   stable meta-packageには含めず、preview packageを明示参照します。
 - Process LoopbackはWindows 10 build 19041以降がruntime要件です。include/exclude modeのnative値、
   cancellation、HRESULT変換とCOM ownershipをmanaged/native境界で変えません。
+- `WasapiRecorder`は初期化済みの`AudioClient`を再利用し、録音再開時に二重初期化しません。
+  停止時はnative streamをStop/Resetし、開始時の初期化失敗でもmanaged stateを`Stopped`へ戻します。
+  停止要求だけで完了とはせず、停止完了後に再開することでcapture処理の重複を防ぎます。
 - providerの`Read`はcaller supplied bufferへ書き込み、返したcountだけを有効とします。
   `WaveProviderBase` / `SampleProviderBase`は`Span<T>`をsource上で表現できない言語向けの配列bridgeであり、
   direct interface実装より1回多いcopyを許容します。
@@ -98,6 +101,6 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 - **tag駆動のfinal release**: versionとsource SHAを一意にし、同じCHANGELOG本文をNuGetとGitHub Releaseで
   共有します。previewだけは`workflow_dispatch`でsuffixを付与します。
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
-  build/analyzer、非Integration testとNative AOT smoke projectのpublishを行います。publishはILCompilerの
+  build/analyzer、非Integration test、14 packageのpackとNative AOT smoke projectのpublishを行います。publishはILCompilerの
   whole-program解析とnative linkまで検証し、analyzerだけでは検出できない問題を補います。
   executableのend-to-end実行は実機で行います。
