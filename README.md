@@ -43,18 +43,18 @@ Linux では `1llum1n4t1s.NAudio.Alsa`、cross-platform file I/O では
 `net10.0` では Core と MIDI のみが選択され、WASAPI などの Windows backend は含まれません。
 
 ```powershell
-dotnet add package 1llum1n4t1s.NAudio --version 4.0.7
+dotnet add package 1llum1n4t1s.NAudio --version 4.0.8
 ```
 
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio" Version="4.0.7" />
+<PackageReference Include="1llum1n4t1s.NAudio" Version="4.0.8" />
 ```
 
 Native AOT アプリでは必要な package だけを参照してください。Process Loopback と
 Media Foundation が目的なら `1llum1n4t1s.NAudio.Wasapi` が `NAudio.Core` を推移参照します。
 
 ```xml
-<PackageReference Include="1llum1n4t1s.NAudio.Wasapi" Version="4.0.7" />
+<PackageReference Include="1llum1n4t1s.NAudio.Wasapi" Version="4.0.8" />
 ```
 
 ## 再生

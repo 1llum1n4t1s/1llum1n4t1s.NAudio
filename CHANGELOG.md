@@ -9,6 +9,12 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.8] - 2026-10-19
+
+### Added
+
+- `WaveFileWriter.WriteSample` で通常の32-bit整数PCMを書き込めるようにし、チャンク識別子の変換にSpanを受け取るAPIを追加しました。
+
 ### Changed
 
 - upstream NAudio `main` の `94bce725` までを取り込み、nullable参照型、Span処理、WAV・macOSのバッファ処理を更新しました。forkのpackage構成と.NET 10対応は維持しています。
