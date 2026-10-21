@@ -1,55 +1,69 @@
+# 更新方針: 毎週月曜09:00（日本時間）、minor/patchを集約、majorは個別PR。
+# マージ可否は既定ブランチのDependabot auto-mergeが最新CIで判定します。
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Tokyo"
-    groups:
-      actions-minor-patch:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-
-  - package-ecosystem: "nuget"
-    directories:
-      - "/samples/AudioFileInspector"
-      - "/samples/MidiFileConverter"
-      - "/samples/MixDiff"
-      - "/samples/NAudioConsoleTest"
-      - "/samples/NAudioDemo"
-      - "/samples/NAudioWpfDemo"
-      - "/src/NAudio.Alsa"
-      - "/src/NAudio.Asio"
-      - "/src/NAudio.Core"
-      - "/src/NAudio.Dmo"
-      - "/src/NAudio.Extras"
-      - "/src/NAudio.MacOS"
-      - "/src/NAudio.Midi"
-      - "/src/NAudio.Sampler"
-      - "/src/NAudio.SoundFile"
-      - "/src/NAudio.Vst3"
-      - "/src/NAudio.Wasapi"
-      - "/src/NAudio.WinForms"
-      - "/src/NAudio.WinMM"
-      - "/src/NAudio"
-      - "/tests/MfStressTest"
-      - "/tests/NAudio.Alsa.Tests"
-      - "/tests/NAudio.Benchmarks"
-      - "/tests/NAudio.Core.Tests"
-      - "/tests/NAudio.MacOS.Tests"
-      - "/tests/NAudio.Sampler.Tests"
-      - "/tests/NAudio.SoundFile.Tests"
-      - "/tests/NAudio.Windows.Tests"
-      - "/tests/NAudioAotSmokeTest"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 5
-    groups:
-      nuget-minor-patch:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: 09:00
+    timezone: Asia/Tokyo
+  open-pull-requests-limit: 5
+  groups:
+    minor-and-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  commit-message:
+    prefix: deps
+- package-ecosystem: nuget
+  directories:
+  - /samples/AudioFileInspector
+  - /samples/MidiFileConverter
+  - /samples/MixDiff
+  - /samples/NAudioConsoleTest
+  - /samples/NAudioDemo
+  - /samples/NAudioWpfDemo
+  - /src/NAudio
+  - /src/NAudio.Alsa
+  - /src/NAudio.Asio
+  - /src/NAudio.Core
+  - /src/NAudio.Dmo
+  - /src/NAudio.Extras
+  - /src/NAudio.MacOS
+  - /src/NAudio.Midi
+  - /src/NAudio.Sampler
+  - /src/NAudio.SoundFile
+  - /src/NAudio.Vst3
+  - /src/NAudio.Wasapi
+  - /src/NAudio.WinForms
+  - /src/NAudio.WinMM
+  - /tests/MfStressTest
+  - /tests/NAudio.Alsa.Tests
+  - /tests/NAudio.Benchmarks
+  - /tests/NAudio.Core.Tests
+  - /tests/NAudio.MacOS.Tests
+  - /tests/NAudio.Sampler.Tests
+  - /tests/NAudio.SoundFile.Tests
+  - /tests/NAudio.Windows.Tests
+  - /tests/NAudioAotSmokeTest
+  schedule:
+    interval: weekly
+    day: monday
+    time: 09:00
+    timezone: Asia/Tokyo
+  open-pull-requests-limit: 5
+  groups:
+    minor-and-patch:
+      patterns:
+      - '*'
+      update-types:
+      - minor
+      - patch
+  commit-message:
+    prefix: deps
+  allow:
+  - dependency-type: all
