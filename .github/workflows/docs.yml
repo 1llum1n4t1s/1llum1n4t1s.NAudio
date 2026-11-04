@@ -8,14 +8,16 @@ on:
       - 'src/**/*.cs'
       - 'docfx/**'
       - '.github/workflows/docs.yml'
-      - '.github/scripts/check-docs-toc.sh'
+      - '.github/scripts/check-docs-toc.cs'
+      - '.github/scripts/CheckDocsToc.csproj'
   pull_request:
     paths:
       - 'Docs/**'
       - 'src/**/*.cs'
       - 'docfx/**'
       - '.github/workflows/docs.yml'
-      - '.github/scripts/check-docs-toc.sh'
+      - '.github/scripts/check-docs-toc.cs'
+      - '.github/scripts/CheckDocsToc.csproj'
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run
@@ -34,14 +36,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Check every tutorial is in the TOC
-        shell: bash
-        run: ./.github/scripts/check-docs-toc.sh
-
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: '10.0.x'
+
+      - name: Check every tutorial is in the TOC
+        run: dotnet run --project .github/scripts/CheckDocsToc.csproj
 
       - name: Install DocFX
         run: dotnet tool update -g docfx

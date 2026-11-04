@@ -5,6 +5,9 @@
 > the `1llum1n4t1s.NAudio.*` ID family and authenticates through NuGet.org Trusted Publishing.
 > Fork releases are generated from `CHANGELOG.md`; the upstream `RELEASE_NOTES.md` references below
 > are historical, while the trusted-publishing contract also applies to the fork.
+> The fork uses Git and PowerShell for checkout and OIDC exchange. Package backups are stored in
+> the private R2 bucket configured by `CLOUDFLARE_ACCOUNT_ID` / `R2_ARTIFACT_BUCKET`, using
+> `R2_ARTIFACT_ACCESS_KEY_ID` / `R2_ARTIFACT_SECRET_ACCESS_KEY` with bucket-scoped Object Read/Write.
 
 **Goal:** Replace the current manual `publish.ps1` flow with an automated GitHub Actions pipeline that publishes both regular pre-release builds (cheap, frequent, on demand) and final releases (tag-driven, with GitHub Releases attached). Rebrand `naudio3dev` as the default branch, retire NAudio 2 to a maintenance branch, and put a lightweight discipline around release notes that keeps the maintainer in control without blocking PRs.
 

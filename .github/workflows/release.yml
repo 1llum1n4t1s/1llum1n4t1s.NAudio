@@ -26,9 +26,31 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0   # full history so gh release --generate-notes can diff against the previous tag
+        shell: pwsh
+        env:
+          CHECKOUT_TOKEN: ${{ github.token }}
+          CHECKOUT_REF: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git init .
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          git remote add origin "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY.git"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $header = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("x-access-token:$env:CHECKOUT_TOKEN"))
+          Write-Output "::add-mask::$header"
+          $env:GIT_CONFIG_COUNT = '1'
+          $env:GIT_CONFIG_KEY_0 = 'http.extraHeader'
+          $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: basic $header"
+          try {
+            git fetch --force --tags origin $env:CHECKOUT_REF
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            git checkout --detach FETCH_HEAD
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          } finally {
+            $env:GIT_CONFIG_COUNT = $null
+            $env:GIT_CONFIG_KEY_0 = $null
+            $env:GIT_CONFIG_VALUE_0 = $null
+          }
 
       # Dispatch must come from main. Tag pushes are unrestricted because
       # the tag itself is the gate.
@@ -204,19 +226,43 @@ jobs:
           }
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: nupkg-${{ steps.version.outputs.version }}
-          path: |
-            ${{ env.RELEASE_OUTPUT_DIR }}/*.nupkg
-            ${{ env.RELEASE_OUTPUT_DIR }}/*.snupkg
-          if-no-files-found: error
+        shell: pwsh
+        env:
+          R2_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          R2_BUCKET: ${{ vars.R2_ARTIFACT_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ARTIFACT_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_ARTIFACT_SECRET_ACCESS_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . ./.github/scripts/R2Artifact.Common.ps1
+          $files = @(Get-ChildItem -Path (Join-Path $env:RELEASE_OUTPUT_DIR '*.nupkg'), (Join-Path $env:RELEASE_OUTPUT_DIR '*.snupkg') -File | Select-Object -ExpandProperty FullName)
+          if ($files.Count -eq 0) { throw 'No NuGet package artifacts found.' }
+          Publish-R2Artifact -AccountId $env:R2_ACCOUNT_ID -Bucket $env:R2_BUCKET -AccessKeyId $env:R2_ACCESS_KEY_ID -SecretAccessKey $env:R2_SECRET_ACCESS_KEY -Name 'nupkg-${{ steps.version.outputs.version }}' -Path $files
 
       - name: Authenticate to NuGet.org
         id: login
-        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
-        with:
-          user: ${{ vars.NUGET_USER }}
+        shell: pwsh
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:NUGET_USER -or -not $env:ACTIONS_ID_TOKEN_REQUEST_TOKEN -or -not $env:ACTIONS_ID_TOKEN_REQUEST_URL) {
+            throw 'NuGet user and GitHub OIDC permissions are required.'
+          }
+          Write-Output "::add-mask::$env:ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          try {
+            $url = "$env:ACTIONS_ID_TOKEN_REQUEST_URL&audience=$([uri]::EscapeDataString('https://www.nuget.org'))"
+            $oidc = Invoke-RestMethod -Uri $url -Headers @{ Authorization = "Bearer $env:ACTIONS_ID_TOKEN_REQUEST_TOKEN" }
+            if (-not $oidc.value) { throw 'Missing OIDC token.' }
+            Write-Output "::add-mask::$($oidc.value)"
+            $body = @{ username = $env:NUGET_USER; tokenType = 'ApiKey' } | ConvertTo-Json -Compress
+            $result = Invoke-RestMethod -Method Post -Uri 'https://www.nuget.org/api/v2/token' -Headers @{ Authorization = "Bearer $($oidc.value)" } -ContentType 'application/json' -Body $body
+            if (-not $result.apiKey -or $result.apiKey -match '[\r\n]') { throw 'Missing or invalid NuGet API key.' }
+            Write-Output "::add-mask::$($result.apiKey)"
+            "NUGET_API_KEY=$($result.apiKey)" >> $env:GITHUB_OUTPUT
+          } catch {
+            throw 'NuGet Trusted Publishing authentication failed.'
+          }
 
       # dotnet nuget push does not expand globs on its own, and PowerShell
       # does not expand wildcards in arguments to external commands. So loop
@@ -253,8 +299,8 @@ jobs:
       #
       # The .nupkg files are attached as release assets. The package directory is still
       # on disk from the Pack step, so there is no artifact round-trip. This
-      # also gives a permanent copy of exactly what shipped: Actions artifacts
-      # expire (90 days by default), release assets do not. Symbol packages
+      # also gives a permanent copy of exactly what shipped: private R2 artifacts
+      # follow the bucket lifecycle, while release assets do not. Symbol packages
       # are deliberately left off — they go to NuGet's symbol server and would
       # only double the asset list here.
       #

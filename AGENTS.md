@@ -27,6 +27,8 @@ Purely internal refactors, test-only changes, dependency bumps with no observabl
 
 Tutorials live in [Docs/](Docs/) as Markdown and are published to a DocFX site on GitHub Pages by [.github/workflows/docs.yml](.github/workflows/docs.yml); the API reference is generated automatically from the source XML doc comments. When you **add a new tutorial**, also add an entry for it in [Docs/toc.yml](Docs/toc.yml) so it appears in the sidebar — a CI check fails the build if any `Docs/*.md` is missing from the TOC (an unlisted page still builds but is orphaned from the navigation). Internal `Docs/Architecture/` docs are excluded from the published site.
 
+Run `dotnet run --project .github/scripts/CheckDocsToc.csproj` to check tutorial links locally with the existing .NET 10 SDK.
+
 ## PR labelling
 
 When opening a PR (where you have permission), apply one of: `breaking`, `enhancement`, `bug`, `documentation`. These categorize GitHub's supplemental generated notes; `CHANGELOG.md` remains the canonical user-facing history. Use `release-notes-skip` for PRs that should not appear in generated notes.
