@@ -27,7 +27,7 @@ Purely internal refactors, test-only changes, dependency bumps with no observabl
 
 Tutorials live in [Docs/](Docs/) as Markdown and are published to a DocFX site on GitHub Pages by [.github/workflows/docs.yml](.github/workflows/docs.yml); the API reference is generated automatically from the source XML doc comments. When you **add a new tutorial**, also add an entry for it in [Docs/toc.yml](Docs/toc.yml) so it appears in the sidebar — a CI check fails the build if any `Docs/*.md` is missing from the TOC (an unlisted page still builds but is orphaned from the navigation). Internal `Docs/Architecture/` docs are excluded from the published site.
 
-Run `dotnet run --project .github/scripts/CheckDocsToc.csproj` to check tutorial links locally with the existing .NET 10 SDK.
+Run `dotnet run --project .github/scripts/CheckDocsToc.csproj` to check tutorial links locally with the existing .NET 11 SDK.
 
 ## PR labelling
 
@@ -65,9 +65,9 @@ The publish command matches CI's separate `aot-publish` job; it compiles and lin
 
 ## Building & testing on Linux
 
-Some cloud and CI environments start without a .NET SDK on the PATH — this isn't a property of the repo but of the host. The default Anthropic cloud-agent sandbox is one example, and other infrastructure (GitHub Copilot agents, fresh CI runners, etc.) may differ now or in the future. So **first check whether `dotnet` is available**; only install it if it isn't. On Debian/Ubuntu, install .NET 10 via apt: add Microsoft's feed with `wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/ms.deb && sudo dpkg -i /tmp/ms.deb && sudo apt-get update`, then `sudo apt-get install -y dotnet-sdk-10.0`.
+Some cloud and CI environments start without a .NET SDK on the PATH — this isn't a property of the repo but of the host. The default Anthropic cloud-agent sandbox is one example, and other infrastructure (GitHub Copilot agents, fresh CI runners, etc.) may differ now or in the future. So **first check whether `dotnet` is available**; only install it if it isn't. On Debian/Ubuntu, install .NET 11 via apt: add Microsoft's feed with `wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/ms.deb && sudo dpkg -i /tmp/ms.deb && sudo apt-get update`, then `sudo apt-get install -y dotnet-sdk-11.0`.
 
-`NAudio.Core.Tests` references `NAudio.Core`, `NAudio.Midi`, and the portable `net10.0` asset of the `NAudio` meta-package, so it builds and runs on Linux/macOS without any extra flags. Build and run the cross-platform tests with:
+`NAudio.Core.Tests` references `NAudio.Core`, `NAudio.Midi`, and the portable `net11.0` asset of the `NAudio` meta-package, so it builds and runs on Linux/macOS without any extra flags. Build and run the cross-platform tests with:
 
 ```
 dotnet build tests/NAudio.Core.Tests/NAudio.Core.Tests.csproj
@@ -76,7 +76,7 @@ dotnet test --project tests/NAudio.Core.Tests/NAudio.Core.Tests.csproj --filter 
 
 (`NAudio.Windows.Tests` references the `NAudio` meta-package and the Windows backends, so it targets a Windows TFM — building it on Linux still needs `-p:EnableWindowsTargeting=true`, and it can only run on Windows. Tests that exercise the meta-package's `AudioFileReader` live there for this reason.)
 
-The `TestCategory!=IntegrationTest` filter skips tests needing real audio hardware; note that .NET 10's `dotnet test` wants `--project` rather than a positional path.
+The `TestCategory!=IntegrationTest` filter skips tests needing real audio hardware; note that `dotnet test` (since the .NET 10 SDK) wants `--project` rather than a positional path.
 
 ## CI
 

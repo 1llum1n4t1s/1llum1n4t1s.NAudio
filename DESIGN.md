@@ -20,7 +20,7 @@ Native AOT検証、`docfx/` と `Docs/` は公開documentationを担います。
 | --- | --- |
 | `NAudio.Core` | provider interfaceと配列互換base class、wave format、managed file reader/writer、DSP、effects、SF2/SFZ parser |
 | `NAudio.Midi` | MIDI file/event model。Windows legだけWinRT MIDI I/Oを追加 |
-| `NAudio.Wasapi` | WASAPI、Core Audio、Media Foundation、Process Loopback。compile時は`net10.0`、実行時はWindows限定 |
+| `NAudio.Wasapi` | WASAPI、Core Audio、Media Foundation、Process Loopback。compile時は`net11.0`、実行時はWindows限定 |
 | `NAudio.WinMM` | WaveOut/WaveIn、ACM、mixer、legacy MIDI |
 | `NAudio.Dmo` | DMO、DirectSound、Windows codec/resampler |
 | `NAudio.Asio` | ASIO playback/capture |
@@ -61,17 +61,17 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 
 - 14個のshipping packageはroot [Directory.Build.props](Directory.Build.props) の`VersionPrefix`を共有します。
   `NAudio.MacOS`だけはAPI安定化まで常にpreview suffixを付け、sample/tool appは独立versionを持ちます。
-- `NAudio.Core`は`net10.0`のcross-platform基盤です。OS固有device APIをCoreへ持ち込みません。
-- `NAudio`と`NAudio.Extras`の`net10.0` / `net10.0-windows` /
-  `net10.0-windows10.0.19041.0`の3 legを維持します。plain Windows TFM consumerをportable assetへ
+- `NAudio.Core`は`net11.0`のcross-platform基盤です。OS固有device APIをCoreへ持ち込みません。
+- `NAudio`と`NAudio.Extras`の`net11.0` / `net11.0-windows` /
+  `net11.0-windows10.0.19041.0`の3 legを維持します。plain Windows TFM consumerをportable assetへ
   誤fallbackさせず、versioned legではWinRT MIDIを提供するためです。
-- `NAudio.Wasapi`はsource-generated COMとP/Invokeでcompileできるため`net10.0`を使用し、
+- `NAudio.Wasapi`はsource-generated COMとP/Invokeでcompileできるため`net11.0`を使用し、
   `[SupportedOSPlatform("windows")]`でruntime境界を表します。
 - `WaveFormat`のmanaged object layoutはnativeの`WAVEFORMATEX`ではありません。DirectSoundを含む
   native境界では`ToWaveFormatExBytes` / `MarshalToPtr` / `MarshalFromPtr`で明示的にserializeし、
   `MarshalToPtr`のallocationは`Marshal.FreeHGlobal`で解放します。継承classの直接marshalやpinは
   Native AOTでbase fieldが欠落したりAuto layoutが並べ替わったりするため、使用しません。
-- `NAudio.MacOS`は`net10.0`でcompileし、`[SupportedOSPlatform("macos")]`でruntime境界を表します。
+- `NAudio.MacOS`は`net11.0`でcompileし、`[SupportedOSPlatform("macos")]`でruntime境界を表します。
   stable meta-packageには含めず、preview packageを明示参照します。
 - Process LoopbackはWindows 10 build 19041以降がruntime要件です。include/exclude modeのnative値、
   cancellation、HRESULT変換とCOM ownershipをmanaged/native境界で変えません。

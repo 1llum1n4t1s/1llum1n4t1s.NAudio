@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Linux-only ALSA backend; net10.0 so `dotnet test` runs it on a
-         Linux box (or Claude's Linux sandbox). Not run by the Windows CI
-         job, which only tests NAudioTests. -->
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Linux-only ALSA backend; net11.0 so `dotnet test` runs it on a
+         Linux box (or Claude's Linux sandbox). The Windows CI job runs every
+         project in NAudio.slnx, so it runs here too but finds no runnable
+         tests (see the exit-code note below). -->
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <EnableNUnitRunner>true</EnableNUnitRunner>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -28,7 +29,7 @@
   <ItemGroup>
     <PackageReference Include="NUnit" Version="5.0.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.3" />
   </ItemGroup>
 
   <ItemGroup>

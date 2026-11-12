@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <!-- Cross-platform half of the old NAudioTests suite. Single TFM so we
-         don't double-run on Windows; targets net10.0 (no -windows) so the
+         don't double-run on Windows; targets net11.0 (no -windows) so the
          project runs on Linux/macOS too. -->
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <EnableNUnitRunner>true</EnableNUnitRunner>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -14,7 +14,7 @@
     <PackageReference Include="Moq" Version="4.21.0" />
     <PackageReference Include="NUnit" Version="5.0.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.3" />
     <PackageReference Include="Concentus" Version="2.2.2" />
   </ItemGroup>
 
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Cross-platform references only. The meta-package's portable net10.0 asset
+    <!-- Cross-platform references only. The meta-package's portable net11.0 asset
          references only Core and Midi, so these tests do not use Windows backends.
          AudioFileReader's Windows decoding paths are tested in NAudio.Windows.Tests. -->
     <ProjectReference Include="..\..\src\NAudio.Core\NAudio.Core.csproj" />

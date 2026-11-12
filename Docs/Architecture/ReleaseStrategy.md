@@ -33,7 +33,7 @@
 
 ### Findings carried forward from Phase 0
 
-- **`actions/setup-dotnet` is not required on `windows-latest`** — .NET 10 SDK (currently `10.0.203`) and runtime are pre-installed. Removing the explicit setup step shaved ~10s and removed dead config. **Trade-off:** when the runner image eventually rotates and drops .NET 10, the build will silently break. If determinism becomes important before then, add `setup-dotnet` back with a pinned version. Deferred for now.
+- **`actions/setup-dotnet` is not required on `windows-latest`** — .NET 10 SDK (currently `10.0.203`) and runtime are pre-installed. Removing the explicit setup step shaved ~10s and removed dead config. **Trade-off:** when the runner image eventually rotates and drops .NET 10, the build will silently break. If determinism becomes important before then, add `setup-dotnet` back with a pinned version. ~~Deferred for now.~~ **Update (Nov 2026):** the move to `net11.0` needs the .NET 11 SDK, which `windows-latest` does not reliably preinstall yet, so `build.yml` (both the `build` and `aot-publish` jobs) and `release.yml` now install it explicitly with `actions/setup-dotnet` (`dotnet-version: '11.0.x'`). This finding no longer applies; keep the explicit setup step for future major-version moves too.
 - **`dotnet test` in .NET 10 requires `--project`** when invoking with a project path. The Azure `DotNetCoreCLI@2` task papers over this; raw `dotnet test path/to.csproj` now errors with *"Specifying a project for 'dotnet test' should be via '--project'."* The validated workflow uses `--project NAudioTests/NAudioTests.csproj`. Same applies to any future test invocations.
 - **Build runs ~40% faster on GitHub Actions** than on Azure Pipelines for the same commit. Not a decision criterion, but a nice confirmation that the migration isn't a regression.
 
@@ -101,7 +101,7 @@ Constraints while this holds:
 - **`RELEASE_NOTES.md` bullets for macOS want a `(preview)` marker.** The same extracted section is embedded as `PackageReleaseNotes` in *every* package, so macOS entries appear on the stable packages' NuGet pages too.
 - **The `v*` GitHub Release lists the macOS `.nupkg` as an asset** alongside the stable ones, since the release step attaches everything in `artifacts/`. That is deliberate — it is an accurate record of what the run produced.
 
-**Graduating it:** delete the `<VersionSuffix>` PropertyGroup from `NAudio.MacOS.csproj`, add the `net10.0-macos` leg to the `NAudio` meta-package, and drop the pre-release wording from the package `<Description>` and README. It rejoins lockstep at the next release with no version discontinuity — the first stable `NAudio.MacOS` is simply whatever `<VersionPrefix>` is current, which sorts above every preview that came before it.
+**Graduating it:** delete the `<VersionSuffix>` PropertyGroup from `NAudio.MacOS.csproj`, add the `net11.0-macos` leg to the `NAudio` meta-package, and drop the pre-release wording from the package `<Description>` and README. It rejoins lockstep at the next release with no version discontinuity — the first stable `NAudio.MacOS` is simply whatever `<VersionPrefix>` is current, which sorts above every preview that came before it.
 
 ### Pre-release: manual trigger, auto-incrementing counter
 
