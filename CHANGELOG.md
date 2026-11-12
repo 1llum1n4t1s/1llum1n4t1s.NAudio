@@ -9,6 +9,20 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.9] - 2026-11-12
+
+### Changed
+
+- 全shipping package、sample、test、CIの最小target frameworkを.NET 11へ更新しました。.NET 10のプロジェクトからは利用できなくなります。
+- `MidiFile.Export` と `MidiEventCollection.PrepareForExport` で使うトラック内の安定ソートの最悪計算量をO(n²)からO(n log n)にし、`WaveFileWriter` の24-bit・32-bit書込みでサンプルごとの割り当てをなくしました。出力内容は変わりません。
+
+### Fixed
+
+- 負号がASCIIの `-` でないカルチャで、SFZの負の `note_offset` / `octave_offset` が無視されて0になる問題を修正しました。
+- WAVの `cue ` チャンクの件数フィールドが実際のエントリ数と食い違う、または短すぎる場合に、`ReadCueList` が例外を投げたり位置0の偽のcueを返したりする問題を修正しました。
+- `AlsaIn` が回復不能なエラーで停止した後に、再び録音を開始できない問題と、`AlsaIn` / `AlsaOut` の `CurrentLatency` が `Dispose` と競合して閉じたハンドルを使う問題を修正しました。
+- macOSの `CoreAudioRecorder` で、デバイスのストリーム構成変更後の再開失敗が `RecordingStopped` で通知されない問題と、タイムスタンプの片方が無効なときに `CurrentLatency` が異常な値を返す問題を修正しました。
+
 ## [4.0.8] - 2026-10-19
 
 ### Added
@@ -209,7 +223,9 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.7...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.9...HEAD
+[4.0.9]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.8...v4.0.9
+[4.0.8]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.7...v4.0.8
 [4.0.7]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.6...v4.0.7
 [4.0.6]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.5...v4.0.6
 [4.0.5]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.4...v4.0.5
