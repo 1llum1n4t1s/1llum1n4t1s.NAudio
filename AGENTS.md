@@ -80,4 +80,4 @@ The `TestCategory!=IntegrationTest` filter skips tests needing real audio hardwa
 
 ## CI
 
-Every PR and push to `main` runs the verification sequence above on `windows-latest` via [.github/workflows/build.yml](.github/workflows/build.yml). Tests requiring real audio hardware should be marked with `TestCategory=IntegrationTest` so they're filtered out of the headless run.
+Every PR and push to `main` runs the verification sequence above on `windows-latest` via [.github/workflows/build.yml](.github/workflows/build.yml). The workflows install the .NET 11 SDK explicitly with `actions/setup-dotnet` (`dotnet-version: '11.0.x'`) rather than relying on the runner image, so update that pin together with the target framework when the SDK major changes. Tests requiring real audio hardware should be marked with `TestCategory=IntegrationTest` so they're filtered out of the headless run.

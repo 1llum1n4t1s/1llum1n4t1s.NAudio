@@ -55,7 +55,8 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
    native encoderへ渡します。具体的な設定は[reader](Docs/ExtendedAudioFileServicesReader.md)と
    [writer](Docs/ExtendedAudioFileServicesWriter.md)の利用ガイドを参照してください。
 6. **Release**: root `VersionPrefix`とCHANGELOGを同期し、`v*` tagでGitHub Actionsを起動します。
-   workflowは14 packageをbuild/test/packし、NuGetへpushした後にGitHub Releaseを作成します。
+   workflowは14 packageをbuild/test/packし、nuspecのid・version、lib/のtarget framework、symbol packageを
+   検証してから、NuGetへpushした後にGitHub Releaseを作成します。
 
 ## 重要な不変条件
 
@@ -99,7 +100,8 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
   VB.NETやNAudio 2由来のproviderにはpooled arrayを使うbridgeを提供します。言語互換性と移行容易性の代わりに、
   bridge経路ではreadごとのcopyを受け入れます。
 - **tag駆動のfinal release**: versionとsource SHAを一意にし、同じCHANGELOG本文をNuGetとGitHub Releaseで
-  共有します。previewだけは`workflow_dispatch`でsuffixを付与します。
+  共有します。previewだけは`workflow_dispatch`でsuffixを付与します。NuGetのversionは不変で公開後に
+  差し替えられないため、packしたbyteを公開前に検証します。
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
   build/analyzer、非Integration test、14 packageのpackとNative AOT smoke projectのpublishを行います。publishはILCompilerの
   whole-program解析とnative linkまで検証し、analyzerだけでは検出できない問題を補います。
