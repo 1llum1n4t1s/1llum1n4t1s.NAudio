@@ -295,6 +295,31 @@ public class WaveFileWriterTests
         }
     }
 
+    [Test]
+    public void WriteShortSamplesTo24BitPcmWritesTheTopThreeBytesOfTheScaledValue()
+    {
+        // Pins the byte layout of the WriteSamples(short[]) 24-bit path: each sample is scaled
+        // by ushort.MaxValue to 32 bits and its top three bytes are written little-endian.
+        var samples = new short[] { 0, 1, -1, 16384, -16384, short.MaxValue, short.MinValue };
+        var ms = new MemoryStream();
+        using (var writer = new WaveFileWriter(ms, new WaveFormat(8000, 24, 1)))
+        {
+            writer.WriteSamples(samples, 0, samples.Length);
+        }
+
+        ms.Position = 0;
+        using var reader = new WaveFileReader(ms);
+        var buffer = new byte[samples.Length * 3];
+        Assert.That(reader.Read(buffer, 0, buffer.Length), Is.EqualTo(buffer.Length), "Bytes read");
+        for (int n = 0; n < samples.Length; n++)
+        {
+            int expected = (ushort.MaxValue * samples[n]) >> 8;
+            int value = buffer[n * 3] | (buffer[n * 3 + 1] << 8) | (buffer[n * 3 + 2] << 16);
+            int actual = (value & 0x800000) == 0 ? value : value | unchecked((int)0xFF000000);
+            Assert.That(actual, Is.EqualTo(expected), $"Sample {n} ({samples[n]})");
+        }
+    }
+
     [TestCase(16)]
     [TestCase(24)]
     [TestCase(32)]

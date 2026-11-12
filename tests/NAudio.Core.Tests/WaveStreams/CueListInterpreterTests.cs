@@ -290,7 +290,47 @@ public class CueListInterpreterTests
         });
     }
 
+    [TestCase(0, 0)]   // count says none: the stray entry used to throw IndexOutOfRange
+    [TestCase(1, 1)]
+    [TestCase(-1, 0)]  // negative count used to throw OverflowException
+    [TestCase(3, 1)]   // count larger than the entries present used to add phantom cues at 0
+    public void CueChunkPointCountIsCappedToTheEntriesPresent(int declaredCount, int expectedCount)
+    {
+        // Like the adtl walk above, a malformed cue chunk must not make ReadCueList throw:
+        // only complete 24-byte cue points that the declared count covers are returned.
+        var cueBytes = BuildCueChunkBody((cueId: 1, samplePosition: 100));
+        BitConverter.TryWriteBytes(cueBytes.AsSpan(0, 4), declaredCount);
+
+        using var reader = OpenWithRawChunk("cue ", cueBytes);
+        var cues = reader.Chunks.ReadCueList();
+        Assert.That(cues, Is.Not.Null);
+        Assert.That(cues.Count, Is.EqualTo(expectedCount));
+        if (expectedCount == 1) Assert.That(cues[0].Position, Is.EqualTo(100));
+    }
+
+    [Test]
+    public void TruncatedCueChunkYieldsAnEmptyCueList()
+    {
+        // Shorter than the 4-byte point count: used to throw ArgumentException.
+        using var reader = OpenWithRawChunk("cue ", [1, 0]);
+        var cues = reader.Chunks.ReadCueList();
+        Assert.That(cues, Is.Not.Null);
+        Assert.That(cues.Count, Is.EqualTo(0));
+    }
+
     // ---- helpers ------------------------------------------------------------
+
+    private static WaveFileReader OpenWithRawChunk(string chunkId, byte[] body)
+    {
+        var ms = new MemoryStream();
+        using (var w = new WaveFileWriter(ms, Format))
+        {
+            w.AddChunk(chunkId, body, ChunkPosition.AfterData);
+            w.WriteSamples(new short[] { 1, 2 }, 0, 2);
+        }
+        ms.Position = 0;
+        return new WaveFileReader(ms);
+    }
 
     /// <summary>
     /// Minimal "cue " chunk body: 1 cue point, no label. Used to exercise the "no adtl"

@@ -57,6 +57,10 @@ public class WaveFileWriter : Stream
     private static ReadOnlySpan<byte> JunkChunk => new byte[28] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     private bool headerFinalized;
     private bool isDisposed;
+    // Whether a 32-bit PCM/extensible format carries an IEEE-float subformat. Resolved once on
+    // first use: AsStandardWaveFormat() depends only on the (readonly) format and allocates a
+    // new WaveFormat per call, which WriteSample would otherwise pay for every sample.
+    private bool? standardFormatIsIeeeFloat;
     private readonly List<BufferedChunk> beforeDataChunks = [];
     private readonly List<BufferedChunk> afterDataChunks = [];
     private CueList? bufferedCues;
@@ -354,6 +358,9 @@ public class WaveFileWriter : Stream
     /// </summary>
     public WaveFormat WaveFormat => format;
 
+    private bool StandardFormatIsIeeeFloat =>
+        standardFormatIsIeeeFloat ??= format.AsStandardWaveFormat().Encoding == WaveFormatEncoding.IeeeFloat;
+
     /// <inheritdoc />
     public override bool CanRead => false;
 
@@ -434,9 +441,11 @@ public class WaveFileWriter : Stream
         else if (WaveFormat.BitsPerSample == 24)
         {
             EnsureDataCanBeWritten(3);
-            var value = BitConverter.GetBytes((int)(int.MaxValue * pcmSample));
-            Span<byte> value24 = [value[1], value[2], value[3]];
-            writer.Write(value24);
+            // Same host-endian bytes as BitConverter.GetBytes, without a heap array per sample:
+            // the top three bytes ([1..3]) of the 32-bit value are the 24-bit sample.
+            Span<byte> value = stackalloc byte[4];
+            BitConverter.TryWriteBytes(value, (int)(int.MaxValue * pcmSample));
+            writer.Write(value.Slice(1, 3));
             dataChunkSize += 3;
         }
         else if (WaveFormat.BitsPerSample == 32 && WaveFormat.Encoding is WaveFormatEncoding.Pcm or WaveFormatEncoding.Extensible)
@@ -446,7 +455,7 @@ public class WaveFileWriter : Stream
             // distinguished by its SubFormat GUID (NAudio defaults 32-bit extensible to IEEE
             // float). AsStandardWaveFormat resolves the subformat for both WaveFormatExtensible
             // and WaveFormatExtraData, so honour it rather than assuming PCM.
-            if (WaveFormat.AsStandardWaveFormat().Encoding == WaveFormatEncoding.IeeeFloat)
+            if (StandardFormatIsIeeeFloat)
             {
                 writer.Write(sample);
             }
@@ -507,13 +516,13 @@ public class WaveFileWriter : Stream
         else if (WaveFormat.BitsPerSample == 24)
         {
             EnsureDataCanBeWritten((long)count * 3, nameof(count));
-            Span<byte> value24 = stackalloc byte[3];
+            // One stack buffer for the whole loop; TryWriteBytes yields the same host-endian
+            // bytes as BitConverter.GetBytes without allocating an array per sample.
+            Span<byte> value = stackalloc byte[4];
+            ReadOnlySpan<byte> value24 = value.Slice(1, 3);
             for (int sample = 0; sample < count; sample++)
             {
-                var value = BitConverter.GetBytes(ushort.MaxValue * samples[sample + offset]);
-                value24[0] = value[1];
-                value24[1] = value[2];
-                value24[2] = value[3];
+                BitConverter.TryWriteBytes(value, ushort.MaxValue * samples[sample + offset]);
                 writer.Write(value24);
             }
             dataChunkSize += (count * 3);
@@ -525,7 +534,7 @@ public class WaveFileWriter : Stream
             // As in WriteSample, a 32-bit extensible format may carry an IEEE-float subformat,
             // in which case the 16-bit samples must be normalised to float rather than written
             // as integer PCM (which would leave float-declared data unreadable).
-            if (WaveFormat.AsStandardWaveFormat().Encoding == WaveFormatEncoding.IeeeFloat)
+            if (StandardFormatIsIeeeFloat)
             {
                 for (int sample = 0; sample < count; sample++)
                 {

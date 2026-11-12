@@ -148,18 +148,52 @@ public partial class AudioPlaybackPanel : UserControl
         return postVolumeMeter;
     }
 
+    // The meter events fire on whichever thread pulls audio through the chain: the UI thread
+    // for WaveOutWindow, but a background playback thread for WaveOutEvent, WASAPI and ASIO.
+    // WinForms controls must only be touched on the UI thread, so marshal the (copied) values.
     private void OnPreVolumeMeter(object sender, StreamVolumeEventArgs e)
     {
         // we know it is stereo
-        waveformPainter1.AddMax(e.MaxSampleValues[0]);
-        waveformPainter2.AddMax(e.MaxSampleValues[1]);
+        float left = e.MaxSampleValues[0];
+        float right = e.MaxSampleValues[1];
+        RunOnUiThread(() =>
+        {
+            waveformPainter1.AddMax(left);
+            waveformPainter2.AddMax(right);
+        });
     }
 
     private void OnPostVolumeMeter(object sender, StreamVolumeEventArgs e)
     {
         // we know it is stereo
-        volumeMeter1.Amplitude = e.MaxSampleValues[0];
-        volumeMeter2.Amplitude = e.MaxSampleValues[1];
+        float left = e.MaxSampleValues[0];
+        float right = e.MaxSampleValues[1];
+        RunOnUiThread(() =>
+        {
+            volumeMeter1.Amplitude = left;
+            volumeMeter2.Amplitude = right;
+        });
+    }
+
+    private void RunOnUiThread(Action action)
+    {
+        // The panel may be closing while the playback thread is still delivering meter events.
+        // Check first: once the handle is gone InvokeRequired returns false, which would
+        // otherwise run the action on the playback thread against disposed controls.
+        if (IsDisposed || !IsHandleCreated) return;
+        if (!InvokeRequired)
+        {
+            action();
+            return;
+        }
+        try
+        {
+            BeginInvoke(action);
+        }
+        catch (InvalidOperationException)
+        {
+            // handle destroyed between the check and the call; drop this meter update
+        }
     }
 
     private void CreateWaveOut()

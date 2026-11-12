@@ -119,9 +119,3 @@ Output Types: 1 items:
 Transform Flags: 1
 Transform Category: Audio Encoder
 ```
-
-You can also activate a transform directly from the `MfActivate` object. For example, to create an `MfTransform` wrapper:
-
-```c#
-using var transform = mft.ActivateTransform();
-```

@@ -256,10 +256,13 @@ public static partial class SfzParser
                 case SfzHeader.Control:
                     if (section.Opcodes.TryGetValue("default_path", out var dp))
                         defaultPath = dp.Replace('\\', '/');
+                    // SFZ is a culture-invariant text format: parse like every other numeric
+                    // opcode, or a negative offset is dropped under cultures whose NegativeSign
+                    // is not the ASCII '-' (he-IL, ar-SA, fa-IR, ...).
                     if (section.Opcodes.TryGetValue("note_offset", out var no) &&
-                        int.TryParse(no, out var noVal)) noteOffset = noVal;
+                        int.TryParse(no, NumberStyles.Integer, CultureInfo.InvariantCulture, out var noVal)) noteOffset = noVal;
                     if (section.Opcodes.TryGetValue("octave_offset", out var oo) &&
-                        int.TryParse(oo, out var ooVal)) octaveOffset = ooVal;
+                        int.TryParse(oo, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ooVal)) octaveOffset = ooVal;
                     CollectSetCc(section.Opcodes, ref setCc);
                     break;
                 case SfzHeader.Global:

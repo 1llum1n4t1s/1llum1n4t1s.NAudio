@@ -449,7 +449,10 @@ public partial class RecordingPanel : UserControl
     {
         if (InvokeRequired)
         {
-            BeginInvoke(new EventHandler<WaveInEventArgs>(OnDataAvailable), sender, e);
+            // The event args alias a capture buffer that is reused on the next callback, so
+            // copy the data before handing it to the UI thread instead of reading it later.
+            var copy = new WaveInEventArgs(e.BufferSpan.ToArray(), e.BytesRecorded);
+            BeginInvoke(new EventHandler<WaveInEventArgs>(OnDataAvailable), sender, copy);
             return;
         }
 

@@ -93,7 +93,18 @@ public partial class CoreAudioRecorder
             OnRecodingStopped(e);
             return;
         }
-        if (wasRunning) { StartRecording(); }
+        if (!wasRunning) { return; }
+        try
+        {
+            StartRecording();
+        }
+        catch (Exception e)
+        {
+            // This runs from a property listener, which swallows exceptions; report the failed
+            // restart through RecordingStopped (as the player does with PlaybackStopped)
+            // instead of leaving the recorder silently stopped.
+            OnRecodingStopped(e);
+        }
     }
 
     private void Initialize(bool isInit = false)

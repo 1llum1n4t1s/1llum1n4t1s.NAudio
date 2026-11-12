@@ -1,7 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
 using NAudio.Wave;
-using System.Diagnostics;
 using Moq;
 
 namespace NAudio.Core.Tests.WaveStreams;
@@ -292,31 +291,5 @@ public class MultiplexingWaveProviderTests
         byte[] expected = [0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 9, 10, 11, 8, 9, 10, 11,];
         var mp = new MultiplexingWaveProvider([input1], 2);
         Assert.That(mp.WaveFormat.Encoding, Is.EqualTo(WaveFormatEncoding.IeeeFloat));
-    }
-
-    public void PerformanceTest()
-    {
-        var waveFormat = new WaveFormat(32000, 16, 1);
-        var input1 = new TestWaveProvider(waveFormat);
-        var input2 = new TestWaveProvider(waveFormat);
-        var input3 = new TestWaveProvider(waveFormat);
-        var input4 = new TestWaveProvider(waveFormat);
-        var mp = new MultiplexingWaveProvider([input1, input2, input3, input4], 4);
-        mp.ConnectInputToOutput(0, 3);
-        mp.ConnectInputToOutput(1, 2);
-        mp.ConnectInputToOutput(2, 1);
-        mp.ConnectInputToOutput(3, 0);
-
-        byte[] buffer = new byte[waveFormat.AverageBytesPerSecond];
-        Stopwatch s = new Stopwatch();
-        var duration = s.Time(() =>
-        {
-            // read one hour worth of audio
-            for (int n = 0; n < 60 * 60; n++)
-            {
-                mp.Read(buffer.AsSpan());
-            }
-        });
-        Console.WriteLine("Performance test took {0}ms", duration);
     }
 }

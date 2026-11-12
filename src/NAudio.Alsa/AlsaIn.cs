@@ -67,8 +67,8 @@ public sealed class AlsaIn : IWaveIn, IWaveLatency
     {
         get
         {
-            if (!pcm.Running) return AverageLatency;
-            if (AlsaInterop.PcmDelay(pcm.Pcm, out nint delayFrames) < 0 || delayFrames < 0)
+            // TryGetDelay guards against a concurrent Dispose closing the handle
+            if (!pcm.TryGetDelay(out nint delayFrames))
                 return AverageLatency;
             return TimeSpan.FromSeconds(delayFrames / (double)waveFormat.SampleRate);
         }
@@ -135,6 +135,9 @@ public sealed class AlsaIn : IWaveIn, IWaveLatency
             error = ex;
         }
 
+        // an unrecoverable error ends the loop without StopRecording; clear Running so the
+        // RecordingStopped handler (or a later caller) can start recording again
+        pcm.WorkerExiting();
         RecordingStopped?.Invoke(this, new StoppedEventArgs(error));
     }
 

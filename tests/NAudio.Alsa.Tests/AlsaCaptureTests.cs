@@ -63,6 +63,43 @@ public class AlsaCaptureTests : AlsaTestBase
     }
 
     [Test]
+    public void CanStartRecordingAgainAfterTheCaptureLoopFails()
+    {
+        // A failure inside the capture loop (here a throwing DataAvailable handler) ends the
+        // worker without StopRecording. Running used to stay true, so the next StartRecording
+        // threw "Already recording" and the device could not be reused.
+        using var input = new AlsaIn("null") { WaveFormat = new WaveFormat(44100, 16, 2) };
+        var failure = new InvalidOperationException("handler failure");
+        bool fail = true;
+        Exception error = null;
+        var stopped = new ManualResetEventSlim();
+        int blocksAfterRestart = 0;
+        input.DataAvailable += (_, _) =>
+        {
+            if (Volatile.Read(ref fail)) throw failure;
+            Interlocked.Increment(ref blocksAfterRestart);
+        };
+        input.RecordingStopped += (_, e) => { error = e.Exception; stopped.Set(); };
+
+        input.StartRecording();
+        Assert.That(stopped.Wait(TimeSpan.FromSeconds(5)), Is.True, "RecordingStopped not raised");
+        Assert.That(error, Is.SameAs(failure));
+
+        Volatile.Write(ref fail, false);
+        stopped.Reset();
+        Assert.DoesNotThrow(input.StartRecording, "restart after a failed capture loop");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (Volatile.Read(ref blocksAfterRestart) < 1 && sw.ElapsedMilliseconds < 3000)
+        {
+            Thread.Sleep(20);
+        }
+
+        input.StopRecording();
+        Assert.That(stopped.Wait(TimeSpan.FromSeconds(3)), Is.True, "RecordingStopped not raised after restart");
+        Assert.That(Volatile.Read(ref blocksAfterRestart), Is.GreaterThanOrEqualTo(1));
+    }
+
+    [Test]
     public void ChangingWaveFormatWhileRecordingThrows()
     {
         using var input = new AlsaIn("null") { WaveFormat = new WaveFormat(44100, 16, 2) };

@@ -81,20 +81,9 @@ public partial class CoreAudioRecorder
             }
         }
 
-        public double GetCurrentLatency()
-        {
-            if (
-                inNowStamp.mFlags == AudioTimeStampFlags.kAudioTimeStampNothingValid &&
-                inInputTimeStamp.mFlags == AudioTimeStampFlags.kAudioTimeStampNothingValid
-            )
-            {
-                return -1d;
-            }
-            else
-            {
-                return ConstructStampTime(inNowStamp) - ConstructStampTime(inInputTimeStamp);
-            }
-        }
+        // -1 makes CurrentLatency fall back to the device-reported latency
+        public double GetCurrentLatency() =>
+            ComputeCaptureLatencySeconds(inNowStamp, inInputTimeStamp, virtualFormat.mSampleRate);
 
         private void InvokeStoppedEvent() => RecordingStopped?.Invoke(this, new(exception));
 

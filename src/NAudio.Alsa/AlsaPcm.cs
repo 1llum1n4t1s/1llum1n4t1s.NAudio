@@ -204,6 +204,48 @@ internal sealed class AlsaPcm : IDisposable
     }
 
     /// <summary>
+    /// Called by the worker loop itself just before it raises its stopped event (end of
+    /// stream or an unrecoverable error). Clears <see cref="Running"/> so the owner can be
+    /// started again from that event or later (it used to stay true after an error, and the
+    /// next start was refused), and drops the PCM as <see cref="StopWorker"/> would, so a
+    /// device left RUNNING/XRUN can be reconfigured. The worker reference is kept so that a
+    /// later Stop/Dispose still joins the thread, i.e. waits for the stopped event to finish.
+    /// </summary>
+    internal void WorkerExiting()
+    {
+        lock (gate)
+        {
+            if (worker == Thread.CurrentThread)
+            {
+                running = false;
+                if (!disposed && !handle.IsInvalid)
+                {
+                    AlsaInterop.PcmDrop(Pcm);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// <c>snd_pcm_delay</c> for callers on any thread. Holds <c>gate</c> so
+    /// <see cref="Dispose"/> cannot close the handle mid-call, and only queries while the
+    /// worker is running.
+    /// </summary>
+    internal bool TryGetDelay(out nint delayFrames)
+    {
+        lock (gate)
+        {
+            delayFrames = 0;
+            if (disposed || !running || handle.IsInvalid)
+            {
+                return false;
+            }
+
+            return AlsaInterop.PcmDelay(Pcm, out delayFrames) >= 0 && delayFrames >= 0;
+        }
+    }
+
+    /// <summary>
     /// Signals the worker to stop and unblocks any in-flight blocking I/O
     /// via <c>snd_pcm_drop</c>, then joins it. Idempotent. If called from
     /// the worker thread itself (e.g. <c>Stop()</c> inside a

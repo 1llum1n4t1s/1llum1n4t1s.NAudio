@@ -9,21 +9,11 @@ namespace NAudio.Windows.Tests.Acm;
 [TestFixture]
 public class GsmEncodeTest
 {
-    private string tempFolder;
-    [OneTimeSetUp]
-    public void Setup()
-    {
-        tempFolder = Path.Combine(Path.GetTempPath(), "NAudio");
-        if (!Directory.Exists(tempFolder))
-        {
-            Directory.CreateDirectory(tempFolder);
-        }
-    }
+    private const int DurationInSeconds = 5;
 
     private static WaveStream CreatePcmTestStream()
     {
         var outFormat = new WaveFormat(8000, 16, 1);
-        const int durationInSeconds = 5;
         var sg = new SignalGenerator(outFormat.SampleRate, outFormat.Channels)
         {
             Frequency = 1000,
@@ -33,30 +23,50 @@ public class GsmEncodeTest
         var sp = sg.ToWaveProvider16();
 
 
-        byte[] data = new byte[outFormat.AverageBytesPerSecond * durationInSeconds];
+        byte[] data = new byte[outFormat.AverageBytesPerSecond * DurationInSeconds];
         var bytesRead = sp.Read(data.AsSpan());
         Assert.That(bytesRead, Is.EqualTo(data.Length));
         return new RawSourceWaveStream(new MemoryStream(data), outFormat);
     }
 
     [Test]
-    public void CanEncodeGsm()
+    public void CanEncodeAndDecodeGsm()
     {
-        using var reader = CreatePcmTestStream();
-        using var gsm = new WaveFormatConversionStream(new Gsm610WaveFormat(), reader);
-        WaveFileWriter.CreateWaveFile(Path.Combine(tempFolder, "gsm.wav"), gsm);
-    }
-
-    [Test]
-    public void CanDecodeGsm()
-    {
-        var testFile = Path.Combine(tempFolder, "gsm.wav");
-        if (!File.Exists(testFile))
+        // Encode and decode in one test, in memory: the decode used to read a temp file written
+        // by a separate encode test, so it was skipped whenever it ran first or alone.
+        using var source = CreatePcmTestStream();
+        var encoded = new MemoryStream();
+        using (var gsm = new WaveFormatConversionStream(new Gsm610WaveFormat(), source))
         {
-            Assert.Ignore("Missing test file (created by the another test)");
+            WaveFileWriter.WriteWavFileToStream(encoded, gsm);
         }
-        using var reader = new WaveFileReader(testFile);
+        Assert.That(encoded.Length, Is.GreaterThan(0), "GSM encode produced no data");
+
+        encoded.Position = 0;
+        using var reader = new WaveFileReader(encoded);
+        Assert.That(reader.WaveFormat.Encoding, Is.EqualTo(WaveFormatEncoding.Gsm610));
         using var pcm = WaveFormatConversionStream.CreatePcmStream(reader);
-        WaveFileWriter.CreateWaveFile(Path.Combine(tempFolder, "gsm-decoded.wav"), pcm);
+        Assert.That(pcm.WaveFormat.Encoding, Is.EqualTo(WaveFormatEncoding.Pcm));
+        Assert.That(pcm.WaveFormat.SampleRate, Is.EqualTo(8000));
+        Assert.That(pcm.WaveFormat.Channels, Is.EqualTo(1));
+
+        var decoded = new MemoryStream();
+        var buffer = new byte[pcm.WaveFormat.AverageBytesPerSecond];
+        int read;
+        long peak = 0;
+        while ((read = pcm.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            decoded.Write(buffer, 0, read);
+            for (int n = 0; n + 1 < read; n += 2)
+            {
+                peak = Math.Max(peak, Math.Abs((long)BitConverter.ToInt16(buffer, n)));
+            }
+        }
+
+        // GSM 06.10 codes 160-sample frames, so the round trip keeps the length to within a frame
+        long expectedBytes = (long)source.WaveFormat.AverageBytesPerSecond * DurationInSeconds;
+        const int frameBytes = 160 * 2;
+        Assert.That(decoded.Length, Is.EqualTo(expectedBytes).Within(frameBytes), "Decoded length");
+        Assert.That(peak, Is.GreaterThan(1000), "Decoded audio should not be silent");
     }
 }

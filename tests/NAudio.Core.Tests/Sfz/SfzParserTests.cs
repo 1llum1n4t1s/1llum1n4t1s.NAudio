@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using NAudio.Sfz;
 using NUnit.Framework;
@@ -185,6 +186,33 @@ public class SfzParserTests
         var instrument = SfzParser.Parse(sfz);
         Assert.That(instrument.NoteOffset, Is.EqualTo(2));
         Assert.That(instrument.OctaveOffset, Is.EqualTo(-1));
+    }
+
+    [Test]
+    public void NegativeNoteAndOctaveOffsetsParseUnderACultureWithANonAsciiNegativeSign()
+    {
+        // Cultures such as he-IL / ar-SA / fa-IR use a NegativeSign that does not start
+        // with the ASCII '-', so a culture-sensitive int.TryParse rejects "-12" and the
+        // offset silently fell back to 0. SFZ is a culture-invariant text format, like the
+        // rest of the parser's numbers. A cloned culture with an explicit NegativeSign keeps
+        // this independent of the host's ICU/NLS data.
+        var culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+        culture.NumberFormat.NegativeSign = "~";
+        var previous = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = culture;
+            Assert.That(int.TryParse("-1", out _), Is.False, "precondition: the current culture rejects an ASCII minus");
+
+            var sfz = "<control> note_offset=-12 octave_offset=-1\n<region> sample=a.wav";
+            var instrument = SfzParser.Parse(sfz);
+            Assert.That(instrument.NoteOffset, Is.EqualTo(-12));
+            Assert.That(instrument.OctaveOffset, Is.EqualTo(-1));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 
     [Test]

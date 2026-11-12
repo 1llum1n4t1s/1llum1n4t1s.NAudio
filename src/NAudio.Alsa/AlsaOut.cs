@@ -86,7 +86,8 @@ public sealed class AlsaOut : IWavePlayer, IWaveLatency
             var format = outputWaveFormat;
             if (playbackState != PlaybackState.Playing || format == null)
                 return AverageLatency;
-            if (AlsaInterop.PcmDelay(pcm.Pcm, out nint delayFrames) < 0 || delayFrames < 0)
+            // TryGetDelay guards against a concurrent Dispose closing the handle
+            if (!pcm.TryGetDelay(out nint delayFrames))
                 return AverageLatency;
             return TimeSpan.FromSeconds(delayFrames / (double)format.SampleRate);
         }
@@ -298,6 +299,9 @@ public sealed class AlsaOut : IWavePlayer, IWaveLatency
         }
 
         playbackState = PlaybackState.Stopped;
+        // end of stream or an unrecoverable error ends the loop without Stop(); clear Running
+        // so it reflects the stopped state before PlaybackStopped is raised
+        pcm.WorkerExiting();
         PlaybackStopped?.Invoke(this, new StoppedEventArgs(error));
     }
 

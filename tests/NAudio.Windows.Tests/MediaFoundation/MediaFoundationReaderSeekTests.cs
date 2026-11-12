@@ -101,15 +101,17 @@ public class MediaFoundationReaderSeekTests
             {
                 blockAlign = refReader.WaveFormat.BlockAlign;
                 sampleRate = refReader.WaveFormat.SampleRate;
-                if (refReader.WaveFormat.Channels != 1) Assert.Ignore("Expected a mono MP3 decode");
+                // The source is a mono signal we encoded ourselves, so a different channel count
+                // or a short decode is a reader regression, not a missing-codec environment.
+                Assert.That(refReader.WaveFormat.Channels, Is.EqualTo(1), "Expected a mono MP3 decode");
                 reference = ReadAllSamples(refReader);
             }
 
             const int window = 8192;
             const int maxLag = 2000;
             int targetSample = sampleRate * 2; // ~2s in
-            if (reference.Length < targetSample + window + maxLag)
-                Assert.Ignore("Decoded MP3 was shorter than expected");
+            Assert.That(reference.Length, Is.GreaterThanOrEqualTo(targetSample + window + maxLag),
+                "Decoded MP3 was shorter than expected");
 
             long targetByte = (long)targetSample * blockAlign;
             using var seeker = new MediaFoundationReader(path);

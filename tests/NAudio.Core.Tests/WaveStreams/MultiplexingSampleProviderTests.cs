@@ -3,7 +3,6 @@ using NAudio.Core.Tests.Utils;
 using NUnit.Framework;
 using NAudio.Wave.SampleProviders;
 using NAudio.Wave;
-using System.Diagnostics;
 using Moq;
 
 namespace NAudio.Core.Tests.WaveStreams;
@@ -210,30 +209,5 @@ public class MultiplexingSampleProviderTests
         var read = mp.Read(buffer.AsSpan());
         Assert.That(read, Is.EqualTo(6));
         Assert.That(buffer, Is.EqualTo(expected));
-    }
-
-    public void PerformanceTest()
-    {
-        var input1 = new TestSampleProvider(32000, 1);
-        var input2 = new TestSampleProvider(32000, 1);
-        var input3 = new TestSampleProvider(32000, 1);
-        var input4 = new TestSampleProvider(32000, 1);
-        var mp = new MultiplexingSampleProvider([input1, input2, input3, input4], 4);
-        mp.ConnectInputToOutput(0, 3);
-        mp.ConnectInputToOutput(1, 2);
-        mp.ConnectInputToOutput(2, 1);
-        mp.ConnectInputToOutput(3, 0);
-
-        float[] buffer = new float[input1.WaveFormat.AverageBytesPerSecond / 4];
-        Stopwatch s = new Stopwatch();
-        var duration = s.Time(() =>
-        {
-            // read one hour worth of audio
-            for (int n = 0; n < 60 * 60; n++)
-            {
-                mp.Read(buffer.AsSpan());
-            }
-        });
-        Console.WriteLine("Performance test took {0}ms", duration);
     }
 }
