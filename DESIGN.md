@@ -106,4 +106,7 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
   build/analyzer、非Integration test、15 packageのpackとNative AOT smoke projectのpublishを行います。publishはILCompilerの
   whole-program解析とnative linkまで検証し、analyzerだけでは検出できない問題を補います。
-  executableのend-to-end実行は実機で行います。
+  smoke executableのend-to-end実行は実機で行います。
+- **ASIOはin-process fake driverでAOT実行まで検証**: `tests/NAudioAsioFakeDriverTest`が`NAudio.Asio`の
+  vtable binding・構造体layout・callbackをprocess内のfake driverに対して動かします。hardwareが不要なため、
+  CIはNative AOTでpublishしたexecutableを実行し、compileは通るがAOTで誤動作するinteropを検出します。
