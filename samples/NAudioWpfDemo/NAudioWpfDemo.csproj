@@ -37,7 +37,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="NUnit" Version="5.0.0" />
-  </ItemGroup>
 </Project>
