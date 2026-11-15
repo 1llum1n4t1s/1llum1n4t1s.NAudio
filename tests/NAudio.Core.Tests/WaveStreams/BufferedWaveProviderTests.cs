@@ -84,14 +84,6 @@ public class BufferedWaveProviderTests
         Assert.That(bwp.ReadFully, Is.True);
     }
 
-    [Test]
-    public void WaveFormatPropertyReturnsConstructorArgument()
-    {
-        var format = new WaveFormat(44100, 16, 2);
-        var bwp = new BufferedWaveProvider(format);
-        Assert.That(bwp.WaveFormat, Is.SameAs(format));
-    }
-
     // ── BufferLength property ─────────────────────────────────────────────
 
     [Test]

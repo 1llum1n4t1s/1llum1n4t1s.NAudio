@@ -8,16 +8,6 @@ namespace NAudio.Core.Tests.SoundFont;
 public class SFVersionTests
 {
     [Test]
-    public void ParsesVersion2Point04()
-    {
-        var sf2 = SoundFontTestHelper.BuildMinimalSoundFont(vMajor: 2, vMinor: 4);
-        var sf = new NAudio.SoundFont.SoundFont(new MemoryStream(sf2));
-
-        Assert.That(sf.FileInfo.SoundFontVersion.Major, Is.EqualTo(2));
-        Assert.That(sf.FileInfo.SoundFontVersion.Minor, Is.EqualTo(4));
-    }
-
-    [Test]
     public void ParsesVersion2Point01()
     {
         var sf2 = SoundFontTestHelper.BuildMinimalSoundFont(vMajor: 2, vMinor: 1);

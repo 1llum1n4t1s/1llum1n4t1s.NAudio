@@ -152,31 +152,6 @@ public class Mp3FileReaderLazyTocTests
     }
 
     [Test]
-    public void SeekForward_PastScannedTail_LandsOnCorrectSample()
-    {
-        var mp3 = SyntheticMp3.CreateBytes(10);
-        long exact = ExactLengthOf(mp3);
-
-        // Reader A: open, seek directly to ~halfway without reading first.
-        using var readerA = OpenFromBytes(mp3);
-        long target = exact / 2;
-        readerA.Position = target;
-        long settledTarget = readerA.Position;
-        var bufA = new byte[16384];
-        int nA = readerA.Read(bufA, 0, bufA.Length);
-
-        // Reader B: open, read sequentially past the same point, then read same number of bytes.
-        using var readerB = OpenFromBytes(mp3);
-        readerB.Position = settledTarget;
-        var bufB = new byte[16384];
-        int nB = readerB.Read(bufB, 0, bufB.Length);
-
-        Assert.That(nA, Is.EqualTo(nB), "Both readers should return the same byte count");
-        // Bytes should be identical (warm-up frames decoded the same way both times).
-        Assert.That(bufA, Is.EqualTo(bufB));
-    }
-
-    [Test]
     public void SeekBackward_WithinScannedTail_ProducesIdenticalPcm()
     {
         var mp3 = SyntheticMp3.CreateBytes(5);

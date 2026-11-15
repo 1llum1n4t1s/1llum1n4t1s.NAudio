@@ -16,14 +16,6 @@ public class VolumeWaveProvider16Tests
     }
 
     [Test]
-    public void PassesThroughSourceWaveFormat()
-    {
-        var testProvider = new TestWaveProvider(new WaveFormat(44100, 16, 2));
-        VolumeWaveProvider16 vwp = new VolumeWaveProvider16(testProvider);
-        Assert.That(vwp.WaveFormat, Is.SameAs(testProvider.WaveFormat));
-    }
-
-    [Test]
     public void PassesThroughDataUnchangedAtVolume1()
     {
         var testProvider = new TestWaveProvider(new WaveFormat(44100, 16, 2));

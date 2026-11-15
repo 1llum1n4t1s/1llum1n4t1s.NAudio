@@ -39,15 +39,6 @@ public class WaveProviderBaseTests
     }
 
     [Test]
-    public void ExposesTheWaveFormatItWasConstructedWith()
-    {
-        var provider = new RampProvider();
-        Assert.That(provider.WaveFormat.SampleRate, Is.EqualTo(44100));
-        Assert.That(provider.WaveFormat.BitsPerSample, Is.EqualTo(16));
-        Assert.That(provider.WaveFormat.Channels, Is.EqualTo(2));
-    }
-
-    [Test]
     public void NullWaveFormatThrows()
     {
         Assert.Throws<ArgumentNullException>(() => new NullFormatProvider());

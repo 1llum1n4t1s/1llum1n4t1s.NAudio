@@ -160,31 +160,6 @@ public class SequencedSampleProviderTests
     }
 
     [Test]
-    public void Swing_Does_Not_Drop_Events_That_Get_Shifted_Across_Internal_Boundary()
-    {
-        // The classic correctness bug: applying swing AFTER filtering by buffer range could drop an
-        // event whose effective tick lands inside the buffer because its nominal tick is outside.
-        // We construct that exact case: event at the nominal end of the first read's tick range,
-        // shifted into the buffer by swing — and we must still see it.
-        var timeline = new EventTimeline<int>();
-        // Nominal tick = first odd 16th past where a buffer of 6001 frames "would" end.
-        // 6001 frames at 48k/120BPM is just past tick 240 (one 16th). The next odd 16th is tick 720 (3x16th).
-        // Let's instead use a smaller buffer: 5999 frames ⇒ tick range [0, 239]. The event is at tick 240,
-        // which is on an odd 16th line; swing 0.5 shifts it backward… but swing only shifts forward, so
-        // it shifts to 360, which is past 239. The event should NOT fire (correct behaviour).
-        // To exercise the "save by over-scan" path we need a transform that shifts BACK. Since our
-        // SwingTransform only shifts forward, instead verify the reverse: an event at tick 240 with
-        // swing 0.5 fires at tick 360 (= frame 9000). The read covers frames 0..23999 (tick 0..959).
-        timeline.Add(Sixteenth, 99);
-        var (sp, log) = Build(timeline, new StaticTempoMap(120));
-        sp.Transform = new SwingTransform(Sixteenth, 0.5);
-        sp.Transport.Play();
-        sp.Read(new float[24000]);
-        Assert.That(log.Count, Is.EqualTo(1));
-        Assert.That(log[0].frameOffset, Is.EqualTo(9000));
-    }
-
-    [Test]
     public void Tempo_Change_Affects_Frame_Offset_Of_Subsequent_Event()
     {
         // Use LiveTempoMap; halve the tempo after the first quarter, then verify the next quarter

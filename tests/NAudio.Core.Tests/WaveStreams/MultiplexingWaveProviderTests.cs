@@ -151,14 +151,6 @@ public class MultiplexingWaveProviderTests
     }
 
     [Test]
-    public void HasConnectInputToOutputMethod()
-    {
-        var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 2));
-        var mp = new MultiplexingWaveProvider([input1], 1);
-        mp.ConnectInputToOutput(1, 0);
-    }
-
-    [Test]
     public void ConnectInputToOutputThrowsExceptionForInvalidInput()
     {
         var input1 = new TestWaveProvider(new WaveFormat(32000, 16, 2));

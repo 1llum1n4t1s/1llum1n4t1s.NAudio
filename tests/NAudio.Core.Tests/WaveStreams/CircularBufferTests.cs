@@ -9,14 +9,6 @@ namespace NAudio.Core.Tests.WaveStreams;
 public class CircularBufferTests
 {
     [Test]
-    public void CircularBufferHasMaxLengthAndCount()
-    {
-        CircularBuffer circularBuffer = new CircularBuffer(1024);
-        Assert.That(circularBuffer.MaxLength, Is.EqualTo(1024));
-        Assert.That(circularBuffer.Count, Is.EqualTo(0));
-    }
-
-    [Test]
     public void ReadFromEmptyBufferReturnsNothing()
     {
         CircularBuffer circularBuffer = new CircularBuffer(1024);

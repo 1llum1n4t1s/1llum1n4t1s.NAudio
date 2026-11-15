@@ -21,13 +21,6 @@ public class WaveChunksTests
     }
 
     [Test]
-    public void ChunksIsNeverNull()
-    {
-        using var reader = Open();
-        Assert.That(reader.Chunks, Is.Not.Null);
-    }
-
-    [Test]
     public void EmptyFileHasEmptyChunksCollection()
     {
         using var reader = Open();

@@ -126,14 +126,6 @@ public class MultiplexingSampleProviderTests
     }
 
     [Test]
-    public void HasConnectInputToOutputMethod()
-    {
-        var input1 = new TestSampleProvider(32000, 2);
-        var mp = new MultiplexingSampleProvider([input1], 1);
-        mp.ConnectInputToOutput(1, 0);
-    }
-
-    [Test]
     public void ConnectInputToOutputThrowsExceptionForInvalidInput()
     {
         var input1 = new TestSampleProvider(32000, 2);

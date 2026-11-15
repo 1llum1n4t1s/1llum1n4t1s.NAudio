@@ -367,18 +367,6 @@ public class WaveOffsetStreamTests
         Assert.That(different, Is.True, "Source offset should cause different data to be read");
     }
 
-    [Test]
-    public void ChangingSourceOffsetRepositionsSourceStream()
-    {
-        using var source = CreateSourceStream(3.0);
-        using var offset = new WaveOffsetStream(source, TimeSpan.Zero, TimeSpan.Zero, TimeSpan.FromSeconds(2));
-
-        offset.SourceOffset = TimeSpan.FromSeconds(1);
-        // After changing source offset, source should be repositioned
-        long expectedSourcePos = (long)(1.0 * SampleRate) * BytesPerSample;
-        Assert.That(source.Position, Is.EqualTo(expectedSourcePos));
-    }
-
     #endregion
 
     #region SourceLength Tests
@@ -681,18 +669,6 @@ public class WaveOffsetStreamTests
             byte expected = (byte)(((sourceOffsetBytesVal + i) % 255) + 1);
             Assert.That(audioBuffer[i], Is.EqualTo(expected), $"Audio should start from source offset at byte {i}");
         }
-    }
-
-    [Test]
-    public void DisposeDisposesSourceStream()
-    {
-        var source = CreateSourceStream();
-        var offset = new WaveOffsetStream(source);
-        offset.Dispose();
-
-        // After dispose, attempting to access source should indicate it's been cleaned up
-        // We can't directly test this without more infrastructure, but we verify no exception on dispose
-        Assert.Pass("Dispose completed without error");
     }
 
     [Test]

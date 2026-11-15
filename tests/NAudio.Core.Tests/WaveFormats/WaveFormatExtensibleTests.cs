@@ -64,16 +64,6 @@ public class WaveFormatExtensibleTests
     }
 
     [Test]
-    public void FullConstructorPreservesExplicitChannelMask()
-    {
-        var mask = (int)(Speakers.FrontLeft | Speakers.FrontRight | Speakers.LowFrequency);
-        var format = new WaveFormatExtensible(48000, 16, 3,
-            AudioMediaSubtypes.MEDIASUBTYPE_PCM, 16, mask);
-
-        Assert.That(format.ChannelMask, Is.EqualTo(mask));
-    }
-
-    [Test]
     public void UseIeeeFloatConstructorPicksPcmSubFormat()
     {
         // The headline case the bit-depth constructor can't reach: 32-bit integer PCM

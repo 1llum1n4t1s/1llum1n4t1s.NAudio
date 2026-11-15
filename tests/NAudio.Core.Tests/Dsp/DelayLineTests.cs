@@ -62,5 +62,16 @@ public class DelayLineTests
         Assert.Throws<ArgumentOutOfRangeException>(() => line.Read(line.MaxDelaySamples + 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => line.Read(0.5f));
         Assert.Throws<ArgumentOutOfRangeException>(() => line.Read(line.MaxDelaySamples + 0.01f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DelayLine(0));
+    }
+
+    [Test]
+    public void ResetClearsContents()
+    {
+        var line = new DelayLine(4);
+        line.Write(9f);
+        line.Reset();
+        line.Write(0f);
+        Assert.That(line.Read(2), Is.EqualTo(0f));
     }
 }

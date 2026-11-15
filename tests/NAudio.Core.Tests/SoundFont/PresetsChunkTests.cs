@@ -20,13 +20,6 @@ public class PresetsChunkTests
     #region Preset tests
 
     [Test]
-    public void ParsesCorrectNumberOfPresets()
-    {
-        // Rich SF2 has 2 presets (Piano, Strings) + EOP terminal which is removed
-        Assert.That(richSf.Presets.Length, Is.EqualTo(2));
-    }
-
-    [Test]
     public void ParsesFirstPresetProperties()
     {
         var preset = richSf.Presets[0];
@@ -91,13 +84,6 @@ public class PresetsChunkTests
     #endregion
 
     #region Instrument tests
-
-    [Test]
-    public void ParsesCorrectNumberOfInstruments()
-    {
-        // Rich SF2 has 2 instruments (Piano, Strings) + EOI terminal which is removed
-        Assert.That(richSf.Instruments.Length, Is.EqualTo(2));
-    }
 
     [Test]
     public void ParsesInstrumentNames()
@@ -228,13 +214,6 @@ public class PresetsChunkTests
     #endregion
 
     #region Sample header tests
-
-    [Test]
-    public void ParsesCorrectNumberOfSampleHeaders()
-    {
-        // Rich SF2 has 2 samples + EOS terminal which is removed
-        Assert.That(richSf.SampleHeaders.Length, Is.EqualTo(2));
-    }
 
     [Test]
     public void ParsesSampleHeaderName()

@@ -25,23 +25,6 @@ public class FadeInOutSampleProviderTests
     }
 
     [Test]
-    public void CanFadeOut()
-    {
-        var source = new TestSampleProvider(10, 1); // 10 samples per second
-        source.UseConstValue = true;
-        source.ConstValue = 100;
-        var fade = new FadeInOutSampleProvider(source);
-        fade.BeginFadeOut(1000);
-        float[] buffer = new float[20];
-        int read = fade.Read(buffer.AsSpan(0, 20));
-        Assert.That(read, Is.EqualTo(20));
-        Assert.That(buffer[0], Is.EqualTo(100)); // start of fade-out
-        Assert.That(buffer[5], Is.EqualTo(50)); // half-way
-        Assert.That(buffer[10], Is.EqualTo(0)); // fully fade out
-        Assert.That(buffer[15], Is.EqualTo(0)); // fully fade out
-    }
-
-    [Test]
     public void FadeDurationCanBeLongerThanOneRead()
     {
         var source = new TestSampleProvider(10, 1); // 10 samples per second
@@ -70,14 +53,6 @@ public class FadeInOutSampleProviderTests
         Assert.That(buffer[1], Is.EqualTo(90).Within(0.0001));
         Assert.That(buffer[2], Is.EqualTo(100).Within(0.0001));
         Assert.That(buffer[3], Is.EqualTo(100));
-    }
-
-    [Test]
-    public void WaveFormatReturnsSourceWaveFormat()
-    {
-        var source = new TestSampleProvider(10, 1); // 10 samples per second
-        var fade = new FadeInOutSampleProvider(source);
-        Assert.That(fade.WaveFormat, Is.SameAs(source.WaveFormat));
     }
 
     [Test]
@@ -188,9 +163,10 @@ public class FadeInOutSampleProviderTests
         float[] buffer = new float[20];
         int read = fade.Read(buffer.AsSpan(0, 20));
         Assert.That(read, Is.EqualTo(20));
-        Assert.That(buffer[0], Is.EqualTo(100)); // start of fade-in
+        Assert.That(buffer[0], Is.EqualTo(100)); // start of fade-out
         Assert.That(buffer[5], Is.EqualTo(50)); // half-way
-        Assert.That(buffer[10], Is.EqualTo(0)); // half-way
+        Assert.That(buffer[10], Is.EqualTo(0)); // fully faded out
+        Assert.That(buffer[15], Is.EqualTo(0)); // stays silent
         read = fade.Read(buffer.AsSpan(0, 20));
         Assert.That(read, Is.EqualTo(20));
         Assert.That(buffer[0], Is.EqualTo(0));

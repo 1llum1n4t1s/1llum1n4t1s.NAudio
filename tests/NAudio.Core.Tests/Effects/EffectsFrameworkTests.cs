@@ -93,55 +93,6 @@ public class EnvelopeFollowerTests
 
 [TestFixture]
 [Category("UnitTest")]
-public class DelayLineTests
-{
-    [Test]
-    public void IntegerReadReturnsDelayedSamples()
-    {
-        var line = new DelayLine(8);
-        line.Write(1f);
-        line.Write(2f);
-        line.Write(3f);
-
-        Assert.That(line.Read(1), Is.EqualTo(3f));
-        Assert.That(line.Read(2), Is.EqualTo(2f));
-        Assert.That(line.Read(3), Is.EqualTo(1f));
-    }
-
-    [Test]
-    public void FractionalReadLinearlyInterpolates()
-    {
-        var line = new DelayLine(8);
-        line.Write(0f);
-        line.Write(10f);
-
-        Assert.That(line.Read(1f), Is.EqualTo(10f).Within(1e-6f));
-        Assert.That(line.Read(2f), Is.EqualTo(0f).Within(1e-6f));
-        Assert.That(line.Read(1.5f), Is.EqualTo(5f).Within(1e-6f));
-    }
-
-    [Test]
-    public void ResetClearsContents()
-    {
-        var line = new DelayLine(4);
-        line.Write(9f);
-        line.Reset();
-        line.Write(0f);
-        Assert.That(line.Read(2), Is.EqualTo(0f));
-    }
-
-    [Test]
-    public void OutOfRangeReadsThrow()
-    {
-        var line = new DelayLine(4);
-        Assert.Throws<ArgumentOutOfRangeException>(() => line.Read(0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => line.Read(5));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new DelayLine(0));
-    }
-}
-
-[TestFixture]
-[Category("UnitTest")]
 public class CrossfadingBiQuadFilterTests
 {
     private const float SampleRate = 48000f;
