@@ -9,6 +9,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+## [4.0.10] - 2026-11-15
+
 ### Fixed
 
 - `BroadcastExtension.FormatOriginationDate` / `FormatOriginationTime` が現在のカルチャの暦や時刻区切りを使い、タイ語などの環境でBWFの `bext` 日付・時刻が仕様外の文字列になる問題を修正しました。
@@ -228,7 +230,8 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 [RELEASE_NOTES.md](https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/blob/71007e4fd85d2de6cccb3ededed9a02871c889b4/RELEASE_NOTES.md)
 を参照してください。
 
-[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.9...HEAD
+[Unreleased]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.10...HEAD
+[4.0.10]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.9...v4.0.10
 [4.0.9]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.8...v4.0.9
 [4.0.8]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.7...v4.0.8
 [4.0.7]: https://github.com/1llum1n4t1s/1llum1n4t1s.NAudio/compare/v4.0.6...v4.0.7
