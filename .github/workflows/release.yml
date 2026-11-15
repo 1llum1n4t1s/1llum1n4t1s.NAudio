@@ -361,11 +361,39 @@ jobs:
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: |
-          $packages = Get-ChildItem -LiteralPath $env:RELEASE_OUTPUT_DIR -Filter '*.nupkg'
+          $packages = @(Get-ChildItem -LiteralPath $env:RELEASE_OUTPUT_DIR -Filter '*.nupkg')
           if (-not $packages) {
             Write-Error "No .nupkg files found in $env:RELEASE_OUTPUT_DIR"
             exit 1
           }
+          # Push package IDs that do not exist on nuget.org yet first. A Trusted Publishing
+          # policy can allow new versions of existing packages but not brand-new IDs; if a new
+          # ID is rejected, the run stops before any existing package is pushed, so a release
+          # is never left half-published. --skip-duplicate keeps a re-run after fixing the
+          # policy safe. An unknown lookup result is treated as existing (normal order).
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $isNew = @{}
+          foreach ($pkg in $packages) {
+            $zip = [IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+            try {
+              $entry = @($zip.Entries | Where-Object { $_.FullName -notlike '*/*' -and $_.Name -like '*.nuspec' })[0]
+              $reader = [IO.StreamReader]::new($entry.Open())
+              try { [xml]$nuspec = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            } finally {
+              $zip.Dispose()
+            }
+            $packageId = [string]$nuspec.package.metadata.id
+            $status = 0
+            try {
+              $response = Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/$($packageId.ToLowerInvariant())/index.json" -Method Head -SkipHttpErrorCheck
+              $status = [int]$response.StatusCode
+            } catch {
+              $status = 0
+            }
+            $isNew[$pkg.FullName] = ($status -eq 404)
+            if ($status -eq 404) { Write-Host "$packageId is a new package ID on nuget.org; pushing it first." }
+          }
+          $packages = @($packages | Sort-Object -Stable -Property @{ Expression = { -not $isNew[$_.FullName] } }, Name)
           foreach ($pkg in $packages) {
             Write-Host "Pushing $($pkg.Name)"
             dotnet nuget push $pkg.FullName `
