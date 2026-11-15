@@ -91,14 +91,14 @@ release workflow が公開する project は次の14個です。
 - `NAudio` meta-package
 
 NuGet 上ではすべて `1llum1n4t1s.` prefix が付きます。project を追加した場合は
-[release workflow](.github/workflows/release.yml) の `Pack` list も同じ変更で更新します。
+[release workflow](.github/workflows/release.yml) の `Pack` list と `Verify packages` の `$expected` list を同じ変更で更新します。
 
 ## Troubleshooting
 
 - **`CHANGELOG.md has no ... section`**: tag version と同じ `## [x.y.z] - YYYY-MM-DD` を追加します
 - **tag と `VersionPrefix` が不一致**: version を修正した commit に tag を作り直します
 - **NuGet authentication error**: Trusted Publishing policy の repository / workflow / package scope と `NUGET_USER`、package ownership を確認します
-- **package が不足する**: workflow の `Pack` list と `artifacts/*.nupkg` を照合します
+- **package が不足する**: workflow の `Pack` list・`Verify packages` の `$expected` list と、`Verify packages` step が log へ出す package 一覧を照合します
 - **35,000文字超過**: changelog は利用者向け要点へ絞り、詳細は commit / PR へ残します
 
 ## 関連ファイル
