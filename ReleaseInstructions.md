@@ -7,7 +7,7 @@ fork の preview / final package を GitHub Actions から公開する手順で�
 ## 前提
 
 - GitHub CLI `gh` が `1llum1n4t1s/1llum1n4t1s.NAudio` へ認証済み
-- NuGet.org Trusted Publishing policy が `.github/workflows/release.yml` と fork package 14件だけを許可している
+- NuGet.org Trusted Publishing policy が `.github/workflows/release.yml` と fork package 15件だけを許可している
 - repository variable `NUGET_USER` に NuGet.org の profile name を設定済み
 - `main` の build / test が成功している
 - `Directory.Build.props` の `VersionPrefix` と [CHANGELOG.md](CHANGELOG.md) が同期している
@@ -41,7 +41,7 @@ suffix の順序は `alpha.N < beta.N < preview.N < rc.N < final` です。末�
 1. `Directory.Build.props` の `VersionPrefix` を release version にします。
 2. `CHANGELOG.md` の `## [Unreleased]` を `## [x.y.z] - YYYY-MM-DD` に変更します。
 3. その上へ新しい空の `## [Unreleased]` section を追加します。
-4. Release build、非 Integration test、Native AOT smoke、14 package の pack を確認します。
+4. Release build、非 Integration test、Native AOT smoke、15 package の pack を確認します。
 5. 通常の protected-branch flow で `main` へ取り込みます。
 
 ### 2. Tag
@@ -60,9 +60,9 @@ release workflow は次を実行します。
 
 - tag と `VersionPrefix` の一致を検証
 - `CHANGELOG.md` の matching version section と35,000文字上限を検証
-- `1llum1n4t1s.NAudio.*` の14 package と symbol package を生成
+- `1llum1n4t1s.NAudio.*` の15 package と symbol package を生成
 - Trusted Publishing で取得した短期資格情報を使って NuGet.org へ公開
-- `1llum1n4t1s.NAudio x.y.z` の GitHub Release を作成し、14個の `.nupkg` を release asset として添付
+- `1llum1n4t1s.NAudio x.y.z` の GitHub Release を作成し、15個の `.nupkg` を release asset として添付
 
 symbol package (`.snupkg`) は NuGet の symbol server へ公開し、GitHub Release には添付しません。
 
@@ -73,7 +73,7 @@ release 後は `VersionPrefix` を次の development version へ進め、`CHANGE
 
 ## Package 一覧
 
-release workflow が公開する project は次の14個です。
+release workflow が公開する project は次の15個です。
 
 - `NAudio.Core`
 - `NAudio.Midi`
@@ -87,6 +87,7 @@ release workflow が公開する project は次の14個です。
 - `NAudio.SoundFile`
 - `NAudio.MacOS`（API安定化まではfinal tagでもpreview suffix付き）
 - `NAudio.Sampler`
+- `NAudio.Nam`
 - `NAudio.Extras`
 - `NAudio` meta-package
 

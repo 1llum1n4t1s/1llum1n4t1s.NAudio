@@ -214,6 +214,7 @@ jobs:
             'NAudio.SoundFile',
             'NAudio.MacOS',
             'NAudio.Sampler',
+            'NAudio.Nam',
             'NAudio',
             'NAudio.Extras'
           )
@@ -247,7 +248,7 @@ jobs:
           $expected = @(
             'NAudio.Core', 'NAudio.Asio', 'NAudio.WinForms', 'NAudio.Midi',
             'NAudio.WinMM', 'NAudio.Wasapi', 'NAudio.Dmo', 'NAudio.Vst3',
-            'NAudio.Alsa', 'NAudio.SoundFile', 'NAudio.MacOS', 'NAudio.Sampler',
+            'NAudio.Alsa', 'NAudio.SoundFile', 'NAudio.MacOS', 'NAudio.Sampler', 'NAudio.Nam',
             'NAudio', 'NAudio.Extras'
           )
           $packages = @(Get-ChildItem -LiteralPath $env:RELEASE_OUTPUT_DIR -Filter '*.nupkg')

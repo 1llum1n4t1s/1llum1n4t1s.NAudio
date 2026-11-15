@@ -13,7 +13,7 @@ public class ExtendedAudioFileReaderSettings
     /// When set to <see langword="true"/>, instructs the reader to provide 32-bit IEEE floating-point samples,
     /// instead of what the file provides.
     /// </summary>
-    public bool RequestIeeeFloat { get; set; }
+    public bool RequestIeeeFloat { get; init; }
 
     /// <summary>
     /// When set to <see langword="true"/>, instructs the reader to 
@@ -30,7 +30,7 @@ public class ExtendedAudioFileReaderSettings
     /// it will take precendence over this one and the reader will go 
     /// ahead and specify IEEE 32-bit depth.
     /// </remarks>
-    public bool AllowNonPowerOfTwoBitDepths { get; set; }
+    public bool AllowNonPowerOfTwoBitDepths { get; init; }
 
     /// <summary>
     /// Gets or sets <see cref="AllowNonPowerOfTwoBitDepths"/> using its original property name.
@@ -38,7 +38,8 @@ public class ExtendedAudioFileReaderSettings
     public bool AllowNonPowerOfTwoBitRates
     {
         get => AllowNonPowerOfTwoBitDepths;
-        set => AllowNonPowerOfTwoBitDepths = value;
+        // 上流が設定クラスを init 専用（生成後は不変）にしたため、旧名の別名も同じ契約に揃える。
+        init => AllowNonPowerOfTwoBitDepths = value;
     }
 
     /// <summary>
@@ -54,5 +55,5 @@ public class ExtendedAudioFileReaderSettings
     /// properties as they are purely existing to manipulate the default built-in logic
     /// of the reader.
     /// </remarks>
-    public WaveFormat? OutputFormat { get; set; }
+    public WaveFormat? OutputFormat { get; init; }
 }

@@ -4,7 +4,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using NAudio.Utils;
 using NAudio.Wave;
 using NUnit.Framework;
 

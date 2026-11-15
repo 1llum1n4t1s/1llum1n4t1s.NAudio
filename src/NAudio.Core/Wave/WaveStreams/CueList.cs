@@ -187,15 +187,17 @@ public class CueList
     /// <param name="listChunkData">The data contained in the list chunk</param>
     internal CueList(byte[] cueChunkData, byte[]? listChunkData)
     {
-        // Trust the declared point count only as far as complete 24-byte cue points are
-        // present: a negative, oversized or undersized count (or a chunk too short to hold the
-        // count) must not throw, matching how the adtl walk below tolerates malformed input.
+        // dwCuePoints says how many cue points follow, but it is only trusted as far as the
+        // chunk actually holds them: it sizes the arrays below, so a corrupt count must not be
+        // able to demand gigabytes (or, if smaller than the entries present, overrun them).
+        const int cuePointSize = 24;
         int declaredCount = cueChunkData.Length >= 4 ? BitConverter.ToInt32(cueChunkData, 0) : 0;
-        int cueCount = Math.Clamp(declaredCount, 0, Math.Max(0, (cueChunkData.Length - 4) / 24));
+        int presentCount = Math.Max(cueChunkData.Length - 4, 0) / cuePointSize;
+        int cueCount = Math.Clamp(declaredCount, 0, presentCount);
         Dictionary<int, int> cueIndex = new Dictionary<int, int>();
         int[] positions = new int[cueCount];
 
-        for (int cue = 0, p = 4; cue < cueCount; p += 24, cue++)
+        for (int cue = 0, p = 4; cue < cueCount; p += cuePointSize, cue++)
         {
             cueIndex[BitConverter.ToInt32(cueChunkData, p)] = cue;
             positions[cue] = BitConverter.ToInt32(cueChunkData, p + 20);

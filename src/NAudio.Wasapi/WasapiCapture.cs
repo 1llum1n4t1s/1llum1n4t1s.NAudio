@@ -22,6 +22,8 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     private volatile CaptureState captureState;
     private Thread? captureThread;
     private AudioClient? audioClient;
+    // fork: プロセスループバック用の内部コンストラクターはデバイスを持たないため null になり得る。
+    private readonly MMDevice? captureDevice;
 
     private AudioClient Client => audioClient ?? throw new ObjectDisposedException(nameof(WasapiCapture));
     private int bytesPerFrame;
@@ -107,6 +109,7 @@ public class WasapiCapture : IWaveIn, IWaveLatency
     public WasapiCapture(MMDevice captureDevice, bool useEventSync, int audioBufferMillisecondsLength)
     {
         syncContext = SynchronizationContext.Current;
+        this.captureDevice = captureDevice;
         audioClient = captureDevice.CreateAudioClient();
         ShareMode = AudioClientShareMode.Shared;
         isUsingEventSync = useEventSync;
@@ -256,6 +259,21 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         if (initialized)
             return;
 
+        try
+        {
+            InitializeCaptureDeviceCore();
+        }
+        catch
+        {
+            ResetAfterFailedInitialize();
+            throw;
+        }
+
+        initialized = true;
+    }
+
+    private void InitializeCaptureDeviceCore()
+    {
         long requestedDuration = ReftimesPerMillisec * audioBufferMillisecondsLength;
 
         if ((ShareMode == AudioClientShareMode.Exclusive) && !Client.IsFormatSupported(ShareMode, waveFormat))
@@ -298,8 +316,31 @@ public class WasapiCapture : IWaveIn, IWaveLatency
         }
 
         bytesPerFrame = waveFormat.Channels * waveFormat.BitsPerSample / 8;
+    }
 
-        initialized = true;
+    /// <summary>
+    /// If initialization fails after IAudioClient::Initialize has succeeded (e.g. SetEventHandle failing),
+    /// the client cannot be initialized again, so swap in a fresh one to let a later StartRecording retry.
+    /// </summary>
+    private void ResetAfterFailedInitialize()
+    {
+        frameEventWaitHandle?.Dispose();
+        frameEventWaitHandle = null;
+
+        // A disposed capture (audioClient null) stays disposed. A process-loopback capture has no
+        // MMDevice to create a fresh client from, so it keeps the existing one as before.
+        if (audioClient == null || captureDevice == null)
+            return;
+        try
+        {
+            var freshClient = captureDevice.CreateAudioClient();
+            audioClient.Dispose();
+            audioClient = freshClient;
+        }
+        catch
+        {
+            // The device may have gone away; keep the existing client so the original exception surfaces.
+        }
     }
 
     /// <summary>

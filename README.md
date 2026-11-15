@@ -165,6 +165,7 @@ M4A decode を非AOT helper processへ分離する必要はありません。
 | `1llum1n4t1s.NAudio.Dmo` | DMO、DirectSound、DMO MP3 decoder / resampler | Windows |
 | `1llum1n4t1s.NAudio.WinForms` | WinForms control と window callback | Windows |
 | `1llum1n4t1s.NAudio.Sampler` | SoundFont / SFZ software sampler | cross-platform |
+| `1llum1n4t1s.NAudio.Nam` | Neural Amp Modeler（`.nam`）のギター・アンプ／ペダルのキャプチャをリアルタイム effect として実行 | cross-platform |
 | `1llum1n4t1s.NAudio.SoundFile` | libsndfile による FLAC / Ogg / Opus / MP3 等 | cross-platform |
 | `1llum1n4t1s.NAudio.Alsa` | ALSA playback / capture | Linux |
 | `1llum1n4t1s.NAudio.MacOS`（preview） | Core Audio playback / capture、Audio Toolbox file I/O | macOS |

@@ -33,6 +33,7 @@ updates:
   - /src/NAudio.Dmo
   - /src/NAudio.Extras
   - /src/NAudio.MacOS
+  - /src/NAudio.Nam
   - /src/NAudio.Midi
   - /src/NAudio.Sampler
   - /src/NAudio.SoundFile
@@ -45,10 +46,12 @@ updates:
   - /tests/NAudio.Benchmarks
   - /tests/NAudio.Core.Tests
   - /tests/NAudio.MacOS.Tests
+  - /tests/NAudio.Nam.Tests
   - /tests/NAudio.Sampler.Tests
   - /tests/NAudio.SoundFile.Tests
   - /tests/NAudio.Windows.Tests
   - /tests/NAudioAotSmokeTest
+  - /tests/NAudioAsioFakeDriverTest
   schedule:
     interval: weekly
     day: monday

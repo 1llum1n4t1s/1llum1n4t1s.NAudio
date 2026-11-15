@@ -1,7 +1,7 @@
 # NAudio 3 — Release strategy
 
 > **1llum1n4t1s fork note:** This document records the upstream NAudio 3 release migration and its
-> OIDC setup. The fork's current `.github/workflows/release.yml` packs 14 packages under
+> OIDC setup. The fork's current `.github/workflows/release.yml` packs 15 packages under
 > the `1llum1n4t1s.NAudio.*` ID family and authenticates through NuGet.org Trusted Publishing.
 > Fork releases are generated from `CHANGELOG.md`; the upstream `RELEASE_NOTES.md` references below
 > are historical, while the trusted-publishing contract also applies to the fork.

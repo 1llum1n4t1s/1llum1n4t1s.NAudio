@@ -98,10 +98,12 @@ public class AiffFileReader : WaveStream
 
         while (stream.Position < stream.Length)
         {
-            AiffChunk nextChunk = ReadChunkHeader(stream);
+            AiffChunk nextChunk = ReadChunkHeader(stream, out uint chunkSize);
             if (nextChunk.ChunkName == "\0\0\0\0") break;
 
-            if (stream.Position + nextChunk.ChunkLength > stream.Length)
+            // Check against the size in the chunk header rather than ChunkLength: some writers
+            // leave off the pad byte after an odd-sized chunk at the end of the file.
+            if (stream.Position + chunkSize > stream.Length)
             {
                 break;
             }
@@ -425,9 +427,12 @@ public class AiffFileReader : WaveStream
         }
     }
 
-    private static AiffChunk ReadChunkHeader(Stream stream)
+    private static AiffChunk ReadChunkHeader(Stream stream, out uint chunkSize)
     {
-        return new AiffChunk((uint)stream.Position, ReadChunkName(stream).ToString(), ReadUInt(stream));
+        uint start = (uint)stream.Position;
+        string name = ReadChunkName(stream).ToString();
+        chunkSize = ReadUInt(stream);
+        return new AiffChunk(start, name, chunkSize);
     }
 
     private static double ReadIeeeExtended(Stream stream)

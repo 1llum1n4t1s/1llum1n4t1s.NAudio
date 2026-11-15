@@ -39,12 +39,6 @@ var writer = ExtendedAudioFileWriter.CreateToFilePath(
 ```
 
 > [!NOTE]
-For plain uncompressed output, prefer `WaveFileWriter`: WAV is what
-every other tool reads. `AiffFileWriter` in the Core library is there if
-you want AIFF, and handles the byte-order swap to AIFF's big-endian
-layout for you.
-
-> [!NOTE]
 The writer also supports creating a file into a .NET data stream.
 The same settings apply to that case, except for the last parameter,
 which it does not exist. See the `CreateToStream` static method
@@ -57,10 +51,72 @@ If your object is not that capable, use a `MemoryStream` so that
 the writer can handle the stream, then copy it's data to your
 target stream.
 
-> [!NOTE]
-The `ProvidingFormat` setting must be a PCM or IEEE floating-point format.
+### Settings supported by the writer
+
+The writer requires a settings object, which you must fill in before creating the writer.
+That settings object is the `ExtendedAudioFileWriterSettings` class,
+located into the `NAudio.MacOS.AudioToolbox` namespace:
+
+```c#
+using NAudio.Wave;
+
+namespace NAudio.MacOS.AudioToolbox;
+
+public class ExtendedAudioFileWriterSettings
+{
+    public required string FileType { get; init; }
+
+    public required WaveFormat ProvidingFormat { get; init; }
+
+    public bool EmitIEEEFloatSamples { get; init; } = false;
+
+    public int FramesPerPacket { get; init; } = 1024;
+}
+```
+
+#### The `FileType` property
+
+This property controls the final container and audio data format of
+the file. With this property you define the format of the resulting
+file and as such it is a required property.
 
 > [!CAUTION]
-Do not try to hardcode the `FileType` property as it's acceptable values
+Do not try to hardcode this property as it's acceptable values
 may vary by macOS version. You can read the supported values at
-run-time from the `AudioFileLibraryInformation.SupportedMimeTypes` property.
+run-time from the `AudioFileLibraryInformation.SupportedWritableMimeTypes` property.
+
+#### The `ProvidingFormat` property
+
+This property controls the audio data format you provide your audio as.
+The writer requires that this property contains a valid PCM or an IEEE floating-point
+format. Anything else will be rejected by the writer right away.
+
+#### The `EmitIEEEFloatSamples` property.
+
+When you write a file into an uncompressed format, this property
+controls whether the samples in the file should be saved as 32-bit IEEE
+floating-point samples. This property is only supported for uncompressed
+formats, and only if the uncompressed format supports using it.
+
+> [!NOTE]
+This property is not effective on compressed formats, as they define
+their own data formats to store the files.
+
+> [!NOTE]
+For plain uncompressed output, prefer `WaveFileWriter`: WAV is what
+every other tool reads. `AiffFileWriter` in the Core library is there if
+you want AIFF, and handles the byte-order swap to AIFF's big-endian
+layout for you.
+
+#### The `FramesPerPacket` property.
+
+This property controls the number of sample frames to store in each compressed
+packet in the format under which the writer is writing data into.
+It might be helpful in some cases to modify this property to achieve better
+compression of your audio data in the target file. Note that this property
+is just a hint to the writer and whether this property will be used or not
+depends on the active encoder.
+
+> [!NOTE]
+This property is not effective on uncompressed formats, as they are
+simply storing the samples as-is into the target file.

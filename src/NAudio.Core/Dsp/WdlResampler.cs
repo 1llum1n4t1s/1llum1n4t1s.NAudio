@@ -111,6 +111,16 @@ public class WdlResampler
         m_feedmode = wantInputDriven;
     }
 
+    // Grows the input buffer to at least `size` samples, keeping its contents. It never
+    // shrinks: only the first m_samples_in_rsinbuf frames (plus whatever a caller has just
+    // been asked to write) are meaningful, so a larger buffer is harmless and lets steady-state
+    // processing with varying block sizes run without allocating.
+    private void EnsureInputCapacity(int size)
+    {
+        if (m_rsinbuf == null || m_rsinbuf.Length < size)
+            Array.Resize(ref m_rsinbuf, size);
+    }
+
     /// <summary>
     /// Reset
     /// </summary>
@@ -180,7 +190,8 @@ public class WdlResampler
 
             if (m_samples_in_rsinbuf > 0)
             {
-                m_rsinbuf = new WDL_SincFilterSample[m_samples_in_rsinbuf * nch];
+                EnsureInputCapacity(m_samples_in_rsinbuf * nch);
+                Array.Clear(m_rsinbuf, 0, m_samples_in_rsinbuf * nch);
             }
         }
 
@@ -195,20 +206,10 @@ public class WdlResampler
         if (nch < m_rsinbuf_nch && m_rsinbuf_nch > 0 && m_samples_in_rsinbuf > 0)
             ReinterleaveBuffer(m_rsinbuf, m_rsinbuf_nch, nch, m_samples_in_rsinbuf);
 
-        again:
-        Array.Resize(ref m_rsinbuf, (m_samples_in_rsinbuf + sreq) * nch);
-
-        int sz = m_rsinbuf.Length / ((nch != 0) ? nch : 1) - m_samples_in_rsinbuf;
-        if (sz != sreq)
-        {
-            if (sreq > 4 && (sz == 0))
-            {
-                sreq /= 2;
-                goto again; // try again with half the size
-            }
-            // todo: notify of error?
-            sreq = sz;
-        }
+        // The C original shrinks the buffer to fit and handles a failed realloc by halving the
+        // request; here the buffer only grows (so steady-state calls with varying sizes don't
+        // allocate) and a failed allocation throws, so neither case applies.
+        EnsureInputCapacity((m_samples_in_rsinbuf + sreq) * nch);
 
         // if increasing channel count, reinterleave after realloc
         if (m_rsinbuf_nch < nch && m_rsinbuf_nch > 0 && m_samples_in_rsinbuf > 0)
@@ -228,6 +229,27 @@ public class WdlResampler
     /// returns number of samples successfully outputted to out
     /// </summary>
     public int ResampleOut(Span<WDL_ResampleSample> outBuffer, int nsamples_in, int nsamples_out, int nch)
+    {
+        return ResampleOut(outBuffer, nsamples_in, nsamples_out, nch, true);
+    }
+
+    /// <summary>
+    /// As <see cref="ResampleOut(Span{float}, int, int, int)"/>, but lets the caller choose what happens when
+    /// nsamples_in is less than the value returned by ResamplePrepare.
+    /// </summary>
+    /// <param name="outBuffer">Buffer to receive the resampled output</param>
+    /// <param name="nsamples_in">Number of input frames written to the buffer from ResamplePrepare</param>
+    /// <param name="nsamples_out">Maximum number of output frames to produce</param>
+    /// <param name="nch">Number of channels</param>
+    /// <param name="flush">
+    /// true to treat short input as the end of the stream: the input is padded with silence so that all
+    /// remaining valid output is produced (the behaviour of the four-argument overload). false to treat
+    /// short input as a temporary shortfall (an under-fed real-time source): only output that is fully
+    /// determined by real input is produced, and the remaining input stays buffered for the next call.
+    /// In sinc mode this avoids computing the last few output samples from the padding.
+    /// </param>
+    /// <returns>Number of output frames written to outBuffer</returns>
+    public int ResampleOut(Span<WDL_ResampleSample> outBuffer, int nsamples_in, int nsamples_out, int nch, bool flush)
     {
         if (nch > WDL_RESAMPLE_MAX_NCH || nch < 1)
         {
@@ -257,17 +279,14 @@ public class WdlResampler
 
         int rsinbuf_availtemp = m_samples_in_rsinbuf;
 
-        if (nsamples_in < m_last_requested) // flush out to ensure we can deliver
+        if (flush && nsamples_in < m_last_requested) // flush out to ensure we can deliver
         {
             int fsize = (m_last_requested - nsamples_in) * 2 + m_sincsize * 2;
 
             int alloc_size = (m_samples_in_rsinbuf + fsize) * nch;
-            Array.Resize(ref m_rsinbuf, alloc_size);
-            if (m_rsinbuf.Length == alloc_size)
-            {
-                Array.Clear(m_rsinbuf, m_samples_in_rsinbuf * nch, fsize * nch);
-                rsinbuf_availtemp = m_samples_in_rsinbuf + fsize;
-            }
+            EnsureInputCapacity(alloc_size);
+            Array.Clear(m_rsinbuf, m_samples_in_rsinbuf * nch, fsize * nch);
+            rsinbuf_availtemp = m_samples_in_rsinbuf + fsize;
         }
 
         int ret = 0;

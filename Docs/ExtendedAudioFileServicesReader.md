@@ -65,7 +65,7 @@ You are able to query the supported file formats as MIME types at run-time:
 using System;
 using NAudio.MacOS.AudioToolbox;
 
-foreach (var mimeType in AudioFileLibraryInformation.SupportedMimeTypes)
+foreach (var mimeType in AudioFileLibraryInformation.SupportedReadableMimeTypes)
 {
     Console.WriteLine(mimeType);
 }
@@ -84,11 +84,11 @@ namespace NAudio.MacOS.AudioToolbox;
 
 public class ExtendedAudioFileReaderSettings
 {
-    public bool RequestIeeeFloat { get; set; }
+    public bool RequestIeeeFloat { get; init; }
 
-    public bool AllowNonPowerOfTwoBitDepths { get; set; }
+    public bool AllowNonPowerOfTwoBitDepths { get; init; }
 
-    public WaveFormat OutputFormat { get; set; }
+    public WaveFormat? OutputFormat { get; init; }
 }
 ```
 
@@ -147,9 +147,9 @@ public sealed class ExtendedAudioFileReaderFromStream : ExtendedAudioFileService
 {
     public sealed class ExtendedAudioFileReaderFromStreamSettings : ExtendedAudioFileReaderSettings
     {
-        public string MimeType { get; set; }
+        public string? MimeType { get; init; }
 
-        public string FileName { get; set; }
+        public string? FileName { get; init; }
     }
 }
 ```
@@ -161,13 +161,13 @@ of the audio file being decoded.
 
 It is optional, and the reader does a decent job finding the audio file type of the provided stream.
 
-The MIME types can be queried at run-time using this code:
+The readable MIME types can be queried at run-time using this code:
 
 ```c#
 using System;
 using NAudio.MacOS.AudioToolbox;
 
-foreach (var mimeType in AudioFileLibraryInformation.SupportedMimeTypes)
+foreach (var mimeType in AudioFileLibraryInformation.SupportedReadableMimeTypes)
 {
     Console.WriteLine(mimeType);
 }
@@ -175,7 +175,7 @@ foreach (var mimeType in AudioFileLibraryInformation.SupportedMimeTypes)
 
 > [!CAUTION]
 Try not to hardcode the MIME type given to the property as it subject to change
-in different macOS versions. Make sure to call first the `SupportedMimeTypes` property
+in different macOS versions. Make sure to call first the `SupportedReadableMimeTypes` property
 and use one of those values.
 
 #### The `FileName` property
@@ -198,14 +198,14 @@ The supported file types (by extension) can be also queried with this snippet:
 using System;
 using NAudio.MacOS.AudioToolbox;
 
-foreach (var extension in AudioFileLibraryInformation.RecognizedFileExtensions)
+foreach (var extension in AudioFileLibraryInformation.RecognizedReadableFileExtensions)
 {
-    Console.WriteLine(mimeType);
+    Console.WriteLine(extension);
 }
 ```
 
 > [!CAUTION]
-The file extensions returned through the `RecognizedFileExtensions` property
+The file extensions returned through the `RecognizedReadableFileExtensions` property
 do *not* have a dot prepended to them. Make sure to prepend a dot if you want
 to use them with the `System.IO` API's.
 
@@ -225,7 +225,7 @@ using var reader = ExtendedAudioFileReaderFromURL.CreateFromFile(
     "/Users/user_name/a_second_file.mp3"
 );
 
-using var player = new CoreAudioPlayer();
+using var player = new CoreAudioPlayer(); // Use the default playback device for playback.
 
 player.Init(reader);
 player.Play();

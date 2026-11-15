@@ -9,6 +9,26 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+### Added
+
+- 新しいpackage `1llum1n4t1s.NAudio.Nam` を追加し、Neural Amp Modeler（`.nam`）のギター・アンプ／ペダルのキャプチャをリアルタイムeffectとして使えるようにしました。(#1498)
+- `CabinetEffect`、`PartitionedConvolver` / `ConvolutionReverbEffect` のゼロレイテンシーモード、`WdlResamplerQuality`、`BufferedWaveProvider` / `MixingSampleProvider` の `CompleteAdding` とunderrun・破棄量のカウンターを追加しました。(#1491, #1492, #1498)
+
+### Changed
+
+- upstream NAudio `main` の `174bb499` までを取り込みました。forkのpackage構成、.NET 11のtarget framework、`NAudio.Asio` の `net11.0-windows` は維持しています。
+- **破壊的変更:** `WaveFormat.FromFormatChunk`（`WaveFileReader.WaveFormat` などWAVのfmtチャンクを読む箇所を含む）が、常に `WaveFormatExtraData` を返すのをやめ、`WaveFormatExtensible` / `AdpcmWaveFormat` / `Gsm610WaveFormat` / `Mp3WaveFormat` など最も適切な型を返すようにしました。`WaveFormatExtraData` へのキャストは `WaveFormatExtensible` のパターンマッチか `AsStandardWaveFormat()` に置き換えてください。(#1497)
+- **破壊的変更:** SFZの `#include` と `sample=` で、絶対パスとUNC・ネットワークパスを拒否するようにしました。相対パスは引き続き使えます。(#1501)
+- `WdlResamplingSampleProvider` の既定をsinc補間に変更しました。従来の出力が必要な場合は `WdlResamplerQuality.Linear` を指定してください。(#1491)
+- `NAudio.Asio` をNative AOTに対応させました。公開APIは変わりません。(#1487)
+- previewの `NAudio.MacOS` で、Extended Audio File Servicesのreader/writer設定を生成時だけ設定できる（`init`）形にしました。(#1500)
+
+### Fixed
+
+- 奇数長のSSNDチャンク末尾のパディングを持たないAIFFを読めるようにし、MPEG-2.5 MP3のXing/Infoヘッダーを読むようにしました。(#1506, #1507, #1508)
+- 壊れたSoundFont・WAVのcue・MP3の入力でメモリーを大量に確保したり想定外の例外を投げたりする問題と、WASAPI・DMO・VST3・macOSのネイティブバッファーの範囲外アクセスを修正しました。(#1501, #1502)
+- `WasapiCapture` の開始に失敗した後、再試行できるようにしました。(#1493)
+
 ## [4.0.10] - 2026-11-15
 
 ### Fixed

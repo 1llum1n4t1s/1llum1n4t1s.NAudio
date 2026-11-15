@@ -4,7 +4,7 @@ This file gives coding agents the conventions for contributing to the 1llum1n4t1
 
 ## Orientation
 
-- **Repository layout.** Projects are grouped by role: `src/` holds the shipping libraries (the NuGet packages), `tests/` holds the test, benchmark and diagnostic projects (including `NAudio.Benchmarks`, `NAudioAotSmokeTest`, `MfStressTest`), and `samples/` holds the runnable demo/tool apps (`NAudioDemo`, `NAudioWpfDemo`, `NAudioConsoleTest`, `AudioFileInspector`, `MidiFileConverter`, `MixDiff`) plus their `SampleData/`. DocFX lives entirely under `docfx/` (`docfx.json`, `index.md`, `toc.yml`, `templates/`, generated `api/`); tutorial Markdown stays in `Docs/`.
+- **Repository layout.** Projects are grouped by role: `src/` holds the shipping libraries (the NuGet packages), `tests/` holds the test, benchmark and diagnostic projects (including `NAudio.Benchmarks`, `NAudioAotSmokeTest`, `NAudioAsioFakeDriverTest`, `MfStressTest`), and `samples/` holds the runnable demo/tool apps (`NAudioDemo`, `NAudioWpfDemo`, `NAudioConsoleTest`, `AudioFileInspector`, `MidiFileConverter`, `MixDiff`) plus their `SampleData/`. DocFX lives entirely under `docfx/` (`docfx.json`, `index.md`, `toc.yml`, `templates/`, generated `api/`); tutorial Markdown stays in `Docs/`.
 - **Fork development happens on `main`.** The 4.x fork is based on upstream NAudio 3. Sync upstream changes through a descriptive temporary branch such as `codex/upstream-sync`, verify the fork-specific compatibility and Native AOT tests, and then integrate that branch into `main`. Use `release/x.y.z` only for an explicitly requested release.
 - **Preserve upstream history.** Keep `upstream/main` as a merge parent when synchronizing the fork so future upstream updates remain traceable. Use a normal fast-forward push from the local `main`; force-push only after the maintainer explicitly approves the exact history rewrite.
 - **Architecture docs.** [DESIGN.md](DESIGN.md) is the source of truth for the current package boundaries, data flows and invariants. [Docs/Architecture/](Docs/Architecture/) retains detailed decision records and migration history:
@@ -50,9 +50,11 @@ dotnet restore NAudio.slnx
 dotnet build NAudio.slnx --configuration Release --no-restore
 dotnet test --solution NAudio.slnx --configuration Release --no-build --filter "TestCategory!=IntegrationTest"
 dotnet publish tests/NAudioAotSmokeTest/NAudioAotSmokeTest.csproj --configuration Release
+dotnet publish tests/NAudioAsioFakeDriverTest/NAudioAsioFakeDriverTest.csproj --configuration Release --runtime win-x64 --output <absolute-output-directory>
+& <absolute-output-directory>\NAudioAsioFakeDriverTest.exe
 ```
 
-Also verify all 14 shipping packages after the Release build, as CI does. Set `$packageOutputDirectory` to an absolute output directory outside the checkout before running:
+Also verify all 15 shipping packages after the Release build, as CI does. Set `$packageOutputDirectory` to an absolute output directory outside the checkout before running:
 
 ```powershell
 foreach ($proj in Get-ChildItem src -Filter *.csproj -Recurse) {
@@ -61,7 +63,7 @@ foreach ($proj in Get-ChildItem src -Filter *.csproj -Recurse) {
 }
 ```
 
-The publish command matches CI's separate `aot-publish` job; it compiles and links the Native AOT executable without running it. Final releases additionally require real-device Native AOT smoke execution documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
+The smoke-test publish command matches CI's separate `aot-publish` job; it compiles and links the Native AOT executable without running it. The ASIO fake-driver test needs no audio hardware, so CI publishes it with Native AOT in the same job and also runs it; it exits non-zero on any failed check. Final releases additionally require real-device Native AOT smoke execution documented in [ReleaseInstructions.md](ReleaseInstructions.md) and [tests/NAudioAotSmokeTest/README.md](tests/NAudioAotSmokeTest/README.md).
 
 ## Building & testing on Linux
 

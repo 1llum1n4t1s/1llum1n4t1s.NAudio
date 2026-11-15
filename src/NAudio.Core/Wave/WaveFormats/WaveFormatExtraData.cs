@@ -6,9 +6,10 @@ namespace NAudio.Wave;
 
 /// <summary>
 /// A WaveFormat that keeps the format-specific extra bytes (cbSize) it was read with, without
-/// interpreting them. Reading a WAV fmt chunk produces one of these, and
-/// <see cref="WaveFormat.MarshalFromPtr"/> falls back to it for an encoding NAudio has no
-/// dedicated subclass for.
+/// interpreting them. <see cref="WaveFormat.FromFormatChunk"/> and
+/// <see cref="WaveFormat.MarshalFromPtr"/> fall back to it for an encoding NAudio has no
+/// dedicated subclass for, and for one that has a subclass but arrived with less extra data
+/// than that subclass describes.
 /// </summary>
 public class WaveFormatExtraData : WaveFormat
 {
@@ -21,13 +22,6 @@ public class WaveFormatExtraData : WaveFormat
     /// than 100 bytes retain the historical zero-filled buffer tail for compatibility.
     /// </summary>
     public byte[] ExtraData => extraData;
-
-    /// <summary>
-    /// Creates an empty instance, to be filled in by <see cref="WaveFormat.FromFormatChunk"/>
-    /// </summary>
-    internal WaveFormatExtraData()
-    {
-    }
 
     /// <summary>
     /// Reads this structure from a BinaryReader

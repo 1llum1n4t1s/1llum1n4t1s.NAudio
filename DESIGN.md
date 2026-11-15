@@ -30,6 +30,7 @@ Native AOT検証、`docfx/` と `Docs/` は公開documentationを担います。
 | `NAudio.SoundFile` | system libsndfileを使うcross-platform file I/O |
 | `NAudio.MacOS` | Core Audio playback/captureとAudio Toolbox file I/O。API安定化まではpreviewのみ |
 | `NAudio.Sampler` | SF2/SFZ/single-sampleのsoftware sampler。Core、MIDI、SoundFileに依存 |
+| `NAudio.Nam` | Neural Amp Modeler（`.nam`）のギター・アンプ／ペダルのキャプチャをリアルタイムeffectとして実行。Coreに依存 |
 | `NAudio` | CoreとMIDIを常に集約し、Windows TFMではWindows backendも集約するmeta-package |
 | `NAudio.Extras` | playback engineなどの補助API。Windows legだけWASAPI機能を含む |
 
@@ -55,12 +56,12 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
    native encoderへ渡します。具体的な設定は[reader](Docs/ExtendedAudioFileServicesReader.md)と
    [writer](Docs/ExtendedAudioFileServicesWriter.md)の利用ガイドを参照してください。
 6. **Release**: root `VersionPrefix`とCHANGELOGを同期し、`v*` tagでGitHub Actionsを起動します。
-   workflowは14 packageをbuild/test/packし、nuspecのid・version、lib/のtarget framework、symbol packageを
+   workflowは15 packageをbuild/test/packし、nuspecのid・version、lib/のtarget framework、symbol packageを
    検証してから、NuGetへpushした後にGitHub Releaseを作成します。
 
 ## 重要な不変条件
 
-- 14個のshipping packageはroot [Directory.Build.props](Directory.Build.props) の`VersionPrefix`を共有します。
+- 15個のshipping packageはroot [Directory.Build.props](Directory.Build.props) の`VersionPrefix`を共有します。
   `NAudio.MacOS`だけはAPI安定化まで常にpreview suffixを付け、sample/tool appは独立versionを持ちます。
 - `NAudio.Core`は`net11.0`のcross-platform基盤です。OS固有device APIをCoreへ持ち込みません。
 - `NAudio`と`NAudio.Extras`の`net11.0` / `net11.0-windows` /
@@ -103,6 +104,6 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
   共有します。previewだけは`workflow_dispatch`でsuffixを付与します。NuGetのversionは不変で公開後に
   差し替えられないため、packしたbyteを公開前に検証します。
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
-  build/analyzer、非Integration test、14 packageのpackとNative AOT smoke projectのpublishを行います。publishはILCompilerの
+  build/analyzer、非Integration test、15 packageのpackとNative AOT smoke projectのpublishを行います。publishはILCompilerの
   whole-program解析とnative linkまで検証し、analyzerだけでは検出できない問題を補います。
   executableのend-to-end実行は実機で行います。

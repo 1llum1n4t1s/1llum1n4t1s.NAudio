@@ -20,6 +20,7 @@ public class MixingSampleProvider : ISampleProvider
     private readonly Lock inputsLock = new();
     private readonly Lock readLock = new();
     private float[]? sourceBuffer;
+    private volatile bool addingCompleted;
     private const int MaxInputs = 1024; // protect ourselves against doing something silly
 
     /// <summary>
@@ -65,14 +66,41 @@ public class MixingSampleProvider : ISampleProvider
     /// of samples requested, even if there are no inputs, or if the
     /// current inputs reach their end. Setting this to true effectively
     /// makes this a never-ending sample provider, so take care if you plan
-    /// to write it out to a file.
+    /// to write it out to a file. Call <see cref="CompleteAdding"/> to let
+    /// it end once its inputs have.
     /// </summary>
     public bool ReadFully { get; set; }
+
+    /// <summary>
+    /// Whether <see cref="CompleteAdding"/> has been called. Once true, no more inputs can be
+    /// added, and the mixer ends when its current inputs have all ended.
+    /// </summary>
+    public bool IsAddingCompleted => addingCompleted;
+
+    /// <summary>
+    /// Marks that no more inputs will be added. <see cref="Read"/> goes on mixing the current
+    /// inputs; once they have all ended it returns the remaining samples as a short read, not
+    /// padded with silence even when <see cref="ReadFully"/> is set, and then 0. If there are
+    /// no inputs left, the next <see cref="Read"/> returns 0. Further calls to
+    /// <see cref="AddMixerInput"/> throw <see cref="InvalidOperationException"/>; removing
+    /// inputs is still allowed. Completion is permanent. Calling it more than once has no
+    /// further effect.
+    /// </summary>
+    public void CompleteAdding()
+    {
+        lock (inputsLock)
+        {
+            addingCompleted = true;
+        }
+    }
 
     /// <summary>
     /// Adds a new mixer input
     /// </summary>
     /// <param name="mixerInput">Mixer input</param>
+    /// <exception cref="InvalidOperationException">
+    /// There are already too many inputs, or <see cref="CompleteAdding"/> has been called.
+    /// </exception>
     [MemberNotNull(nameof(WaveFormat))]
     public void AddMixerInput(ISampleProvider mixerInput)
     {
@@ -80,6 +108,10 @@ public class MixingSampleProvider : ISampleProvider
 
         lock (inputsLock)
         {
+            if (addingCompleted)
+            {
+                throw new InvalidOperationException("Cannot add mixer inputs after CompleteAdding has been called");
+            }
             if (sources.Count >= MaxInputs)
             {
                 throw new InvalidOperationException("Too many mixer inputs");
@@ -140,11 +172,15 @@ public class MixingSampleProvider : ISampleProvider
     public WaveFormat WaveFormat { get; private set; }
 
     /// <summary>
-    /// Reads samples from this sample provider into a span
+    /// Reads samples from this sample provider into a span.
+    /// Inputs that return fewer samples than requested are treated as ended and removed.
+    /// The read is padded with silence if <see cref="ReadFully"/> is set and
+    /// <see cref="CompleteAdding"/> has not been called.
     /// </summary>
     public int Read(Span<float> buffer)
     {
         int outputSamples = 0;
+        bool completed;
         List<ISampleProvider>? endedSources = null;
         lock (readLock)
         {
@@ -152,6 +188,8 @@ public class MixingSampleProvider : ISampleProvider
             ISampleProvider[] sourceSnapshot;
             lock (inputsLock)
             {
+                // 入力一覧と完了状態を同じロック内で取得し、読み取り中の追加・削除と整合させる。
+                completed = addingCompleted;
                 sourceSnapshot = sources.ToArray();
             }
 
@@ -199,13 +237,16 @@ public class MixingSampleProvider : ISampleProvider
                 index--;
             }
 
-            if (ReadFully && outputSamples < buffer.Length)
+            // After completion, an input still running returned a full read, so outputSamples can
+            // only be short once every input has ended: let it through so the stream ends.
+            if (ReadFully && !completed && outputSamples < buffer.Length)
             {
                 buffer.Slice(outputSamples).Clear();
                 outputSamples = buffer.Length;
             }
         }
 
+        // 利用者のハンドラーが入力を追加・削除しても自己デッドロックしないよう、ロック外で通知する。
         if (endedSources != null)
         {
             foreach (var source in endedSources)
