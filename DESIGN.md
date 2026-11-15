@@ -103,6 +103,9 @@ OS固有interopを各backendへ閉じ込めています。meta-packageは利便�
 - **tag駆動のfinal release**: versionとsource SHAを一意にし、同じCHANGELOG本文をNuGetとGitHub Releaseで
   共有します。previewだけは`workflow_dispatch`でsuffixを付与します。NuGetのversionは不変で公開後に
   差し替えられないため、packしたbyteを公開前に検証します。
+  push順は、nuget.orgに未登録の新規package IDを先にします。Trusted Publishingのpolicyが既存packageの
+  新versionだけを許可し新規IDを拒否した場合でも、既存packageのpush前に停止して半端な公開を避けるためです。
+  再実行は`--skip-duplicate`で安全です。
 - **実device smokeをCIから分離**: headless runnerではaudio endpointとcallbackを保証できないため、CIは
   build/analyzer、非Integration test、15 packageのpackとNative AOT smoke projectのpublishを行います。publishはILCompilerの
   whole-program解析とnative linkまで検証し、analyzerだけでは検出できない問題を補います。
