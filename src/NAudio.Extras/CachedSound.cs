@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using NAudio.Wave;
 
 namespace NAudio.Extras;
@@ -53,7 +52,8 @@ public class CachedSound
         int samplesRead;
         while ((samplesRead = audioFileReader.Read(readBuffer.AsSpan())) > 0)
         {
-            wholeFile.AddRange(readBuffer.Take(samplesRead));
+            // LINQの逐次列挙を避け、読めた範囲をspanでまとめて追加する。
+            wholeFile.AddRange(readBuffer.AsSpan(0, samplesRead));
         }
         return wholeFile.ToArray();
     }

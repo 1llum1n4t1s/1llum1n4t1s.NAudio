@@ -131,7 +131,8 @@ internal class MidiConverter
         string fileName = Path.GetFileName(file);
         string target = Path.Combine(outputFolder, fileName);
 
-        if (Path.GetExtension(file).ToLower() == ".mid")
+        // トルコ語ロケール等でも ".MID" を取りこぼさないよう、カルチャー非依存で比較する。
+        if (string.Equals(Path.GetExtension(file), ".mid", StringComparison.OrdinalIgnoreCase))
         {
             MidiFile midiFile = new MidiFile(file);
             ConvertMidi(midiFile, target, CreateNewContext(context, Path.GetFileNameWithoutExtension(file)));

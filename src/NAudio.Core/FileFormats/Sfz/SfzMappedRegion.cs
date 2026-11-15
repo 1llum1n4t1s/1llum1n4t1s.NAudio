@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace NAudio.Sfz;
@@ -434,8 +435,9 @@ public sealed class SfzMappedRegion
         Dictionary<int, (int Low, int High)>? triggers = null;
         foreach (var pair in region.Opcodes)
         {
-            bool low = pair.Key.StartsWith("on_locc");
-            bool high = pair.Key.StartsWith("on_hicc");
+            // opcode 名は ASCII 固定なので、現在カルチャーに依存しない序数比較で判定する。
+            bool low = pair.Key.StartsWith("on_locc", StringComparison.Ordinal);
+            bool high = pair.Key.StartsWith("on_hicc", StringComparison.Ordinal);
             if (!low && !high) continue;
             if (!int.TryParse(pair.Key.Substring(7), NumberStyles.Integer, CultureInfo.InvariantCulture, out int cc))
                 continue;
@@ -462,7 +464,7 @@ public sealed class SfzMappedRegion
         List<(int Velocity, float Level)>? points = null;
         foreach (var pair in region.Opcodes)
         {
-            if (!pair.Key.StartsWith(prefix)) continue;
+            if (!pair.Key.StartsWith(prefix, StringComparison.Ordinal)) continue;
             if (!int.TryParse(pair.Key.Substring(prefix.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out int velocity))
                 continue;
             if (velocity < 1 || velocity > 127) continue;
@@ -520,8 +522,8 @@ public sealed class SfzMappedRegion
         Dictionary<int, (int Low, int High)>? gates = null;
         foreach (var pair in region.Opcodes)
         {
-            bool low = pair.Key.StartsWith("locc");
-            bool high = pair.Key.StartsWith("hicc");
+            bool low = pair.Key.StartsWith("locc", StringComparison.Ordinal);
+            bool high = pair.Key.StartsWith("hicc", StringComparison.Ordinal);
             if (!low && !high) continue;
             if (!int.TryParse(pair.Key.Substring(4), NumberStyles.Integer, CultureInfo.InvariantCulture, out int cc))
                 continue;
@@ -580,9 +582,9 @@ public sealed class SfzMappedRegion
     private static SfzFilterType ParseFilterType(string? value)
     {
         if (string.IsNullOrEmpty(value)) return SfzFilterType.LowPass;
-        if (value.StartsWith("hpf")) return SfzFilterType.HighPass;
-        if (value.StartsWith("bpf")) return SfzFilterType.BandPass;
-        if (value.StartsWith("brf")) return SfzFilterType.BandReject;
+        if (value.StartsWith("hpf", StringComparison.Ordinal)) return SfzFilterType.HighPass;
+        if (value.StartsWith("bpf", StringComparison.Ordinal)) return SfzFilterType.BandPass;
+        if (value.StartsWith("brf", StringComparison.Ordinal)) return SfzFilterType.BandReject;
         return SfzFilterType.LowPass;
     }
 }
