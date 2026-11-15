@@ -88,6 +88,8 @@ public class WaveViewer : UserControl
         set
         {
             startPosition = value;
+            // 描画開始位置が変わったので、WaveStream・SamplesPerPixel と同じく再描画を要求する。
+            Invalidate();
         }
     }
 

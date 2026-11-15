@@ -114,7 +114,8 @@ public partial class Pot : UserControl
     {
         int diameter = Math.Min(this.Width - 4, this.Height - 4);
 
-        Pen potPen = new Pen(ForeColor, 3.0f);
+        // 描画ごとに作るペンはファイナライザー任せにせず、描画が終わったら即座に解放する。
+        using var potPen = new Pen(ForeColor, 3.0f);
         potPen.LineJoin = System.Drawing.Drawing2D.LineJoin.Round;
         System.Drawing.Drawing2D.GraphicsState state = e.Graphics.Save();
         //e.Graphics.TranslateTransform(diameter / 2f, diameter / 2f);

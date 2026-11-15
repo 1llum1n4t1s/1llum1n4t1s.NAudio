@@ -65,7 +65,8 @@ public class VolumeSlider : System.Windows.Forms.UserControl
     /// </summary>
     protected override void OnPaint(PaintEventArgs pe)
     {
-        StringFormat format = new StringFormat();
+        // StringFormat はネイティブ資源を持つため、描画が終わったら即座に解放する。
+        using var format = new StringFormat();
         format.LineAlignment = StringAlignment.Center;
         format.Alignment = StringAlignment.Center;
 

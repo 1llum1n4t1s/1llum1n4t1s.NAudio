@@ -13,9 +13,12 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                components?.Dispose();
+                // OnForeColorChanged で作ったペンをコントロールと一緒に解放する。
+                // フィールドは null にせず、破棄後に ForeColor が変わっても新しく作るだけにする。
+                foregroundPen?.Dispose();
             }
             base.Dispose(disposing);
         }

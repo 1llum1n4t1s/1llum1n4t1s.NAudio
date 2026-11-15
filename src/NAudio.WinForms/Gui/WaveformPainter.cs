@@ -44,7 +44,11 @@ public partial class WaveformPainter : Control
     [MemberNotNull(nameof(foregroundPen))]
     protected override void OnForeColorChanged(EventArgs e)
     {
+        // 新しいペンを用意してから差し替え、前のペンを解放する（初回は null）。
+        // 先に解放すると、生成に失敗したときフィールドが解放済みを指してしまう。
+        var previous = foregroundPen;
         foregroundPen = new Pen(ForeColor);
+        previous?.Dispose();
         base.OnForeColorChanged(e);
     }
 

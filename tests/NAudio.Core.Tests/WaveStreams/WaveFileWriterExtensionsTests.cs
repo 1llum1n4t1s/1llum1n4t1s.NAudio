@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using NAudio.Utils;
@@ -175,6 +176,32 @@ public class WaveFileWriterExtensionsTests
         var dt = new DateTime(2026, 4, 23, 14, 5, 6);
         Assert.That(BroadcastExtension.FormatOriginationDate(dt), Is.EqualTo("2026-04-23"));
         Assert.That(BroadcastExtension.FormatOriginationTime(dt), Is.EqualTo("14:05:06"));
+    }
+
+    [Test]
+    public void WriteBroadcastExtensionDateTimeHelpersIgnoreCurrentCulture()
+    {
+        // bext の日付・時刻は ASCII 固定の書式。仏暦の th-TH に時刻区切り "." を足した
+        // カルチャーでは、カルチャー依存の書式化だと日付も時刻も仕様から外れる。
+        var culture = (CultureInfo)CultureInfo.GetCultureInfo("th-TH").Clone();
+        culture.DateTimeFormat.TimeSeparator = ".";
+        var dt = new DateTime(2026, 4, 23, 14, 5, 6);
+        var previous = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = culture;
+            // ICU が無い・Invariant モードの環境では th-TH の暦データが得られないため、
+            // 失敗ではなく判定不能として扱う。
+            Assume.That(dt.ToString("yyyy-MM-dd"), Is.Not.EqualTo("2026-04-23"), "precondition: the current culture uses a non-Gregorian calendar");
+            Assume.That(dt.ToString("HH:mm:ss"), Is.Not.EqualTo("14:05:06"), "precondition: the current culture uses a non-colon time separator");
+
+            Assert.That(BroadcastExtension.FormatOriginationDate(dt), Is.EqualTo("2026-04-23"));
+            Assert.That(BroadcastExtension.FormatOriginationTime(dt), Is.EqualTo("14:05:06"));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 
     // --- WriteInfoMetadata -----------------------------------------------------

@@ -9,6 +9,11 @@ GitHub Release にはこの `CHANGELOG.md` を使用します。
 
 ## [Unreleased]
 
+### Fixed
+
+- `BroadcastExtension.FormatOriginationDate` / `FormatOriginationTime` が現在のカルチャの暦や時刻区切りを使い、タイ語などの環境でBWFの `bext` 日付・時刻が仕様外の文字列になる問題を修正しました。
+- `NAudio.WinForms` の `Pot` / `VolumeSlider` / `PanSlider` / `VolumeMeter` / `WaveformPainter` が描画用のペン・ブラシ・`StringFormat` をGCのファイナライズまで解放しなかった問題を修正し、`WaveViewer.StartPosition` の変更で再描画されるようにしました。
+
 ## [4.0.9] - 2026-11-12
 
 ### Changed

@@ -34,7 +34,11 @@ public partial class VolumeMeter : Control
     [MemberNotNull(nameof(foregroundBrush))]
     protected override void OnForeColorChanged(EventArgs e)
     {
+        // 新しいブラシを用意してから差し替え、前のブラシを解放する（初回は null）。
+        // 先に解放すると、生成に失敗したときフィールドが解放済みを指してしまう。
+        var previous = foregroundBrush;
         foregroundBrush = new SolidBrush(ForeColor);
+        previous?.Dispose();
         base.OnForeColorChanged(e);
     }
 
